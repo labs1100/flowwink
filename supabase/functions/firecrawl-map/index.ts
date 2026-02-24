@@ -114,95 +114,113 @@ serve(async (req) => {
 
     console.log('Mapping site URLs:', formattedUrl);
 
-    // Use Firecrawl Map API (synchronous, better for this use case)
-    const response = await fetch('https://api.firecrawl.dev/v1/map', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        url: formattedUrl,
-        limit: options?.limit || 500, // Increased from 100
-        includeSubdomains: options?.includeSubdomains ?? false,
-        // Map API now supports these options for better SPA handling
-        search: options?.search,
-        ignoreSitemap: options?.ignoreSitemap ?? false,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error('Firecrawl Map API error:', data);
-      return new Response(
-        JSON.stringify({ success: false, error: data.error || `Request failed with status ${response.status}` }),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Try direct sitemap parsing first (more reliable than Firecrawl for many sites)
+    let allLinks: string[] = [];
+    
+    // Try multiple sitemap URLs (www vs non-www, different paths)
+    const sitemapUrls = [
+      `${baseUrl}/sitemap.xml`,
+      `${baseUrl}/sitemap_index.xml`,
+      baseUrl.replace('://www.', '://') + '/sitemap.xml', // Try without www
+      baseUrl.replace('://', '://www.') + '/sitemap.xml', // Try with www
+    ];
+    
+    let sitemapXml = '';
+    let foundSitemapUrl = '';
+    
+    for (const sitemapUrl of sitemapUrls) {
+      console.log(`Attempting to fetch sitemap: ${sitemapUrl}`);
+      try {
+        const sitemapResponse = await fetch(sitemapUrl);
+        if (sitemapResponse.ok) {
+          sitemapXml = await sitemapResponse.text();
+          foundSitemapUrl = sitemapUrl;
+          console.log(`Sitemap found at ${sitemapUrl}, length: ${sitemapXml.length} chars`);
+          break;
+        }
+      } catch (e) {
+        console.log(`Failed to fetch ${sitemapUrl}: ${e}`);
+      }
+    }
+    
+    if (sitemapXml) {
+      try {
+        
+        // Extract URLs from sitemap
+        const urlMatches = sitemapXml.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/g);
+        const sitemapUrls = new Set<string>();
+        
+        for (const match of urlMatches) {
+          const url = match[1].trim();
+          // Handle nested sitemaps
+          if (url.toLowerCase().includes('sitemap') && url.toLowerCase().endsWith('.xml')) {
+            console.log(`Found nested sitemap: ${url}`);
+            try {
+              const nestedResponse = await fetch(url);
+              if (nestedResponse.ok) {
+                const nestedXml = await nestedResponse.text();
+                const nestedMatches = nestedXml.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/g);
+                for (const nestedMatch of nestedMatches) {
+                  const nestedUrl = nestedMatch[1].trim();
+                  if (nestedUrl && !nestedUrl.toLowerCase().includes('sitemap')) {
+                    sitemapUrls.add(nestedUrl);
+                  }
+                }
+              }
+            } catch (e) {
+              console.log(`Failed to fetch nested sitemap: ${e}`);
+            }
+          } else if (url && !url.toLowerCase().includes('sitemap')) {
+            sitemapUrls.add(url);
+          }
+        }
+        
+        allLinks = Array.from(sitemapUrls);
+        console.log(`Extracted ${allLinks.length} URLs from sitemap`);
+      } catch (e) {
+        console.log(`Error parsing sitemap: ${e}`);
+      }
+    } else {
+      console.log('No sitemap found, will try Firecrawl Map...');
     }
 
-    let allLinks: string[] = data.links || [];
-    console.log(`Firecrawl Map found ${allLinks.length} URLs`);
+    // If sitemap parsing didn't work or found too few URLs, try Firecrawl Map as fallback
+    if (allLinks.length < 5) {
+      console.log('Trying Firecrawl Map API as fallback...');
+      const response = await fetch('https://api.firecrawl.dev/v1/map', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: formattedUrl,
+          limit: options?.limit || 500,
+          includeSubdomains: options?.includeSubdomains ?? false,
+          search: options?.search,
+          ignoreSitemap: options?.ignoreSitemap ?? false,
+        }),
+      });
 
-    // Check if we got mostly/only sitemap files
-    const sitemapLinks = allLinks.filter(link => link.toLowerCase().includes('sitemap'));
-    const nonSitemapLinks = allLinks.filter(link => !link.toLowerCase().includes('sitemap'));
-    
-    console.log(`Found ${sitemapLinks.length} sitemap files and ${nonSitemapLinks.length} regular pages`);
+      const data = await response.json();
 
-    // If we have sitemaps and very few regular pages, parse the sitemaps
-    if (sitemapLinks.length > 0 && nonSitemapLinks.length < 10) {
-      console.log('Parsing sitemap files to extract URLs...');
-      const sitemapUrls = new Set<string>(nonSitemapLinks); // Keep existing non-sitemap URLs
-      
-      for (const sitemapUrl of sitemapLinks) {
-        try {
-          console.log(`Fetching sitemap: ${sitemapUrl}`);
-          const sitemapResponse = await fetch(sitemapUrl);
-          if (sitemapResponse.ok) {
-            const sitemapXml = await sitemapResponse.text();
-            console.log(`Sitemap XML length: ${sitemapXml.length} chars`);
-            
-            // Extract URLs from sitemap XML (handles both <loc> and nested sitemaps)
-            const urlMatches = sitemapXml.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/g);
-            let extractedCount = 0;
-            for (const match of urlMatches) {
-              const url = match[1].trim();
-              // If it's another sitemap, fetch it recursively (one level only)
-              if (url.toLowerCase().includes('sitemap') && url.toLowerCase().endsWith('.xml')) {
-                try {
-                  const nestedResponse = await fetch(url);
-                  if (nestedResponse.ok) {
-                    const nestedXml = await nestedResponse.text();
-                    const nestedMatches = nestedXml.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/g);
-                    for (const nestedMatch of nestedMatches) {
-                      const nestedUrl = nestedMatch[1].trim();
-                      if (nestedUrl && !nestedUrl.toLowerCase().includes('sitemap')) {
-                        sitemapUrls.add(nestedUrl);
-                        extractedCount++;
-                      }
-                    }
-                  }
-                } catch (e) {
-                  console.log(`Failed to fetch nested sitemap ${url}:`, e);
-                }
-              } else if (url && !url.toLowerCase().includes('sitemap')) {
-                sitemapUrls.add(url);
-                extractedCount++;
-              }
-            }
-            console.log(`Extracted ${extractedCount} URLs from ${sitemapUrl}`);
-          } else {
-            console.log(`Failed to fetch sitemap ${sitemapUrl}: ${sitemapResponse.status}`);
-          }
-        } catch (e) {
-          console.log(`Error parsing sitemap ${sitemapUrl}:`, e);
+      if (response.ok) {
+        const firecrawlLinks = data.links || [];
+        console.log(`Firecrawl Map found ${firecrawlLinks.length} URLs`);
+        
+        // Merge with sitemap URLs (if any)
+        const combined = new Set([...allLinks, ...firecrawlLinks]);
+        allLinks = Array.from(combined);
+        console.log(`Total URLs after merging: ${allLinks.length}`);
+      } else {
+        console.error('Firecrawl Map API error:', data);
+        // If we have sitemap URLs, continue with those
+        if (allLinks.length === 0) {
+          return new Response(
+            JSON.stringify({ success: false, error: data.error || `Failed to discover pages. ${response.status}` }),
+            { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
-      }
-      
-      if (sitemapUrls.size > nonSitemapLinks.length) {
-        allLinks = Array.from(sitemapUrls);
-        console.log(`Successfully extracted ${allLinks.length} total URLs from sitemaps`);
       }
     }
 
