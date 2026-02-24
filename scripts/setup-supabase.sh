@@ -152,7 +152,7 @@ SERVICE_ROLE_KEY=$(echo "$API_KEYS" | jq -r '.[] | select(.name == "service_role
 # Check what's already done
 check_functions_deployed() {
     local deployed
-    deployed=$(supabase functions list --project-ref "$PROJECT_REF" 2>/dev/null | grep -c "Active" || echo "0")
+    deployed=$(supabase functions list --project-ref "$PROJECT_REF" 2>/dev/null | grep -c "ACTIVE" || echo "0")
     echo "$deployed"
 }
 
