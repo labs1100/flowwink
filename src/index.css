@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Swedish Healthcare CMS Design System
-   Medical-grade aesthetic with Sophiahemmet-inspired palette
+/* FlowWink Design System
+   Professional aesthetic with customizable palette
    All colors MUST be HSL.
 */
 
@@ -11,7 +11,7 @@
 
 @layer base {
   :root {
-    /* Medical Blue Primary - Sophiahemmet #003087 */
+    /* Primary Brand Color - Professional Blue #003087 */
     --primary: 220 100% 26%;
     --primary-foreground: 0 0% 100%;
     

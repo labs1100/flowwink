@@ -29,17 +29,17 @@ ON public.site_settings
 FOR INSERT
 WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
 
--- Insert default footer settings
+-- Insert default footer settings (empty placeholders)
 INSERT INTO public.site_settings (key, value) VALUES (
   'footer',
   '{
-    "phone": "08-688 40 00",
-    "email": "info@sophiahemmet.se",
-    "address": "Valhallavägen 91",
-    "postalCode": "114 28 Stockholm",
-    "weekdayHours": "08:00–17:00",
-    "weekendHours": "Stängt",
-    "brandName": "Sophiahemmet",
-    "brandTagline": "Kvalitetsvård med patienten i fokus sedan 1884."
+    "phone": "",
+    "email": "",
+    "address": "",
+    "postalCode": "",
+    "weekdayHours": "Monday–Friday: 09:00–17:00",
+    "weekendHours": "Saturday–Sunday: Closed",
+    "brandName": "",
+    "brandTagline": ""
   }'::jsonb
 );

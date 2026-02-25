@@ -1,10 +1,10 @@
--- Insert SEO settings
+-- Insert SEO settings (empty placeholders)
 INSERT INTO public.site_settings (key, value) VALUES (
   'seo',
   '{
-    "siteTitle": "Sophiahemmet",
-    "titleTemplate": "%s | Sophiahemmet",
-    "defaultDescription": "Kvalitetsvård med patienten i fokus sedan 1884.",
+    "siteTitle": "My Site",
+    "titleTemplate": "%s | My Site",
+    "defaultDescription": "",
     "ogImage": "",
     "twitterHandle": "",
     "googleSiteVerification": "",
