@@ -7,6 +7,7 @@ import { useUpdateGeneralSettings } from '@/hooks/useSiteSettings';
 import { useUpdateFooterBlock } from '@/hooks/useGlobalBlocks';
 import { toast } from 'sonner';
 import type { ContentBlock, ContentBlockType } from '@/types/cms';
+import { extractImageUrls, updateBlockAtPath, isExternalUrl } from '@/lib/image-extraction';
 
 // Block-to-Module mapping for auto-enabling modules
 const BLOCK_MODULE_MAP: Record<string, keyof ModulesSettings> = {
@@ -671,6 +672,50 @@ export function useCopilot(): UseCopilotReturn {
     toast.success('Block added');
   }, [migrationState, blocks, createPageMutation, updatePageStatusInStructure, findNextPendingPage, startMigration]);
 
+  // Process images: download external images and save to media library
+  const processImages = useCallback(async (blocksToProcess: CopilotBlock[]): Promise<ContentBlock[]> => {
+    const contentBlocks = blocksToProcess.map(b => ({ 
+      id: b.id, 
+      type: b.type as ContentBlockType, 
+      data: b.data 
+    })) as ContentBlock[];
+    
+    const images = extractImageUrls(contentBlocks);
+    
+    if (images.length === 0) {
+      return contentBlocks;
+    }
+    
+    logger.log(`Processing ${images.length} images for local storage...`);
+    let updatedBlocks = contentBlocks;
+    let processedCount = 0;
+    
+    for (const { blockIndex, path, url } of images) {
+      try {
+        const { data, error } = await supabase.functions.invoke('process-image', {
+          body: { imageUrl: url, folder: 'flowpilot' }
+        });
+        
+        if (error) {
+          logger.warn(`Failed to process image ${url}:`, error);
+          continue;
+        }
+        
+        if (data.success && data.url) {
+          updatedBlocks = updateBlockAtPath(updatedBlocks, blockIndex, path, data.url);
+          processedCount++;
+          logger.log(`Processed image ${processedCount}/${images.length}: ${url} → ${data.url}`);
+        }
+      } catch (err) {
+        logger.warn(`Error processing image ${url}:`, err);
+        // Continue with other images even if one fails
+      }
+    }
+    
+    logger.log(`Image processing complete: ${processedCount}/${images.length} images saved locally`);
+    return updatedBlocks;
+  }, []);
+
   const skipMigrationBlock = useCallback(async () => {
     if (!migrationState.isActive || migrationState.pendingBlocks.length === 0) return;
 
@@ -691,14 +736,13 @@ export function useCopilot(): UseCopilotReturn {
         const pagesTotal = migrationState.pagesTotal;
         
         try {
+          // Process images before saving
+          const processedBlocks = await processImages(approvedBlocks);
+          
           await createPageMutation.mutateAsync({
             title: pageTitle,
             slug: pageSlug,
-            content: approvedBlocks.map(b => ({ 
-              id: b.id, 
-              type: b.type as ContentBlockType, 
-              data: b.data 
-            })) as ContentBlock[],
+            content: processedBlocks,
             status: 'draft',
             show_in_menu: false, // Don't auto-add to menu
           });
