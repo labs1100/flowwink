@@ -429,7 +429,8 @@ export function HeroBlock({ data }: HeroBlockProps) {
             titleSizeClasses[data.titleSize || 'default'],
             titleAnimationClasses[titleAnimation],
             titleAnimation === 'typewriter' && "inline-block",
-            data.gradientTitle && "text-gradient"
+            // Don't apply gradient on color background or primary overlay (would be same color as bg)
+            data.gradientTitle && backgroundType !== 'color' && overlayColor !== 'primary' && "text-gradient"
           )}
         >
           {data.title}
