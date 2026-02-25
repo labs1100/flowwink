@@ -28,6 +28,7 @@ Quick reference for all documentation. Each document has a clear purpose and tar
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | [MODULES.md](./MODULES.md) | What each module does | Users/Admins |
+| [SITE-MIGRATION.md](./SITE-MIGRATION.md) | Import content from existing websites | Users/Admins |
 | [TEMPLATE-AUTHORING.md](./TEMPLATE-AUTHORING.md) | Create site templates | Users/Admins |
 
 ---
