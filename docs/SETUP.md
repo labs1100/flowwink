@@ -40,9 +40,14 @@ The script will:
 1. Prompt you to login to Supabase CLI (if not logged in)
 2. Ask for your project ref
 3. **Deploy all edge functions** (~60 seconds)
-4. **Run database migrations** (creates tables, RLS policies)
+4. **Run initial database migrations** (creates tables, RLS policies)
 5. **Create your admin user** (prompts for email/password)
 6. **Output environment variables** ready to copy-paste
+
+**✨ Auto-Migrations:** After initial setup, future migrations run automatically when you:
+- Start dev server: `npm run dev`
+- Build for production: `npm run build`
+- Pull latest Docker image: migrations included in build
 
 ### 3. Copy Environment Variables
 

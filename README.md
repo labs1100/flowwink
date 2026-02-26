@@ -139,9 +139,11 @@ cp .env.example .env
 
 # Run database migrations (see docs/SETUP.md)
 
-# Start development server
+# Start development server (migrations run automatically)
 npm run dev
 ```
+
+**✨ Auto-Migrations:** Database migrations run automatically when you start the dev server or build for production. No manual migration steps needed!
 
 ### Connecting to Your Own Supabase
 
@@ -166,7 +168,12 @@ The entire purpose of this project is to allow you to clone it from GitHub and c
    ```bash
    ./scripts/setup-supabase.sh
    ```
-   This deploys edge functions and runs migrations automatically.
+   This deploys edge functions and runs initial migrations.
+
+**Auto-Migrations:** After initial setup, migrations run automatically when you:
+- Start dev server: `npm run dev`
+- Build for production: `npm run build`
+- Pull latest Docker image: migrations included in build
 
 ### Detailed Setup
 
@@ -217,15 +224,10 @@ Deploy on static hosting platforms with your own Supabase backend:
 | **Backend** | Your own Supabase project (Cloud or Self-Hosted) |
 | **AI** | Private LLM (OpenAI, Gemini, Ollama, LM Studio, etc.) |
 
-See **[docs/SETUP.md](docs/SETUP.md)** for complete self-hosting instructions.
-
-### Option 3: Development/Testing with Lovable
-
-For development and testing only (not recommended for production):
-
-[![Remix on Lovable](https://img.shields.io/badge/Remix%20on-Lovable-ff69b4)](https://lovable.dev/projects/fac5f9b2-2dc8-4cce-be0a-4266a826f893)
-
-**Note:** Remixing creates a fork that won't receive upstream updates. Use Docker deployment for production to maintain upgradeability.
+**Note:** When deploying to Vercel/Netlify, run migrations manually before deployment:
+```bash
+npx supabase db push
+```
 
 See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for complete deployment guides.
 

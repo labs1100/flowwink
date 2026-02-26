@@ -199,6 +199,59 @@ git checkout main
 ./scripts/upgrade.sh
 ```
 
+### Scenario 7: Multi-Client Migrations (Agencies)
+
+You're managing FlowWink for multiple clients (5+ Supabase instances).
+
+**✨ One-Command Solution:**
+
+```bash
+# 1. Edit scripts/migrate-all-clients.sh with your client project refs
+CLIENTS=(
+  "Client1:abcdefghijklmnop"
+  "Client2:qrstuvwxyzabcdef"
+  "Client3:ghijklmnopqrstuv"
+  "Client4:wxyzabcdefghijkl"
+  "Client5:mnopqrstuvwxyzab"
+)
+
+# 2. Login to Supabase (once)
+supabase login
+
+# 3. Run migrations for all clients
+./scripts/migrate-all-clients.sh
+```
+
+**Output:**
+```
+🚀 FlowWink Multi-Client Migration Tool
+========================================
+
+This will run migrations on 5 client projects:
+  - Client1 (abcdefghijklmnop)
+  - Client2 (qrstuvwxyzabcdef)
+  ...
+
+Continue? (y/N) y
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📦 Migrating: Client1
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Migrations completed for Client1
+
+... (repeat for all clients)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Migration Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Successful: 5
+❌ Failed: 0
+
+🎉 All migrations completed successfully!
+```
+
+**Important:** You only need to run migrations, **not** `npm install` or `npm run build`. Frontend deployments (Vercel/Netlify) are separate from database migrations.
+
 ---
 
 ## Database Migrations
