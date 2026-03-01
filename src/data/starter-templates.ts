@@ -2663,6 +2663,20 @@ const momentumPages: TemplatePage[] = [
           imagePosition: 'left',
         },
       },
+      // PARALLAX SECTION - Visual break between feature deep-dives
+      {
+        id: 'parallax-tech',
+        type: 'parallax-section',
+        data: {
+          backgroundImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920',
+          title: 'Built for the Future',
+          subtitle: 'Infrastructure that scales from your first user to your first million.',
+          height: 'sm',
+          textColor: 'light',
+          overlayOpacity: 70,
+          contentAlignment: 'center',
+        },
+      },
       // SOCIAL PROOF - Live developer metrics
       {
         id: 'social-proof-dev',
