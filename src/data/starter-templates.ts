@@ -7647,7 +7647,16 @@ const hybridHelpPages: TemplatePage[] = [
               icon: 'CreditCard',
               content: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Manage your subscription, update payment methods, view invoices, and compare plan features.' }] }] },
             },
-            {
+      // SECTION DIVIDER - Between search and categories
+      {
+        id: 'divider-search-categories',
+        type: 'section-divider',
+        data: {
+          shape: 'curved',
+          height: 'sm',
+        },
+      },
+      {
               id: 'tab-troubleshooting',
               title: 'Troubleshooting',
               icon: 'Wrench',
