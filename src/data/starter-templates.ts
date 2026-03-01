@@ -3316,97 +3316,49 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
               iconStyle: 'circle',
             },
           },
-          // FEATURES - Complete CMS modules
+          // BENTO GRID - Core modules showcase (replaces flat features grid)
           {
-            id: 'features-modules',
-            type: 'features',
+            id: 'bento-modules',
+            type: 'bento-grid',
             data: {
               title: 'Everything You Need',
               subtitle: 'A complete content platform with built-in modules that just work.',
-              features: [
-                {
-                  id: 'mod-blog',
-                  icon: 'FileText',
-                  title: 'Blog Module',
-                  description: 'Full-featured blog with categories, tags, authors, and SEO optimization. RSS feeds included.',
-                },
-                {
-                  id: 'mod-newsletter',
-                  icon: 'Mail',
-                  title: 'Newsletter Module',
-                  description: 'Built-in subscriber management, GDPR compliance, and email campaigns. No third-party needed.',
-                },
-                {
-                  id: 'mod-crm',
-                  icon: 'Users',
-                  title: 'CRM Module',
-                  description: 'Lead management, company tracking, and deal pipeline. Convert visitors to customers.',
-                },
-                {
-                  id: 'mod-kb',
-                  icon: 'Library',
-                  title: 'Knowledge Base',
-                  description: 'Structured FAQ with categories, full-text search, and AI chat integration for instant answers.',
-                },
-                {
-                  id: 'mod-ecommerce',
-                  icon: 'ShoppingCart',
-                  title: 'E-commerce',
-                  description: 'Products, orders, and Stripe checkout. Sell subscriptions or one-time purchases.',
-                },
-                {
-                  id: 'mod-forms',
-                  icon: 'ClipboardList',
-                  title: 'Form Builder',
-                  description: 'Drag-and-drop forms with validation, submissions tracking, and webhook integration.',
-                },
-                {
-                  id: 'mod-media',
-                  icon: 'Image',
-                  title: 'Media Library',
-                  description: 'Centralized asset management with image optimization, cropping, and Unsplash integration.',
-                },
-                {
-                  id: 'mod-webhooks',
-                  icon: 'Webhook',
-                  title: 'Webhooks & API',
-                  description: 'Connect to any service with webhooks. N8N templates included for common automations.',
-                },
-                {
-                  id: 'mod-livesupport',
-                  icon: 'Headphones',
-                  title: 'Live Support',
-                  description: 'Human agent support with AI-to-human handoff, sentiment detection, and escalation rules.',
-                },
-                {
-                  id: 'mod-deals',
-                  icon: 'Briefcase',
-                  title: 'Deal Pipeline',
-                  description: 'Kanban-style sales pipeline. Track deals from lead to close with value forecasting.',
-                },
-                {
-                  id: 'mod-companies',
-                  icon: 'Building2',
-                  title: 'Companies',
-                  description: 'Organization management with AI enrichment. Auto-link contacts via email domain.',
-                },
-                {
-                  id: 'mod-contentapi',
-                  icon: 'Database',
-                  title: 'Content Hub API',
-                  description: 'Full REST API for headless delivery. Power any frontend with structured content.',
-                },
-                {
-                  id: 'mod-webinars',
-                  icon: 'Video',
-                  title: 'Webinars',
-                  description: 'Plan, promote, and follow up webinars and online events with registration and reminders.',
-                },
+              eyebrow: 'PLATFORM',
+              columns: 3,
+              variant: 'default',
+              gap: 'md',
+              staggeredReveal: true,
+              items: [
+                { id: 'bg-cms', title: 'Visual Page Builder', description: '47+ drag-and-drop blocks. Build any layout without touching code.', icon: 'Layout', span: 'wide', accentColor: '#3B82F6' },
+                { id: 'bg-chat', title: 'AI Chat Widget', description: 'Content-aware AI that reads your pages and KB to answer visitor questions 24/7. Private LLM support.', icon: 'MessageCircle', span: 'large', accentColor: '#8B5CF6' },
+                { id: 'bg-blog', title: 'Blog & Newsletter', description: 'Full blog with categories, tags, and built-in email campaigns with GDPR compliance.', icon: 'FileText', accentColor: '#F59E0B' },
+                { id: 'bg-crm', title: 'CRM & Leads', description: 'Lead capture, deal pipeline, company tracking, and AI qualification.', icon: 'Users', accentColor: '#10B981' },
+                { id: 'bg-ecommerce', title: 'E-commerce', description: 'Products, orders, and Stripe checkout. Sell subscriptions or one-time purchases.', icon: 'ShoppingCart', accentColor: '#EC4899' },
+                { id: 'bg-kb', title: 'Knowledge Base', description: 'Hierarchical FAQ with full-text search and chat integration.', icon: 'Library', span: 'wide', accentColor: '#06B6D4' },
               ],
-              columns: 4,
-              layout: 'grid',
-              variant: 'cards',
-              iconStyle: 'square',
+            },
+          },
+          // SECTION DIVIDER - Transition to pillars
+          {
+            id: 'divider-before-pillars',
+            type: 'section-divider',
+            data: {
+              shape: 'curved',
+              height: 'sm',
+            },
+          },
+          // PARALLAX SECTION - Platform vision
+          {
+            id: 'parallax-vision',
+            type: 'parallax-section',
+            data: {
+              backgroundImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920',
+              title: 'Head + FlowWink + Headless',
+              subtitle: 'Beautiful website included. Powerful API built in. No compromises.',
+              height: 'md',
+              textColor: 'light',
+              overlayOpacity: 60,
+              contentAlignment: 'center',
             },
           },
           // FEATURES - AI-First Platform
