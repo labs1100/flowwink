@@ -245,6 +245,8 @@ export function BlockRenderer({ block, pageId, index = 0 }: BlockRendererProps) 
         return <WebinarBlock data={block.data as Record<string, unknown>} blockId={block.id} pageId={pageId} />;
       case 'parallax-section':
         return <ParallaxSectionBlock data={block.data as unknown as ParallaxSectionBlockData} />;
+      case 'bento-grid':
+        return <BentoGridBlock data={block.data as unknown as BentoGridBlockData} />;
       default:
         return null;
     }
