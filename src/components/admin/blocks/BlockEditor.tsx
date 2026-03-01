@@ -493,6 +493,12 @@ const DEFAULT_BLOCK_DATA: BlockDataMap = {
     variant: 'default',
     staggeredReveal: true,
   },
+  'section-divider': {
+    shape: 'wave',
+    height: 'md',
+    flip: false,
+    invert: false,
+  },
 };
 
 interface BlockEditorProps {
