@@ -70,6 +70,7 @@ import { ChatLauncherBlockEditor } from './ChatLauncherBlockEditor';
 import { WebinarBlockEditor } from './WebinarBlockEditor';
 import { ParallaxSectionBlockEditor } from './ParallaxSectionBlockEditor';
 import { BentoGridBlockEditor } from './BentoGridBlockEditor';
+import { SectionDividerBlockEditor } from './SectionDividerBlockEditor';
 import type { ProductsBlockData } from '@/components/public/blocks/ProductsBlock';
 import type { CartBlockData } from '@/components/public/blocks/CartBlock';
 import type { KbFeaturedBlockData } from '@/components/public/blocks/KbFeaturedBlock';
@@ -90,6 +91,7 @@ import type { FloatingCTABlockData } from '@/components/public/blocks/FloatingCT
 import type { ChatLauncherBlockData } from '@/components/public/blocks/ChatLauncherBlock';
 import type { ParallaxSectionBlockData } from '@/components/public/blocks/ParallaxSectionBlock';
 import type { BentoGridBlockData } from '@/components/public/blocks/BentoGridBlock';
+import type { SectionDividerBlockData } from '@/components/public/blocks/SectionDividerBlock';
 
 interface NewsletterBlockData {
   title?: string;
@@ -151,6 +153,7 @@ type BlockDataMap = {
   webinar: Record<string, unknown>;
   'parallax-section': ParallaxSectionBlockData;
   'bento-grid': BentoGridBlockData;
+  'section-divider': SectionDividerBlockData;
 };
 
 const DEFAULT_BLOCK_DATA: BlockDataMap = {
@@ -489,6 +492,12 @@ const DEFAULT_BLOCK_DATA: BlockDataMap = {
     gap: 'md',
     variant: 'default',
     staggeredReveal: true,
+  },
+  'section-divider': {
+    shape: 'wave',
+    height: 'md',
+    flip: false,
+    invert: false,
   },
 };
 
@@ -1007,6 +1016,14 @@ export function BlockEditor({ blocks, onChange, canEdit }: BlockEditorProps) {
         return (
           <BentoGridBlockEditor
             data={block.data as unknown as BentoGridBlockData}
+            onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
+            isEditing={isEditing}
+          />
+        );
+      case 'section-divider':
+        return (
+          <SectionDividerBlockEditor
+            data={block.data as unknown as SectionDividerBlockData}
             onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
             isEditing={isEditing}
           />
