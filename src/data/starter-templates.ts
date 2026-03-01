@@ -1668,6 +1668,15 @@ const securehealthPages: TemplatePage[] = [
           secondaryButton: { text: 'Our Services', url: '/services' },
         },
       },
+      // SECTION DIVIDER - Clean clinical transition
+      {
+        id: 'divider-hero-badges',
+        type: 'section-divider',
+        data: {
+          shape: 'wave',
+          height: 'sm',
+        },
+      },
       // BADGE - Trust indicators
       {
         id: 'badge-compliance',
