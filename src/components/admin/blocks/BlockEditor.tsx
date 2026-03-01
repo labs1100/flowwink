@@ -68,6 +68,7 @@ import { NotificationToastBlockEditor } from './NotificationToastBlockEditor';
 import { FloatingCTABlockEditor } from './FloatingCTABlockEditor';
 import { ChatLauncherBlockEditor } from './ChatLauncherBlockEditor';
 import { WebinarBlockEditor } from './WebinarBlockEditor';
+import { ParallaxSectionBlockEditor } from './ParallaxSectionBlockEditor';
 import type { ProductsBlockData } from '@/components/public/blocks/ProductsBlock';
 import type { CartBlockData } from '@/components/public/blocks/CartBlock';
 import type { KbFeaturedBlockData } from '@/components/public/blocks/KbFeaturedBlock';
