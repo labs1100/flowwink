@@ -4722,7 +4722,7 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
             type: 'hero',
             data: {
               title: 'See FlowWink in Action',
-              subtitle: 'This page is built with FlowWink. Explore 43+ block types organized by category below.',
+              subtitle: 'This page is built with FlowWink. Explore 47+ block types organized by category below.',
               backgroundType: 'color',
               heightMode: 'auto',
               contentAlignment: 'center',
