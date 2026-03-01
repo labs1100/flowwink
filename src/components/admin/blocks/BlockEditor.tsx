@@ -89,6 +89,7 @@ import type { NotificationToastBlockData } from '@/components/public/blocks/Noti
 import type { FloatingCTABlockData } from '@/components/public/blocks/FloatingCTABlock';
 import type { ChatLauncherBlockData } from '@/components/public/blocks/ChatLauncherBlock';
 import type { ParallaxSectionBlockData } from '@/components/public/blocks/ParallaxSectionBlock';
+import type { BentoGridBlockData } from '@/components/public/blocks/BentoGridBlock';
 
 interface NewsletterBlockData {
   title?: string;
