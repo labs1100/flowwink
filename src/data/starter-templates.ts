@@ -4132,7 +4132,7 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
                   content: {
                     type: 'doc',
                     content: [
-                      { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Visual Editor & 43+ Blocks' }] },
+                      { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Visual Editor & 47+ Blocks' }] },
                       { type: 'paragraph', content: [{ type: 'text', text: 'Drag-and-drop page building with real-time preview. No coding required.' }] },
                       { type: 'bulletList', content: [
                         { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Rich Text Editor' }, { type: 'text', text: ' – Full formatting, links, images, and embedded media' }] }] },
