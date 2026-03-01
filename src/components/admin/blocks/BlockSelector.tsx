@@ -162,6 +162,12 @@ const BLOCK_GROUPS: BlockGroup[] = [
         icon: <Table2 className="h-5 w-5" />,
         description: 'Structured data in responsive table',
       },
+      {
+        type: 'parallax-section',
+        label: 'Parallax Section',
+        icon: <Mountain className="h-5 w-5" />,
+        description: 'Full-width section with parallax background',
+      },
     ],
   },
   {
