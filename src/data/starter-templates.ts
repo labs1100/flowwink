@@ -3262,7 +3262,7 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
                 {
                   id: 'hw-2',
                   title: 'Create',
-                  description: 'Use the visual editor to build pages with 43+ blocks. No coding needed.',
+                  description: 'Use the visual editor to build pages with 47+ blocks. No coding needed.',
                   icon: 'Blocks',
                 },
                 {
