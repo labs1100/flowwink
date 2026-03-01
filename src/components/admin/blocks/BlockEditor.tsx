@@ -91,6 +91,7 @@ import type { FloatingCTABlockData } from '@/components/public/blocks/FloatingCT
 import type { ChatLauncherBlockData } from '@/components/public/blocks/ChatLauncherBlock';
 import type { ParallaxSectionBlockData } from '@/components/public/blocks/ParallaxSectionBlock';
 import type { BentoGridBlockData } from '@/components/public/blocks/BentoGridBlock';
+import type { SectionDividerBlockData } from '@/components/public/blocks/SectionDividerBlock';
 
 interface NewsletterBlockData {
   title?: string;
