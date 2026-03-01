@@ -241,6 +241,8 @@ export function BlockRenderer({ block, pageId, index = 0 }: BlockRendererProps) 
         return <ChatLauncherBlock data={block.data as unknown as ChatLauncherBlockData} />;
       case 'webinar':
         return <WebinarBlock data={block.data as Record<string, unknown>} blockId={block.id} pageId={pageId} />;
+      case 'parallax-section':
+        return <ParallaxSectionBlock data={block.data as unknown as ParallaxSectionBlockData} />;
       default:
         return null;
     }
