@@ -4711,7 +4711,7 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
         menu_order: 3,
         showInMenu: true,
         meta: {
-          description: 'Explore all 43+ block types available in FlowWink - from content blocks to interactive elements and AI-powered features.',
+          description: 'Explore all 47+ block types available in FlowWink - from content blocks to interactive elements and AI-powered features.',
           showTitle: true,
           titleAlignment: 'center',
         },
