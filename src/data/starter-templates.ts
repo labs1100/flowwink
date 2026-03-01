@@ -152,6 +152,15 @@ const launchpadPages: TemplatePage[] = [
           secondaryButton: { text: 'Learn More', url: '/product' },
         },
       },
+      // SECTION DIVIDER - Polished transition from hero
+      {
+        id: 'divider-hero-stats',
+        type: 'section-divider',
+        data: {
+          shape: 'wave',
+          height: 'sm',
+        },
+      },
       {
         id: 'stats-1',
         type: 'stats',
