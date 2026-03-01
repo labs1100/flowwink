@@ -9706,7 +9706,7 @@ const flowwinkAgencyPages: TemplatePage[] = [
               description: 'Full platform, your infrastructure.',
               features: [
                 'Unlimited client sites',
-                'All 43+ block types',
+                'All 47+ block types',
                 'Blog, newsletter, forms, CRM',
                 'AI chat widget',
                 'Headless API access',
