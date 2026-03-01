@@ -87,6 +87,7 @@ import type { SocialProofBlockData } from '@/components/public/blocks/SocialProo
 import type { NotificationToastBlockData } from '@/components/public/blocks/NotificationToastBlock';
 import type { FloatingCTABlockData } from '@/components/public/blocks/FloatingCTABlock';
 import type { ChatLauncherBlockData } from '@/components/public/blocks/ChatLauncherBlock';
+import type { ParallaxSectionBlockData } from '@/components/public/blocks/ParallaxSectionBlock';
 
 interface NewsletterBlockData {
   title?: string;
