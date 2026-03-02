@@ -199,8 +199,11 @@ const trustcorpPages: StarterTemplate['pages'] = [
         id: 'two-col-1',
         type: 'two-column',
         data: {
+          eyebrow: 'CONSULTING',
+          title: 'Strategic',
+          accentText: 'Consulting',
+          accentPosition: 'end',
           content: { type: 'doc', content: [
-            { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Strategic Consulting' }] },
             { type: 'paragraph', content: [{ type: 'text', text: 'Our experienced consultants work closely with your leadership team to develop strategies that drive growth, efficiency, and competitive advantage.' }] },
             { type: 'bulletList', content: [
               { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Digital transformation roadmaps' }] }] },
@@ -211,14 +214,19 @@ const trustcorpPages: StarterTemplate['pages'] = [
           imageSrc: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800',
           imageAlt: 'Team strategy meeting',
           imagePosition: 'right',
+          ctaText: 'Book a Consultation →',
+          ctaUrl: '/contact',
         },
       },
       {
         id: 'two-col-2',
         type: 'two-column',
         data: {
+          eyebrow: 'TECHNOLOGY',
+          title: 'Enterprise',
+          accentText: 'Technology',
+          accentPosition: 'end',
           content: { type: 'doc', content: [
-            { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Enterprise Technology' }] },
             { type: 'paragraph', content: [{ type: 'text', text: 'We design, build, and maintain the technology infrastructure that powers the world\'s leading organizations.' }] },
             { type: 'bulletList', content: [
               { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Cloud architecture & migration' }] }] },
@@ -229,6 +237,8 @@ const trustcorpPages: StarterTemplate['pages'] = [
           imageSrc: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800',
           imageAlt: 'Technology infrastructure',
           imagePosition: 'left',
+          ctaText: 'Explore Solutions →',
+          ctaUrl: '/case-studies',
         },
       },
       {
@@ -291,14 +301,19 @@ const trustcorpPages: StarterTemplate['pages'] = [
         id: 'two-col-1',
         type: 'two-column',
         data: {
+          eyebrow: 'CASE STUDY',
+          title: 'GlobalBank',
+          accentText: 'Transformation',
+          accentPosition: 'end',
           content: { type: 'doc', content: [
-            { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'GlobalBank Case Study' }] },
             { type: 'paragraph', content: [{ type: 'text', text: 'GlobalBank faced mounting operational costs and declining customer satisfaction. Through our comprehensive digital transformation program, we helped them modernize legacy systems, implement AI-driven customer service, and achieve regulatory compliance across 30 markets.' }] },
             { type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Results: ' }, { type: 'text', text: '40% cost reduction, 25% improvement in customer satisfaction, 99.99% system uptime.' }] },
           ]},
           imageSrc: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800',
           imageAlt: 'Business analysis',
           imagePosition: 'right',
+          ctaText: 'Read Full Case Study →',
+          ctaUrl: '/contact',
         },
       },
       {
@@ -320,14 +335,19 @@ const trustcorpPages: StarterTemplate['pages'] = [
         id: 'two-col-1',
         type: 'two-column',
         data: {
+          eyebrow: 'ABOUT US',
+          title: 'Our',
+          accentText: 'Mission',
+          accentPosition: 'end',
           content: { type: 'doc', content: [
-            { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Our Mission' }] },
             { type: 'paragraph', content: [{ type: 'text', text: 'We exist to help enterprises navigate complexity with confidence. For over 25 years, we\'ve been the trusted partner for organizations that demand excellence, security, and results.' }] },
             { type: 'paragraph', content: [{ type: 'text', text: 'Our commitment to data sovereignty and privacy isn\'t just a feature — it\'s our foundation. In an era of cloud dependency, we give organizations control over their most sensitive operations.' }] },
           ]},
           imageSrc: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800',
           imageAlt: 'Team collaboration',
           imagePosition: 'right',
+          ctaText: 'Meet Our Team →',
+          ctaUrl: '/about',
         },
       },
       {

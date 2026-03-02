@@ -457,10 +457,13 @@ const serviceProPages: TemplatePage[] = [
         id: 'two-col-1',
         type: 'two-column',
         data: {
+          eyebrow: 'ABOUT US',
+          title: 'Our',
+          accentText: 'Story',
+          accentPosition: 'end',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Our Story' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Founded with a simple mission: to provide exceptional service that puts clients first. Over the years, we\'ve grown from a small practice to a trusted name in professional services.' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'What sets us apart is our commitment to quality and our personal approach. Every client is unique, and we take the time to understand your specific needs.' }] },
             ],
@@ -468,6 +471,8 @@ const serviceProPages: TemplatePage[] = [
           imageSrc: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800',
           imageAlt: 'Our team',
           imagePosition: 'right',
+          ctaText: 'Meet the Team →',
+          ctaUrl: '/about',
         },
       },
       {
@@ -514,10 +519,13 @@ const serviceProPages: TemplatePage[] = [
         id: 'two-col-1',
         type: 'two-column',
         data: {
+          eyebrow: 'CONTACT',
+          title: 'Get in',
+          accentText: 'Touch',
+          accentPosition: 'end',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Get in Touch' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Have a question? Want to learn more about our services? We\'re here to help.' }] },
               { type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Email: ' }, { type: 'text', text: 'hello@servicepro.com' }] },
               { type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Phone: ' }, { type: 'text', text: '+1 (555) 123-4567' }] },

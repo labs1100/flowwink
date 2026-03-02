@@ -771,6 +771,10 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           id: 'twocol-forms',
           type: 'two-column',
           data: {
+            eyebrow: 'LEAD CAPTURE',
+            title: 'Forms &',
+            accentText: 'Newsletters',
+            accentPosition: 'end',
             leftColumn: {
               type: 'doc',
               content: [
@@ -1046,10 +1050,13 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           id: 'twocol-versions',
           type: 'two-column',
           data: {
+            eyebrow: 'VERSION CONTROL',
+            title: 'Version History &',
+            accentText: 'Rollback',
+            accentPosition: 'end',
             leftColumn: {
               type: 'doc',
               content: [
-                { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Version History & Rollback' }] },
                 { type: 'paragraph', content: [{ type: 'text', text: 'Every save creates a version. Every version is accessible forever.' }] },
                 { type: 'bulletList', content: [
                   { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Compare any two versions side-by-side' }] }] },
@@ -1077,10 +1084,13 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           id: 'twocol-api',
           type: 'two-column',
           data: {
+            eyebrow: 'HEADLESS',
+            title: 'Complete',
+            accentText: 'REST API',
+            accentPosition: 'end',
             leftColumn: {
               type: 'doc',
               content: [
-                { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Complete REST API' }] },
                 { type: 'paragraph', content: [{ type: 'text', text: 'Access all your content programmatically. Build custom frontends, mobile apps, or integrate with external services.' }] },
                 { type: 'bulletList', content: [
                   { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Pages API' }, { type: 'text', text: ' – Get all pages with content blocks and metadata' }] }] },
@@ -1098,6 +1108,8 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
               ],
             },
             layout: '50-50',
+            ctaText: 'View Full API Docs →',
+            ctaUrl: '/docs',
           },
         },
         {

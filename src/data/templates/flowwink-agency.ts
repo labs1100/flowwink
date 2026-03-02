@@ -91,10 +91,13 @@ const flowwinkAgencyPages: TemplatePage[] = [
         id: 'twocol-problem',
         type: 'two-column',
         data: {
+          eyebrow: 'THE PROBLEM',
+          title: 'The Agency',
+          accentText: 'Problem',
+          accentPosition: 'end',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'The Agency Problem' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Every tool you use charges per client. As you grow, your margins shrink.' }] },
               { type: 'bulletList', content: [
                 { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Webflow: €20-200 per site per month' }] }] },
@@ -114,10 +117,13 @@ const flowwinkAgencyPages: TemplatePage[] = [
         id: 'twocol-solution',
         type: 'two-column',
         data: {
+          eyebrow: 'THE SOLUTION',
+          title: 'The FlowWink',
+          accentText: 'Solution',
+          accentPosition: 'end',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'The FlowWink Solution' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Self-host one platform, deploy unlimited client sites. Your infrastructure, your rules, your profits.' }] },
               { type: 'bulletList', content: [
                 { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'One €20/month VPS hosts 20+ client sites' }] }] },
@@ -130,6 +136,8 @@ const flowwinkAgencyPages: TemplatePage[] = [
           imageSrc: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800',
           imageAlt: 'Agency team collaborating effectively',
           imagePosition: 'left',
+          ctaText: 'Get Started Free →',
+          ctaUrl: '/contact',
         },
       },
       {
@@ -318,10 +326,13 @@ const flowwinkAgencyPages: TemplatePage[] = [
         id: 'twocol-vps',
         type: 'two-column',
         data: {
+          eyebrow: 'HOSTING',
+          title: 'The VPS Hosting',
+          accentText: 'Math',
+          accentPosition: 'end',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'The VPS Hosting Math' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'A single €20/month VPS from Hetzner, DigitalOcean, or similar can comfortably host 20-50 client sites.' }] },
               { type: 'bulletList', content: [
                 { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Docker containers for easy management' }] }] },
@@ -335,6 +346,8 @@ const flowwinkAgencyPages: TemplatePage[] = [
           imageSrc: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800',
           imageAlt: 'Server infrastructure',
           imagePosition: 'right',
+          ctaText: 'Calculate Your Savings →',
+          ctaUrl: '/pricing',
         },
       },
       {
@@ -407,10 +420,13 @@ const flowwinkAgencyPages: TemplatePage[] = [
         id: 'twocol-workflow',
         type: 'two-column',
         data: {
+          eyebrow: 'WORKFLOW',
+          title: 'The Client',
+          accentText: 'Workflow',
+          accentPosition: 'end',
           leftColumn: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'The Client Workflow' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Your team builds the site, clients get a simple admin to manage content. Clear separation of concerns.' }] },
               { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'What Your Team Does' }] },
               { type: 'bulletList', content: [
@@ -512,10 +528,13 @@ const flowwinkAgencyPages: TemplatePage[] = [
         id: 'twocol-headless',
         type: 'two-column',
         data: {
+          eyebrow: 'ARCHITECTURE',
+          title: 'Head + Headless:',
+          accentText: 'Best of Both',
+          accentPosition: 'end',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Head + Headless: Best of Both' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Unlike pure headless CMS platforms, FlowWink includes a beautiful built-in website. But when clients need custom frontends or mobile apps, the full API is available.' }] },
               { type: 'bulletList', content: [
                 { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Use the visual site for standard clients' }] }] },
@@ -527,6 +546,8 @@ const flowwinkAgencyPages: TemplatePage[] = [
           imageSrc: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800',
           imageAlt: 'Code editor showing API',
           imagePosition: 'right',
+          ctaText: 'View API Docs →',
+          ctaUrl: '/docs',
         },
       },
       {
