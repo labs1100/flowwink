@@ -34,6 +34,7 @@ export interface TemplateOverwriteOptions {
   pages: boolean;
   branding: boolean;
   chatSettings: boolean;
+  headerSettings: boolean;
   footerSettings: boolean;
   seoSettings: boolean;
   cookieBannerSettings: boolean;
