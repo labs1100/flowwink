@@ -18,7 +18,7 @@ import {
   downloadZipBlob,
   ZipExportProgress,
 } from '@/lib/template-zip';
-import { StarterTemplate } from '@/data/starter-templates';
+import { StarterTemplate } from '@/data/templates';
 import { ContentBlock, PageMeta } from '@/types/cms';
 import { toast } from 'sonner';
 

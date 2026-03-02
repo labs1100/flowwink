@@ -4,7 +4,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { STARTER_TEMPLATES, StarterTemplate } from "@/data/starter-templates";
+import { STARTER_TEMPLATES, StarterTemplate } from "@/data/templates";
 import { TemplatePreview } from "@/components/admin/templates/TemplatePreview";
 import { TemplateVisualCard } from "@/components/admin/templates/TemplateVisualCard";
 import { 

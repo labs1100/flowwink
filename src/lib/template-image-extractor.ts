@@ -5,7 +5,7 @@
  * Only includes images that are actually referenced in the template content.
  */
 
-import { StarterTemplate, TemplatePage, TemplateBlogPost } from '@/data/starter-templates';
+import { StarterTemplate, TemplatePage, TemplateBlogPost } from '@/data/templates';
 import { ContentBlock } from '@/types/cms';
 
 export interface ExtractedImage {

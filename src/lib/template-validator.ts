@@ -5,7 +5,7 @@
  * Use before importing templates to catch issues early.
  */
 
-import { StarterTemplate, TemplatePage, TemplateBlogPost } from '@/data/starter-templates';
+import { StarterTemplate, TemplatePage, TemplateBlogPost } from '@/data/templates';
 import { ContentBlock, ContentBlockType } from '@/types/cms';
 
 export interface ValidationResult {

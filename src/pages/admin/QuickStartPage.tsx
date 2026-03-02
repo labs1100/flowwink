@@ -14,7 +14,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { STARTER_TEMPLATES } from '@/data/starter-templates';
+import { STARTER_TEMPLATES } from '@/data/templates';
 import { useIsAIConfigured } from '@/hooks/useIntegrationStatus';
 
 export default function QuickStartPage() {

@@ -28,7 +28,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { StarterTemplate } from '@/data/starter-templates';
+import { StarterTemplate } from '@/data/templates';
 import { importTemplateFromFile, parseTemplateJson, modifyTemplate, generateTemplateId, ImportResult } from '@/lib/template-importer';
 import { importTemplateFromZip, ZipExportProgress, ZipImportResult } from '@/lib/template-zip';
 import { cn } from '@/lib/utils';

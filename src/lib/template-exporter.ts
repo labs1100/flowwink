@@ -8,7 +8,7 @@
 import { ContentBlock, PageMeta, FooterBlockData, HeaderBlockData } from '@/types/cms';
 import { BrandingSettings, ChatSettings, SeoSettings, CookieBannerSettings } from '@/hooks/useSiteSettings';
 import { ModulesSettings } from '@/hooks/useModules';
-import { StarterTemplate, TemplatePage, TemplateBlogPost, TemplateProduct } from '@/data/starter-templates';
+import { StarterTemplate, TemplatePage, TemplateBlogPost, TemplateProduct } from '@/data/templates';
 import { TemplateKbCategory } from '@/data/template-kb-articles';
 
 export interface SiteExportData {
