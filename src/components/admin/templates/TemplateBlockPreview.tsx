@@ -248,8 +248,8 @@ function BlockPlaceholder({
             <p className="font-semibold text-xl mb-2">{label}</p>
             <div className="max-w-md mx-auto">
               <div className="flex items-center gap-2 bg-muted/50 rounded-xl border px-4 py-3">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Sök i kunskapsbasen...</span>
+                 <Search className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Search the knowledge base...</span>
               </div>
             </div>
           </div>
