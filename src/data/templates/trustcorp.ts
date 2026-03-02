@@ -301,14 +301,19 @@ const trustcorpPages: StarterTemplate['pages'] = [
         id: 'two-col-1',
         type: 'two-column',
         data: {
+          eyebrow: 'CASE STUDY',
+          title: 'GlobalBank',
+          accentText: 'Transformation',
+          accentPosition: 'end',
           content: { type: 'doc', content: [
-            { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'GlobalBank Case Study' }] },
             { type: 'paragraph', content: [{ type: 'text', text: 'GlobalBank faced mounting operational costs and declining customer satisfaction. Through our comprehensive digital transformation program, we helped them modernize legacy systems, implement AI-driven customer service, and achieve regulatory compliance across 30 markets.' }] },
             { type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Results: ' }, { type: 'text', text: '40% cost reduction, 25% improvement in customer satisfaction, 99.99% system uptime.' }] },
           ]},
           imageSrc: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800',
           imageAlt: 'Business analysis',
           imagePosition: 'right',
+          ctaText: 'Read Full Case Study →',
+          ctaUrl: '/contact',
         },
       },
       {
