@@ -1,4 +1,4 @@
-import { TwoColumnBlockData, TiptapDocument } from '@/types/cms';
+import { TwoColumnBlockData, TiptapDocument, ImageAspectRatio, ImageRounded } from '@/types/cms';
 import { renderToHtml } from '@/lib/tiptap-utils';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
