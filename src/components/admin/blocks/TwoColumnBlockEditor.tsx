@@ -305,6 +305,8 @@ export function TwoColumnBlockEditor({ data, isEditing, onChange }: TwoColumnBlo
             </div>
           </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-4">
             <ImageUploader
               value={data.imageSrc || ''}
