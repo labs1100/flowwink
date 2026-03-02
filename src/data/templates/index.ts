@@ -66,3 +66,15 @@ export const ALL_TEMPLATES: StarterTemplate[] = [
   digitalShopTemplate,
   flowwinkAgencyTemplate,
 ];
+
+/** @deprecated Use ALL_TEMPLATES instead */
+export const STARTER_TEMPLATES = ALL_TEMPLATES;
+
+// Helper functions
+export function getTemplateById(id: string): StarterTemplate | undefined {
+  return ALL_TEMPLATES.find(t => t.id === id);
+}
+
+export function getTemplatesByCategory(category: StarterTemplate['category']): StarterTemplate[] {
+  return ALL_TEMPLATES.filter(t => t.category === category);
+}
