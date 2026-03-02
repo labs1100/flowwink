@@ -335,7 +335,7 @@ export function TemplatePreview({ template, open, onOpenChange, onSelect }: Temp
               <div className="p-3">
                 <h4 className="text-xs font-medium mb-2 flex items-center gap-1.5 text-muted-foreground uppercase tracking-wide">
                   <Palette className="h-3 w-3" />
-                  Färger
+                  Colors
                 </h4>
                 <div className="flex gap-2">
                   <div className="flex items-center gap-2">
