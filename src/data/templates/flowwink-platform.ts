@@ -771,6 +771,10 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           id: 'twocol-forms',
           type: 'two-column',
           data: {
+            eyebrow: 'LEAD CAPTURE',
+            title: 'Forms &',
+            accentText: 'Newsletters',
+            accentPosition: 'end',
             leftColumn: {
               type: 'doc',
               content: [
