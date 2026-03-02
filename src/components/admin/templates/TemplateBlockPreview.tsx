@@ -440,8 +440,8 @@ export function TemplateBlockPreview({ block, compact, primaryColor = '#6366f1' 
           <BlockPlaceholder 
             type="cart" 
             icon={ShoppingCart} 
-            label="Varukorg"
-            description="E-handel varukorg"
+            label="Shopping Cart"
+            description="E-commerce cart"
             primaryColor={primaryColor}
           />
         );
