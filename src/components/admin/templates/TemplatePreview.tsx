@@ -282,7 +282,7 @@ export function TemplatePreview({ template, open, onOpenChange, onSelect }: Temp
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <FileText className="h-3.5 w-3.5" />
-                    <span>{pageCount} sidor</span>
+                    <span>{pageCount} pages</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <LayoutGrid className="h-3.5 w-3.5" />
