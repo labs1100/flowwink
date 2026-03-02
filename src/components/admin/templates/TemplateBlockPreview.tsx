@@ -471,8 +471,8 @@ export function TemplateBlockPreview({ block, compact, primaryColor = '#6366f1' 
           <BlockPlaceholder 
             type="kb-featured" 
             icon={FileText} 
-            label="Utvalda artiklar"
-            description="Visar utvalda KB-artiklar"
+            label="Featured Articles"
+            description="Displays featured KB articles"
             primaryColor={primaryColor}
           />
         );
