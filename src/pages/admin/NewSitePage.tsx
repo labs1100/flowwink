@@ -18,7 +18,7 @@ import { TemplatePreviewDialog, TemplateOverwriteOptions } from '@/components/ad
 import { StarterTemplate } from '@/data/starter-templates';
 import { validateTemplate, ValidationResult } from '@/lib/template-validator';
 import { useCreatePage, usePages, useDeletePage, usePermanentDeletePage, useDeletedPages } from '@/hooks/usePages';
-import { useUpdateBrandingSettings, useUpdateChatSettings, useUpdateGeneralSettings, useUpdateSeoSettings, useUpdateCookieBannerSettings, useBrandingSettings, useChatSettings, useSeoSettings, useCookieBannerSettings } from '@/hooks/useSiteSettings';
+import { useUpdateBrandingSettings, useUpdateChatSettings, useUpdateGeneralSettings, useUpdateSeoSettings, useUpdateCookieBannerSettings, useUpdateAeoSettings, useBrandingSettings, useChatSettings, useSeoSettings, useCookieBannerSettings } from '@/hooks/useSiteSettings';
 import { useUpdateFooterBlock, useFooterBlock } from '@/hooks/useGlobalBlocks';
 import { useBlogPosts, useCreateBlogPost, useDeleteBlogPost } from '@/hooks/useBlogPosts';
 import { useKbCategories, useCreateKbCategory, useCreateKbArticle, useDeleteKbCategory } from '@/hooks/useKnowledgeBase';
