@@ -68,6 +68,7 @@ import NotFound from "./pages/NotFound";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import PricingPage from "./pages/PricingPage";
+import ShowcasePage from "./pages/ShowcasePage";
 import DeveloperToolsPage from "./pages/admin/DeveloperToolsPage";
 import WebinarsPage from "./pages/admin/WebinarsPage";
 
@@ -83,6 +84,7 @@ const router = createBrowserRouter([
   { path: "/newsletter/confirmed", element: <NewsletterConfirmedPage /> },
   // Checkout and pricing routes
   { path: "/priser", element: <PricingPage /> },
+  { path: "/showcase", element: <ShowcasePage /> },
   { path: "/checkout", element: <CheckoutPage /> },
   { path: "/checkout/success", element: <CheckoutSuccessPage /> },
   // Blog routes

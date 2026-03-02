@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, Clock, Facebook, Instagram, Linkedin, Twitter, Youtube, Shield } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Facebook, Instagram, Linkedin, Twitter, Youtube, Shield, LayoutTemplate } from 'lucide-react';
 import { useFooterBlock, defaultFooterData } from '@/hooks/useGlobalBlocks';
 import { useBranding } from '@/providers/BrandingProvider';
 import { useTheme } from 'next-themes';
@@ -291,6 +291,15 @@ export function PublicFooter() {
             </div>
           )}
           
+          {/* Templates Link */}
+          <Link
+            to="/showcase"
+            className="flex items-center gap-2 text-sm text-primary-foreground/60 hover:text-primary-foreground transition-colors"
+          >
+            <LayoutTemplate className="h-4 w-4" />
+            <span>Templates</span>
+          </Link>
+
           {settings?.legalLinks && settings.legalLinks.filter(l => l.enabled).length > 0 && (
             <div className="flex gap-6 text-sm text-primary-foreground/60">
               {settings.legalLinks.filter(l => l.enabled).map((link) => (
