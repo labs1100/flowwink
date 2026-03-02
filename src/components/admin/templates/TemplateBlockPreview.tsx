@@ -429,8 +429,8 @@ export function TemplateBlockPreview({ block, compact, primaryColor = '#6366f1' 
           <BlockPlaceholder 
             type="products" 
             icon={Package} 
-            label="Produktgrid"
-            description="Visar produkter från databasen"
+            label="Product Grid"
+            description="Displays products from the database"
             primaryColor={primaryColor}
             variant="products"
           />
