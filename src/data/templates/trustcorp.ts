@@ -335,14 +335,19 @@ const trustcorpPages: StarterTemplate['pages'] = [
         id: 'two-col-1',
         type: 'two-column',
         data: {
+          eyebrow: 'ABOUT US',
+          title: 'Our',
+          accentText: 'Mission',
+          accentPosition: 'end',
           content: { type: 'doc', content: [
-            { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Our Mission' }] },
             { type: 'paragraph', content: [{ type: 'text', text: 'We exist to help enterprises navigate complexity with confidence. For over 25 years, we\'ve been the trusted partner for organizations that demand excellence, security, and results.' }] },
             { type: 'paragraph', content: [{ type: 'text', text: 'Our commitment to data sovereignty and privacy isn\'t just a feature — it\'s our foundation. In an era of cloud dependency, we give organizations control over their most sensitive operations.' }] },
           ]},
           imageSrc: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800',
           imageAlt: 'Team collaboration',
           imagePosition: 'right',
+          ctaText: 'Meet Our Team →',
+          ctaUrl: '/about',
         },
       },
       {

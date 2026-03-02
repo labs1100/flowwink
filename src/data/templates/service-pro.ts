@@ -519,10 +519,13 @@ const serviceProPages: TemplatePage[] = [
         id: 'two-col-1',
         type: 'two-column',
         data: {
+          eyebrow: 'CONTACT',
+          title: 'Get in',
+          accentText: 'Touch',
+          accentPosition: 'end',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Get in Touch' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Have a question? Want to learn more about our services? We\'re here to help.' }] },
               { type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Email: ' }, { type: 'text', text: 'hello@servicepro.com' }] },
               { type: 'paragraph', content: [{ type: 'text', marks: [{ type: 'bold' }], text: 'Phone: ' }, { type: 'text', text: '+1 (555) 123-4567' }] },
