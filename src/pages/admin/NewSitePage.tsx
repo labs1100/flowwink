@@ -474,6 +474,12 @@ export default function NewSitePage() {
         await updateChat.mutateAsync(selectedTemplate.chatSettings as any);
       }
 
+      // Step 4b: Apply header settings (if headerSettings option enabled)
+      if (opts.headerSettings && selectedTemplate.headerSettings) {
+        setProgress({ currentPage: selectedTemplate.pages.length, totalPages: selectedTemplate.pages.length, currentStep: 'Applying header...' });
+        await updateHeader.mutateAsync(selectedTemplate.headerSettings as any);
+      }
+
       // Step 5: Apply footer settings (if footerSettings option enabled)
       if (opts.footerSettings) {
         setProgress({ currentPage: selectedTemplate.pages.length, totalPages: selectedTemplate.pages.length, currentStep: 'Applying footer...' });
