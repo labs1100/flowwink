@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { TemplateBlockPreview } from "./TemplateBlockPreview";
 import { ContentBlock } from "@/types/cms";
+import { TemplateBrandingProvider } from "./TemplateBrandingProvider";
 
 interface TemplatePreviewProps {
   template: StarterTemplate | null;
@@ -351,29 +352,31 @@ export function TemplatePreview({ template, open, onOpenChange, onSelect }: Temp
               <ScrollArea className={cn(
                 isFullscreen ? "h-[calc(100vh-120px)]" : "h-[calc(90vh-180px)]"
               )}>
-                <div 
-                  className={cn(
-                    "template-preview-content",
-                    isDarkTheme && "dark"
-                  )}
-                  style={previewStyles}
-                >
-                  {currentPage?.blocks?.map((block, index) => (
-                    <TemplateBlockPreview 
-                      key={block.id || index}
-                      block={block as ContentBlock}
-                      compact={deviceMode === 'mobile'}
-                      primaryColor={hslToCssColor(primaryColor)}
-                    />
-                  ))}
-                  
-                  {(!currentPage?.blocks || currentPage.blocks.length === 0) && (
-                    <div className="p-12 text-center text-muted-foreground">
-                      <LayoutGrid className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Denna sida har inga block</p>
-                    </div>
-                  )}
-                </div>
+                <TemplateBrandingProvider branding={template.branding || {}}>
+                  <div 
+                    className={cn(
+                      "template-preview-content",
+                      isDarkTheme && "dark"
+                    )}
+                    style={previewStyles}
+                  >
+                    {currentPage?.blocks?.map((block, index) => (
+                      <TemplateBlockPreview 
+                        key={block.id || index}
+                        block={block as ContentBlock}
+                        compact={deviceMode === 'mobile'}
+                        primaryColor={hslToCssColor(primaryColor)}
+                      />
+                    ))}
+                    
+                    {(!currentPage?.blocks || currentPage.blocks.length === 0) && (
+                      <div className="p-12 text-center text-muted-foreground">
+                        <LayoutGrid className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Denna sida har inga block</p>
+                      </div>
+                    )}
+                  </div>
+                </TemplateBrandingProvider>
               </ScrollArea>
             </div>
           </div>
