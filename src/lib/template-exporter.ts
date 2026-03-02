@@ -8,7 +8,7 @@
 import { ContentBlock, PageMeta, FooterBlockData, HeaderBlockData } from '@/types/cms';
 import { BrandingSettings, ChatSettings, SeoSettings, CookieBannerSettings } from '@/hooks/useSiteSettings';
 import { ModulesSettings } from '@/hooks/useModules';
-import { StarterTemplate, TemplatePage, TemplateBlogPost, TemplateProduct } from '@/data/starter-templates';
+import { StarterTemplate, TemplatePage, TemplateBlogPost, TemplateProduct } from '@/data/templates';
 import { TemplateKbCategory } from '@/data/template-kb-articles';
 
 export interface SiteExportData {
@@ -151,7 +151,7 @@ export function generateTemplateCode(template: StarterTemplate): string {
 // Created: ${new Date().toISOString()}
 
 import { ContentBlock, PageMeta } from '@/types/cms';
-import { StarterTemplate, TemplatePage } from '@/data/starter-templates';
+import { StarterTemplate, TemplatePage } from '@/data/templates';
 
 const ${template.id.replace(/-/g, '_')}Pages: TemplatePage[] = [
 ${pagesCode}

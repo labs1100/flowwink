@@ -18,7 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useUnsavedChanges, UnsavedChangesDialog } from '@/hooks/useUnsavedChanges';
 import type { Json } from '@/integrations/supabase/types';
-import { STARTER_TEMPLATES } from '@/data/starter-templates';
+import { STARTER_TEMPLATES } from '@/data/templates';
 
 interface CustomTheme {
   id: string;

@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { StarterTemplate } from '@/data/starter-templates';
+import { StarterTemplate } from '@/data/templates';
 import { cn } from '@/lib/utils';
 
 export interface TemplateOverwriteOptions {

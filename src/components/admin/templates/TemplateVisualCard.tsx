@@ -1,4 +1,4 @@
-import { StarterTemplate } from "@/data/starter-templates";
+import { StarterTemplate } from "@/data/templates";
 import { cn } from "@/lib/utils";
 import { getTemplateThumbnail, getTemplateHero } from "@/lib/template-helpers";
 import { Eye, Sparkles, BookOpen, Rss, MessageSquare } from "lucide-react";

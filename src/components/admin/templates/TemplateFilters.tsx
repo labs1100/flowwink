@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { HelpStyle } from "@/data/starter-templates";
+import { HelpStyle } from "@/data/templates";
 import { 
   Rocket, 
   Building2, 

@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger';
  */
 
 import JSZip from 'jszip';
-import { StarterTemplate } from '@/data/starter-templates';
+import { StarterTemplate } from '@/data/templates';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   extractTemplateImages, 

@@ -1,7 +1,7 @@
 import { logger } from '@/lib/logger';
 import { useState, forwardRef, useEffect } from 'react';
 import { Rocket, Building2, ShieldCheck, Sparkles, MessageSquare, Check, FileText, Settings, Palette, BookOpen, Bot, Layers, Upload } from 'lucide-react';
-import { STARTER_TEMPLATES, StarterTemplate, HelpStyle } from '@/data/starter-templates';
+import { STARTER_TEMPLATES, StarterTemplate, HelpStyle } from '@/data/templates';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
