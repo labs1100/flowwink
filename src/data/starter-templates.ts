@@ -198,10 +198,12 @@ const launchpadPages: TemplatePage[] = [
         id: 'two-col-1',
         type: 'two-column',
         data: {
+          eyebrow: 'PERFORMANCE',
+          title: 'Built for Speed',
+          titleSize: 'large',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Built for Speed' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Deploy in seconds, not hours. Our streamlined infrastructure means your ideas go live the moment they\'re ready.' }] },
               { type: 'bulletList', content: [
                 { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'One-click deployments' }] }] },
