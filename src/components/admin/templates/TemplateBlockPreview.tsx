@@ -461,8 +461,8 @@ export function TemplateBlockPreview({ block, compact, primaryColor = '#6366f1' 
           <BlockPlaceholder 
             type="kb-search" 
             icon={Search} 
-            label="KB Sök"
-            description="Sök i kunskapsbasen"
+            label="KB Search"
+            description="Search the knowledge base"
             primaryColor={primaryColor}
           />
         );
