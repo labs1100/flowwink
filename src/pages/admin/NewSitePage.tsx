@@ -485,6 +485,12 @@ export default function NewSitePage() {
         await updateSeo.mutateAsync(selectedTemplate.seoSettings as any);
       }
 
+      // Step 6b: Apply AEO settings (if seoSettings option enabled and template has AEO)
+      if (opts.seoSettings && selectedTemplate.aeoSettings) {
+        setProgress({ currentPage: selectedTemplate.pages.length, totalPages: selectedTemplate.pages.length, currentStep: 'Configuring AEO...' });
+        await updateAeo.mutateAsync(selectedTemplate.aeoSettings as any);
+      }
+
       // Step 7: Apply Cookie Banner settings (if cookieBannerSettings option enabled)
       if (opts.cookieBannerSettings) {
         setProgress({ currentPage: selectedTemplate.pages.length, totalPages: selectedTemplate.pages.length, currentStep: 'Configuring cookies...' });
