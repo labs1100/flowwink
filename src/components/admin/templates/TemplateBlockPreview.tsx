@@ -546,8 +546,8 @@ export function TemplateBlockPreview({ block, compact, primaryColor = '#6366f1' 
           <BlockPlaceholder 
             type="stats" 
             icon={LayoutGrid} 
-            label="Statistik"
-            description="Siffror & nyckeltal"
+            label="Statistics"
+            description="Numbers & key metrics"
             primaryColor={primaryColor}
           />
         );
