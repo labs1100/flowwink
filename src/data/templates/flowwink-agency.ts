@@ -91,10 +91,13 @@ const flowwinkAgencyPages: TemplatePage[] = [
         id: 'twocol-problem',
         type: 'two-column',
         data: {
+          eyebrow: 'THE PROBLEM',
+          title: 'The Agency',
+          accentText: 'Problem',
+          accentPosition: 'end',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'The Agency Problem' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Every tool you use charges per client. As you grow, your margins shrink.' }] },
               { type: 'bulletList', content: [
                 { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Webflow: €20-200 per site per month' }] }] },
@@ -114,10 +117,13 @@ const flowwinkAgencyPages: TemplatePage[] = [
         id: 'twocol-solution',
         type: 'two-column',
         data: {
+          eyebrow: 'THE SOLUTION',
+          title: 'The FlowWink',
+          accentText: 'Solution',
+          accentPosition: 'end',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'The FlowWink Solution' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'Self-host one platform, deploy unlimited client sites. Your infrastructure, your rules, your profits.' }] },
               { type: 'bulletList', content: [
                 { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'One €20/month VPS hosts 20+ client sites' }] }] },
@@ -130,6 +136,8 @@ const flowwinkAgencyPages: TemplatePage[] = [
           imageSrc: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800',
           imageAlt: 'Agency team collaborating effectively',
           imagePosition: 'left',
+          ctaText: 'Get Started Free →',
+          ctaUrl: '/contact',
         },
       },
       {
