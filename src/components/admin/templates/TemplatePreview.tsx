@@ -342,7 +342,7 @@ export function TemplatePreview({ template, open, onOpenChange, onSelect }: Temp
                     <div 
                       className="h-6 w-6 rounded border shadow-sm"
                       style={{ backgroundColor: template.branding?.primaryColor }}
-                      title={`Primär: ${template.branding?.primaryColor}`}
+                      title={`Primary: ${template.branding?.primaryColor}`}
                     />
                     <div 
                       className="h-6 w-6 rounded border shadow-sm"
