@@ -414,10 +414,12 @@ const launchpadPages: TemplatePage[] = [
         id: 'two-col-2',
         type: 'two-column',
         data: {
+          eyebrow: 'SCALABILITY',
+          title: 'Scale Without Limits',
+          titleSize: 'large',
           content: {
             type: 'doc',
             content: [
-              { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Scale Without Limits' }] },
               { type: 'paragraph', content: [{ type: 'text', text: 'From your first 100 users to your first million. Our platform grows with you, automatically handling traffic spikes.' }] },
             ],
           },
