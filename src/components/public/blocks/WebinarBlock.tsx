@@ -121,15 +121,17 @@ export function WebinarBlock({ data, blockId, pageId }: WebinarBlockProps) {
   return (
     <section className={containerClasses}>
       {data.title && (
-        <h2 className="text-2xl font-bold mb-2">{data.title}</h2>
-      )}
-      {data.description && (
-        <p className="text-muted-foreground mb-6">{data.description}</p>
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold mb-2">{data.title}</h2>
+          {data.description && (
+            <p className="text-muted-foreground">{data.description}</p>
+          )}
+        </div>
       )}
 
       {/* Upcoming */}
       {upcoming.length > 0 && (
-        <div className="space-y-4 mb-8">
+        <div className="max-w-2xl mx-auto space-y-4 mb-8">
           {upcoming.map(webinar => (
             <WebinarCard
               key={webinar.id}
@@ -145,8 +147,8 @@ export function WebinarBlock({ data, blockId, pageId }: WebinarBlockProps) {
       {/* Past */}
       {data.showPast && past.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-4 text-muted-foreground">Previous Webinars</h3>
-          <div className="space-y-4">
+          <h3 className="text-lg font-semibold mb-4 text-muted-foreground text-center">Previous Webinars</h3>
+          <div className="max-w-2xl mx-auto space-y-4">
             {past.map(webinar => (
               <WebinarCard
                 key={webinar.id}
