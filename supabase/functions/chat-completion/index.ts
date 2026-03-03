@@ -335,18 +335,79 @@ async function buildKnowledgeBase(
   return `\n\n## Website Content (Knowledge Base)\n${sections.join('\n\n')}`;
 }
 
-// Execute tool calls
+// Load external/both agent skills as tools
+async function loadAgentSkillTools(supabase: ReturnType<typeof createClient>): Promise<{tools: any[], skillMap: Map<string, string>}> {
+  const { data: skills, error } = await supabase
+    .from('agent_skills')
+    .select('id, name, scope, tool_definition, handler')
+    .eq('enabled', true)
+    .in('scope', ['external', 'both']);
+
+  if (error || !skills?.length) {
+    return { tools: [], skillMap: new Map() };
+  }
+
+  const tools: any[] = [];
+  const skillMap = new Map<string, string>(); // tool function name -> skill name
+
+  for (const skill of skills) {
+    const toolDef = skill.tool_definition as any;
+    if (toolDef?.type === 'function' && toolDef.function) {
+      tools.push(toolDef);
+      skillMap.set(toolDef.function.name, skill.name);
+    }
+  }
+
+  console.log(`Loaded ${tools.length} agent skills for public chat:`, [...skillMap.keys()]);
+  return { tools, skillMap };
+}
+
+// Execute tool calls — handles built-in tools + agent skills via agent-execute
 async function executeToolCall(
   toolName: string, 
   args: Record<string, any>,
   conversationId: string | undefined,
   customerEmail: string | undefined,
-  customerName: string | undefined
+  customerName: string | undefined,
+  agentSkillNames?: Map<string, string>,
 ): Promise<string> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
   console.log(`Executing tool: ${toolName}`, args);
+
+  // Check if this is an agent skill
+  if (agentSkillNames?.has(toolName)) {
+    const skillName = agentSkillNames.get(toolName)!;
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          skill_name: skillName,
+          arguments: args,
+          agent_type: 'chat',
+          conversation_id: conversationId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'pending_approval') {
+        return `This action requires admin approval. Your request has been submitted and will be processed shortly.`;
+      }
+      if (data.error) {
+        return `Could not complete this action: ${data.error}`;
+      }
+      return JSON.stringify(data.result || data, null, 2);
+    } catch (error) {
+      console.error('Agent skill execution error:', error);
+      return `Action failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    }
+  }
 
   switch (toolName) {
     case 'firecrawl_search': {
