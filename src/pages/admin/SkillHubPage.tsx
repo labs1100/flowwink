@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Plus, Filter } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +47,7 @@ export default function SkillHubPage() {
   };
 
   return (
+    <AdminLayout>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -153,5 +155,6 @@ export default function SkillHubPage() {
         onDelete={(id) => remove.mutate(id)}
       />
     </div>
+    </AdminLayout>
   );
 }
