@@ -119,6 +119,7 @@ const navigationGroups: NavGroup[] = [
     label: "Main",
     items: [
       { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+      { name: "FlowPilot", href: "/admin/copilot", icon: Zap },
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3, moduleId: "analytics" },
     ],
   },
