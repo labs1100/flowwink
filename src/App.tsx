@@ -75,6 +75,7 @@ import WebinarsPage from "./pages/admin/WebinarsPage";
 const TemplateGalleryPage = lazy(() => import("./pages/admin/TemplateGalleryPage"));
 const SkillHubPage = lazy(() => import("./pages/admin/SkillHubPage"));
 
+console.info("[boot] App.tsx evaluated");
 const queryClient = new QueryClient();
 
 const withPageFallback = (element: JSX.Element) => (
