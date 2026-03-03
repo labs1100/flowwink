@@ -119,6 +119,7 @@ const navigationGroups: NavGroup[] = [
     label: "Main",
     items: [
       { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+      { name: "FlowPilot", href: "/admin/copilot", icon: Zap },
       { name: "Analytics", href: "/admin/analytics", icon: BarChart3, moduleId: "analytics" },
     ],
   },
@@ -168,7 +169,6 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Quick Start", href: "/admin/quick-start", icon: Rocket, setupOnly: true },
       { name: "Templates", href: "/admin/templates", icon: Puzzle, setupOnly: true },
-      { name: "FlowPilot", href: "/admin/copilot", icon: Zap },
       { name: "Branding", href: "/admin/branding", icon: Palette },
       { name: "Global Elements", href: "/admin/global-blocks", icon: LayoutGrid, moduleId: "globalElements" },
       { name: "Modules", href: "/admin/modules", icon: Puzzle },

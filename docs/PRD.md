@@ -1,8 +1,8 @@
 # FlowWink - Product Requirements Document (PRD)
 
-> **Version:** 2.2  
-> **Last Updated:** February 2026  
-> **Status:** Blockseditorpreviews Complete
+> **Version:** 2.3  
+> **Last Updated:** March 2026  
+> **Status:** FlowPilot Agent Architecture Complete
 
 ---
 
@@ -1338,4 +1338,134 @@ The Template Manager (`/admin/template-export`) provides comprehensive template 
 
 ---
 
-*Dokumentet underhålls of FlowWink-teamet. Senast uppdaterad februari 2026.*
+## Appendix E: FlowPilot — Agentic CMS Operator
+
+### Overview
+
+FlowPilot is FlowWink's built-in AI agent that operates the CMS on behalf of administrators. It has two modes:
+
+| Mode | Purpose | Access |
+|------|---------|--------|
+| **Operate** | Natural-language CMS control — write posts, analyze traffic, manage leads | `/admin/copilot` (default) |
+| **Migrate** | AI-assisted site migration from external URLs | `/admin/copilot` → Migrate tab |
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    SKILL REGISTRY                    │
+│              (agent_skills table, DB)                │
+│  ┌──────────┬──────────┬──────────┬──────────┐      │
+│  │ content  │ crm      │ commerce │ analytics│      │
+│  │ skills   │ skills   │ skills   │ skills   │      │
+│  └──────────┴──────────┴──────────┴──────────┘      │
+└────────────────────┬────────────────────────────────┘
+                     │ OpenAI tool-calling format
+          ┌──────────┴──────────┐
+          │                     │
+    ┌─────▼─────┐        ┌─────▼─────┐
+    │ FlowPilot │        │  Public   │
+    │ (internal)│        │   Chat    │
+    │ agent-    │        │ chat-     │
+    │ operate   │        │ completion│
+    └─────┬─────┘        └─────┬─────┘
+          │                     │
+          └──────────┬──────────┘
+                     │
+              ┌──────▼──────┐
+              │ agent-      │
+              │ execute     │
+              │ (unified    │
+              │  executor)  │
+              └──────┬──────┘
+                     │
+         ┌───────────┼───────────┐
+         │           │           │
+    ┌────▼───┐ ┌─────▼────┐ ┌───▼────┐
+    │ edge:  │ │ module:  │ │ db:    │
+    │ func   │ │ handler  │ │ table  │
+    └────────┘ └──────────┘ └────────┘
+```
+
+### Skill Engine
+
+Skills are stored in the `agent_skills` database table with full OpenAI function-calling `tool_definition` JSON. Each skill has:
+
+| Field | Description |
+|-------|-------------|
+| `name` | Unique identifier (e.g. `write_blog_post`) |
+| `handler` | Routing string: `edge:function-name`, `module:name`, `db:table`, `webhook:n8n` |
+| `scope` | `internal` (FlowPilot only), `external` (public chat only), `both` |
+| `category` | `content`, `crm`, `commerce`, `analytics`, `system` |
+| `requires_approval` | If `true`, execution is gated until admin approves in Activity Feed |
+
+#### Built-in Skills (11)
+
+| Skill | Handler | Scope | Approval |
+|-------|---------|-------|----------|
+| `migrate_url` | `edge:copilot-action` | internal | No |
+| `create_page_block` | `module:pages` | internal | No |
+| `write_blog_post` | `module:blog` | internal | No |
+| `send_newsletter` | `edge:send-newsletter` | internal | **Yes** |
+| `create_campaign` | `module:campaigns` | internal | No |
+| `add_lead` | `module:crm` | both | No |
+| `search_web` | `edge:web-search` | both | No |
+| `book_appointment` | `module:bookings` | external | No |
+| `check_order` | `module:orders` | external | No |
+| `update_settings` | `db:site_settings` | internal | **Yes** |
+| `analyze_analytics` | `db:page_views` | internal | No |
+
+### Data Model
+
+#### `agent_skills` — Skill registry
+Stores all available tools with OpenAI-compatible definitions. Skills can be enabled/disabled and scoped per agent.
+
+#### `agent_activity` — Audit log
+Every skill execution is logged with input, output, duration, status (`success`, `error`, `pending_approval`, `approved`), and the originating agent type.
+
+#### `agent_memory` — Persistent context
+Key-value store for agent state (e.g. user preferences, last analysis results). Categories: `context`, `preference`, `cache`. Supports TTL via `expires_at`.
+
+### Edge Functions
+
+| Function | Role |
+|----------|------|
+| `agent-execute` | Unified skill executor — validates scope, checks approval gates, routes to handler, logs activity |
+| `agent-operate` | FlowPilot AI router — receives natural language, picks skills via tool calling, executes via `agent-execute`, summarizes results |
+| `copilot-action` | Legacy migration assistant (to be refactored to use skill registry) |
+
+### UI Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `CopilotPage` | `/admin/copilot` | Main FlowPilot page with mode tabs |
+| `OperateChat` | Left panel (Operate mode) | Chat interface with quick actions and skill badges |
+| `ActivityFeed` | Right panel (Operate mode) | Real-time activity log with approve button for gated actions |
+| `CopilotChat` | Left panel (Migrate mode) | Migration conversation interface |
+| `CopilotMigrationPreview` | Right panel (Migrate mode) | Block-by-block migration approval |
+
+### Hooks
+
+| Hook | Purpose |
+|------|---------|
+| `useAgentOperate` | Manages Operate mode — messages, skills, activity feed, approval flow |
+| `useCopilot` | Manages Migrate mode — conversation, blocks, migration state |
+
+### Security Model
+
+- **Scope validation**: `agent-execute` enforces that internal skills cannot be called from public chat and vice versa
+- **Approval gating**: Sensitive skills (newsletter, settings) return `202 pending_approval` and require admin action in Activity Feed
+- **RLS policies**: All agent tables have proper row-level security; only admins can manage skills and view activity
+- **Audit trail**: Every execution is logged in `agent_activity` with full input/output
+
+### Roadmap
+
+- [ ] Refactor `copilot-action` to load tool definitions from `agent_skills` table
+- [ ] Agent memory read/write from FlowPilot conversations
+- [ ] Automation layer: `agent_automations` table with schedule/event/signal triggers
+- [ ] Cron-based skill execution
+- [ ] Proactive suggestions (heartbeat system)
+
+---
+
+*Dokumentet underhålls of FlowWink-teamet. Senast uppdaterad mars 2026.*
