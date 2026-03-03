@@ -27,6 +27,16 @@
 - [ ] Refactor copilot-action to load tool definitions from agent_skills table
 - [ ] Agent memory read/write from FlowPilot conversations
 
+## Phase 3.5: Skill Hub Admin UI ✅ DONE
+
+### Completed
+- **SkillHubPage** (`/admin/skills`) with Skills, Activity, and Objectives (placeholder) tabs
+- **SkillCard** — card grid with inline enable/disable toggle, scope/category/handler badges
+- **SkillEditorSheet** — full CRUD sheet with JSON tool definition editor (CodeMirror)
+- **ActivityTable** — filterable activity log with expand for input/output JSON, approve/reject
+- **useSkillHub** hook — CRUD for skills, activity queries, approval mutations
+- **Sidebar** — "Skill Hub" added to Main group with Bot icon
+
 ## Phase 3: Public Chat Gets Skills ✅ DONE
 
 ### Completed
