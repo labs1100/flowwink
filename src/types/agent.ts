@@ -60,6 +60,29 @@ export interface AgentMemory {
 }
 
 // =============================================================================
+// Objective
+// =============================================================================
+
+export interface AgentObjective {
+  id: string;
+  goal: string;
+  status: AgentObjectiveStatus;
+  constraints: Record<string, unknown>;
+  success_criteria: Record<string, unknown>;
+  progress: Record<string, unknown>;
+  created_by: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentObjectiveActivity {
+  objective_id: string;
+  activity_id: string;
+  created_at: string;
+}
+
+// =============================================================================
 // Activity
 // =============================================================================
 
