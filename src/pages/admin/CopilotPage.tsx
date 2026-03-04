@@ -101,6 +101,7 @@ export default function CopilotPage() {
                   isLoading={operate.isLoading}
                   onSendMessage={operate.sendMessage}
                   onReset={operate.clearMessages}
+                  onCancel={operate.cancelRequest}
                 />
               </div>
               <div className="w-80 flex flex-col bg-muted/30">
