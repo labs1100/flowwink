@@ -215,29 +215,33 @@ ${hunterContacts.length > 0 ? JSON.stringify(hunterContacts.slice(0, 5), null, 2
 
     console.log('[prospect-research] AI analysis complete');
 
-    // --- Step 5: Upsert company ---
+    // --- Step 5: Insert or find company ---
     const summary = aiResult.company_summary || {};
-    const { data: company, error: companyError } = await supabase
-      .from('companies')
-      .upsert(
-        {
-          name: company_name,
-          domain: prospectDomain || null,
-          website: resolvedUrl || null,
+    
+    // Check if company with this domain already exists
+    let companyRecord: any = null;
+    if (prospectDomain) {
+      const { data: existing } = await supabase
+        .from('companies')
+        .select('id, name, domain')
+        .eq('domain', prospectDomain)
+        .maybeSingle();
+      
+      if (existing) {
+        // Update existing company
+        await supabase.from('companies').update({
           industry: summary.industry || null,
           size: summary.size_estimate || null,
+          website: resolvedUrl || null,
           notes: summary.potential_pain_points?.join('; ') || null,
           enriched_at: new Date().toISOString(),
-        },
-        { onConflict: 'domain', ignoreDuplicates: false }
-      )
-      .select('id, name, domain')
-      .single();
+        }).eq('id', existing.id);
+        companyRecord = existing;
+      }
+    }
 
-    if (companyError) {
-      console.error('[prospect-research] Company upsert error:', companyError);
-      // Try insert without upsert if domain is null
-      const { data: insertedCompany } = await supabase
+    if (!companyRecord) {
+      const { data: inserted } = await supabase
         .from('companies')
         .insert({
           name: company_name,
@@ -250,9 +254,7 @@ ${hunterContacts.length > 0 ? JSON.stringify(hunterContacts.slice(0, 5), null, 2
         })
         .select('id, name, domain')
         .single();
-      if (insertedCompany) {
-        (company as any) = insertedCompany;
-      }
+      companyRecord = inserted;
     }
 
     const companyId = (company as any)?.id;
