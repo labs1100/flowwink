@@ -196,25 +196,25 @@ export default function AnalyticsDashboardPage() {
   // Build dynamic summary cards
   const summaryCards = [
     leadsEnabled && {
-      title: 'Totalt Leads',
+      title: 'Total Leads',
       value: summary?.totalLeads || 0,
       icon: Users,
       change: comparison?.leads.change,
     },
     dealsEnabled && {
-      title: 'Pipeline-värde',
+      title: 'Pipeline Value',
       value: formatCurrency(summary?.dealsPipelineValue || 0),
       icon: Briefcase,
-      description: `${summary?.totalDeals || 0} aktiva deals`,
+      description: `${summary?.totalDeals || 0} active deals`,
       change: comparison?.dealValue.change,
     },
     newsletterEnabled && {
-      title: 'Newsletter-prenumeranter',
+      title: 'Newsletter Subscribers',
       value: summary?.newsletterSubscribers || 0,
       icon: Mail,
     },
     formsEnabled && {
-      title: 'Formulärinskick',
+      title: 'Form Submissions',
       value: summary?.formSubmissions || 0,
       icon: Inbox,
     },
@@ -619,19 +619,19 @@ export default function AnalyticsDashboardPage() {
                   </div>
                   <div className="text-center p-4 rounded-lg bg-yellow-500/10">
                     <p className="text-2xl font-bold text-yellow-600">{bookingStats?.pending || 0}</p>
-                    <p className="text-xs text-muted-foreground">Väntande</p>
+                    <p className="text-xs text-muted-foreground">Pending</p>
                   </div>
                   <div className="text-center p-4 rounded-lg bg-green-500/10">
                     <p className="text-2xl font-bold text-green-600">{bookingStats?.confirmed || 0}</p>
-                    <p className="text-xs text-muted-foreground">Bekräftade</p>
+                    <p className="text-xs text-muted-foreground">Confirmed</p>
                   </div>
                   <div className="text-center p-4 rounded-lg bg-blue-500/10">
                     <p className="text-2xl font-bold text-blue-600">{bookingStats?.completed || 0}</p>
-                    <p className="text-xs text-muted-foreground">Slutförda</p>
+                    <p className="text-xs text-muted-foreground">Completed</p>
                   </div>
                   <div className="text-center p-4 rounded-lg bg-primary/10">
                     <p className="text-2xl font-bold text-primary">{bookingStats?.upcoming || 0}</p>
-                    <p className="text-xs text-muted-foreground">Kommande</p>
+                    <p className="text-xs text-muted-foreground">Upcoming</p>
                   </div>
                 </div>
               )}
@@ -643,8 +643,8 @@ export default function AnalyticsDashboardPage() {
         {newsletterEnabled ? (
           <Card>
             <CardHeader>
-              <CardTitle>Newsletter-prestanda</CardTitle>
-              <CardDescription>Senaste utskick och deras resultat</CardDescription>
+              <CardTitle>Newsletter Performance</CardTitle>
+              <CardDescription>Recent campaigns and their results</CardDescription>
             </CardHeader>
             <CardContent>
               {newsletterLoading ? (
@@ -672,19 +672,19 @@ export default function AnalyticsDashboardPage() {
                           <p className="font-medium truncate">{newsletter.subject}</p>
                           <p className="text-sm text-muted-foreground">
                             {newsletter.sent_at
-                              ? new Date(newsletter.sent_at).toLocaleDateString('sv-SE')
-                              : 'Ej skickat'}
+                              ? new Date(newsletter.sent_at).toLocaleDateString('en-US')
+                              : 'Not sent'}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <Badge variant="secondary">
-                            {newsletter.sent_count} skickade
+                            {newsletter.sent_count} sent
                           </Badge>
                           <Badge variant="outline" className="text-green-600 border-green-600/30">
-                            {openRate}% öppnade
+                            {openRate}% opened
                           </Badge>
                           <Badge variant="outline" className="text-blue-600 border-blue-600/30">
-                            {clickRate}% klickade
+                            {clickRate}% clicked
                           </Badge>
                         </div>
                       </div>
@@ -693,7 +693,7 @@ export default function AnalyticsDashboardPage() {
                 </div>
               ) : (
                 <div className="py-8 text-center text-muted-foreground">
-                  Inga skickade nyhetsbrev ännu
+                  No newsletters sent yet
                 </div>
               )}
             </CardContent>

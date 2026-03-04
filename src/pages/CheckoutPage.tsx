@@ -88,10 +88,10 @@ export default function CheckoutPage() {
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground" />
-            <CardTitle>Din varukorg är tom</CardTitle>
+            <CardTitle>Your cart is empty</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">Lägg till produkter för att fortsätta till kassan.</p>
+            <p className="text-muted-foreground">Add products to continue to checkout.</p>
           </CardContent>
           <CardFooter>
             <Button onClick={() => navigate('/')} className="w-full">

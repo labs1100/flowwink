@@ -149,7 +149,7 @@ export function TableBlock({ data }: TableBlockProps) {
                     colSpan={columns.length}
                     className="text-center text-muted-foreground py-8"
                   >
-                    Inga rader tillagda
+                    No rows added
                   </TableCell>
                 </TableRow>
               )}

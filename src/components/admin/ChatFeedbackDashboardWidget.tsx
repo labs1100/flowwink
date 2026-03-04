@@ -51,7 +51,7 @@ export function ChatFeedbackDashboardWidget() {
           <div className="text-center py-6">
             <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-50" />
             <p className="text-sm text-muted-foreground">
-              Ingen feedback ännu. Feedback samlas in när användare interagerar med AI-chatten.
+              No feedback yet. Feedback is collected when users interact with the AI chat.
             </p>
           </div>
         ) : (
@@ -138,7 +138,7 @@ export function ChatFeedbackDashboardWidget() {
             {(!articlesNeedingImprovement || articlesNeedingImprovement.length === 0) && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success text-sm">
                 <ThumbsUp className="h-4 w-4" />
-                <span>Inga artiklar behöver förbättras just nu!</span>
+                <span>No articles need improvement right now!</span>
               </div>
             )}
           </div>

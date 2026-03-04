@@ -484,7 +484,7 @@ const defaultBlogSettings: BlogSettings = {
   archiveSlug: 'blogg',
   rssEnabled: true,
   rssTitle: 'RSS Feed',
-  rssDescription: 'Senaste inläggen från vår blogg',
+  rssDescription: 'Latest posts from our blog',
 };
 
 export function useBlogSettings() {

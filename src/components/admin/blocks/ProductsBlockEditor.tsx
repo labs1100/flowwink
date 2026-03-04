@@ -27,9 +27,9 @@ export function ProductsBlockEditor({ data, onChange, isEditing }: ProductsBlock
     return (
       <div className="p-6 text-center border-2 border-dashed rounded-lg bg-muted/30">
         <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-        <h3 className="font-medium text-lg">{data.title || 'Produkter'}</h3>
+        <h3 className="font-medium text-lg">{data.title || 'Products'}</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          {activeProductsCount} aktiv{activeProductsCount !== 1 ? 'a' : ''} produkt{activeProductsCount !== 1 ? 'er' : ''}
+          {activeProductsCount} active product{activeProductsCount !== 1 ? 's' : ''}
         </p>
       </div>
     );

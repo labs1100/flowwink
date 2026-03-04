@@ -46,7 +46,7 @@ export function ArticleGridBlock({ data }: ArticleGridBlockProps) {
                   </p>
                 )}
                 <span className="inline-flex items-center gap-1 text-sm text-primary font-medium">
-                  Läs mer
+                  Read more
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </span>
               </div>

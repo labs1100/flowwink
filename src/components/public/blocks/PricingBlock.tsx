@@ -33,7 +33,7 @@ export function PricingBlock({ data }: PricingBlockProps) {
     if (!product) return;
     
     if (isInCart(product.id)) {
-      toast.info('Produkten finns redan i varukorgen');
+      toast.info('Product is already in cart');
       navigate('/checkout');
       return;
     }
@@ -45,7 +45,7 @@ export function PricingBlock({ data }: PricingBlockProps) {
       currency: product.currency,
       imageUrl: product.image_url || undefined,
     });
-    toast.success(`${product.name} har lagts till i varukorgen`);
+    toast.success(`${product.name} added to cart`);
     navigate('/checkout');
   };
 
@@ -54,7 +54,7 @@ export function PricingBlock({ data }: PricingBlockProps) {
     if (tier.productId) {
       // Wait for products to load
       if (productsLoading) {
-        toast.info('Laddar produkter...');
+        toast.info('Loading products...');
         return;
       }
       

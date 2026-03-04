@@ -39,7 +39,7 @@ export default function BlogTagPage() {
         <PublicNavigation />
         <main className="min-h-screen bg-background">
           <div className="container mx-auto px-4 py-12">
-            <p className="text-center text-muted-foreground">Laddar...</p>
+            <p className="text-center text-muted-foreground">Loading...</p>
           </div>
         </main>
         <PublicFooter />
@@ -88,11 +88,11 @@ export default function BlogTagPage() {
             <div className="flex-1">
               {isLoading ? (
                 <div className="text-center py-12 text-muted-foreground">
-                  Laddar inlägg...
+                  Loading posts...
                 </div>
               ) : posts.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">Inga inlägg med denna tagg ännu.</p>
+                  <p className="text-muted-foreground">No posts with this tag yet.</p>
                 </div>
               ) : (
                 <>

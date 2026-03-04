@@ -309,10 +309,10 @@ function MegaMenuParentItem({
         <CollapsibleContent>
           <div className="p-4 bg-muted/20 border-t space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Dropdown-länkar</h4>
+              <h4 className="text-sm font-medium">Dropdown links</h4>
               <Button variant="outline" size="sm" onClick={addSubItem}>
                 <Plus className="h-4 w-4 mr-2" />
-                Lägg till länk
+                Add link
               </Button>
             </div>
 
@@ -337,7 +337,7 @@ function MegaMenuParentItem({
               </DndContext>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4 border-2 border-dashed rounded-lg">
-                Inga dropdown-länkar ännu. Lägg till för att skapa en mega-meny.
+                No dropdown links yet. Add links to create a mega menu.
               </p>
             )}
           </div>
@@ -407,9 +407,9 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
   };
 
   const variantDescriptions: Record<HeaderVariant, string> = {
-    clean: 'Minimalistisk transparent header för kreativa sidor',
-    sticky: 'Fast header med blur-effekt som följer vid scroll',
-    'mega-menu': 'Kraftfull header med dropdown mega-menyer',
+    clean: 'Minimalist transparent header for creative pages',
+    sticky: 'Fixed header with blur effect that follows on scroll',
+    'mega-menu': 'Powerful header with dropdown mega menus',
   };
 
   const variantIcons: Record<HeaderVariant, React.ReactNode> = {
@@ -508,9 +508,9 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="compact">Kompakt (48px)</SelectItem>
+                  <SelectItem value="compact">Compact (48px)</SelectItem>
                   <SelectItem value="default">Standard (64px)</SelectItem>
-                  <SelectItem value="tall">Hög (80px)</SelectItem>
+                  <SelectItem value="tall">Tall (80px)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -568,17 +568,17 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="default">Standard</SelectItem>
-                  <SelectItem value="primary">Primärfärg</SelectItem>
-                  <SelectItem value="muted">Subtil</SelectItem>
-                  <SelectItem value="contrast">Hög kontrast</SelectItem>
+                  <SelectItem value="primary">Primary</SelectItem>
+                  <SelectItem value="muted">Muted</SelectItem>
+                  <SelectItem value="contrast">High Contrast</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <Label>Visa kant</Label>
-                <p className="text-sm text-muted-foreground">Visa en nedre kant på headern</p>
+                <Label>Show Border</Label>
+                <p className="text-sm text-muted-foreground">Show a bottom border on the header</p>
               </div>
               <Switch
                 checked={data.showBorder !== false}
@@ -589,7 +589,7 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Sticky header</Label>
-                <p className="text-sm text-muted-foreground">Header följer med vid scroll</p>
+                <p className="text-sm text-muted-foreground">Header stays visible on scroll</p>
               </div>
               <Switch
                 checked={data.stickyHeader !== false}
@@ -599,8 +599,8 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
 
             <div className="flex items-center justify-between">
               <div>
-                <Label>Visa tema-växlare</Label>
-                <p className="text-sm text-muted-foreground">Låt besökare byta mellan mörkt/ljust läge</p>
+                <Label>Show theme toggle</Label>
+                <p className="text-sm text-muted-foreground">Let visitors switch between dark/light mode</p>
               </div>
               <Switch
                 checked={data.showThemeToggle !== false}
@@ -616,7 +616,7 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
         <Card>
           <CardContent className="pt-6 space-y-4">
             <div className="space-y-2">
-              <Label>Navigeringsjustering</Label>
+              <Label>Navigation alignment</Label>
               <Select
                 value={data.navAlignment || 'right'}
                 onValueChange={(value: 'left' | 'center' | 'right') => onChange({ ...data, navAlignment: value })}
@@ -625,15 +625,15 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="left">Vänster (efter logotyp)</SelectItem>
-                  <SelectItem value="center">Centrerad</SelectItem>
-                  <SelectItem value="right">Höger</SelectItem>
+                  <SelectItem value="left">Left (after logo)</SelectItem>
+                  <SelectItem value="center">Centered</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>Mobilmeny-stil</Label>
+              <Label>Mobile menu style</Label>
               <Select
                 value={data.mobileMenuStyle || 'default'}
                 onValueChange={(value: 'default' | 'fullscreen' | 'slide') => onChange({ ...data, mobileMenuStyle: value })}
@@ -643,8 +643,8 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="default">Dropdown</SelectItem>
-                  <SelectItem value="fullscreen">Helskärm</SelectItem>
-                  <SelectItem value="slide">Slide från höger</SelectItem>
+                  <SelectItem value="fullscreen">Fullscreen</SelectItem>
+                  <SelectItem value="slide">Slide from right</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -674,14 +674,14 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium">Egna navigeringslänkar</h3>
+                  <h3 className="font-medium">Custom navigation links</h3>
                   <p className="text-sm text-muted-foreground">
-                    Lägg till externa länkar utöver CMS-sidor
+                    Add external links beyond CMS pages
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={addNavItem}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Lägg till
+                  Add
                 </Button>
               </div>
 
@@ -711,7 +711,7 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
 
               {(data.customNavItems || []).length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  Inga egna navigeringslänkar. CMS-sidor visas automatiskt.
+                  No custom navigation links. CMS pages are shown automatically.
                 </p>
               )}
             </CardContent>
@@ -766,14 +766,14 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base">Menygrupper</CardTitle>
+                  <CardTitle className="text-base">Menu Groups</CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Skapa dropdown-menyer med kategorier och länkar
+                    Create dropdown menus with categories and links
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={addNavItem}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Lägg till menygrupp
+                  Add menu group
                 </Button>
               </div>
             </CardHeader>
@@ -804,11 +804,11 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
                 <div className="text-center py-8 border-2 border-dashed rounded-lg">
                   <LayoutGrid className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-foreground">
-                    Inga menygrupper ännu. Lägg till för att skapa dropdown-menyer.
+                    No menu groups yet. Add one to create dropdown menus.
                   </p>
                   <Button variant="outline" size="sm" className="mt-4" onClick={addNavItem}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Skapa första menygruppen
+                    Create first menu group
                   </Button>
                 </div>
               )}
