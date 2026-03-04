@@ -766,9 +766,9 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base">Menygrupper</CardTitle>
+                  <CardTitle className="text-base">Menu Groups</CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Skapa dropdown-menyer med kategorier och länkar
+                    Create dropdown menus with categories and links
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={addNavItem}>
