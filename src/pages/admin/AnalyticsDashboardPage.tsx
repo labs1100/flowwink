@@ -643,8 +643,8 @@ export default function AnalyticsDashboardPage() {
         {newsletterEnabled ? (
           <Card>
             <CardHeader>
-              <CardTitle>Newsletter-prestanda</CardTitle>
-              <CardDescription>Senaste utskick och deras resultat</CardDescription>
+              <CardTitle>Newsletter Performance</CardTitle>
+              <CardDescription>Recent campaigns and their results</CardDescription>
             </CardHeader>
             <CardContent>
               {newsletterLoading ? (
