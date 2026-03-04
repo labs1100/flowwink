@@ -119,7 +119,7 @@ export function KbFeaturedBlock({ data }: KbFeaturedBlockProps) {
                       {article.question}
                     </h3>
                     <div className="flex items-center text-sm text-accent-foreground font-medium mt-auto">
-                      Läs mer
+                      Read more
                       <ChevronRight className="h-4 w-4 ml-1 transition-transform group-hover:translate-x-1" />
                     </div>
                   </CardContent>

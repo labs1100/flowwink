@@ -21,9 +21,9 @@ export function CartBlockEditor({ data, onChange, isEditing }: CartBlockEditorPr
     return (
       <div className="p-6 text-center border-2 border-dashed rounded-lg bg-muted/30">
         <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-        <h3 className="font-medium text-lg">{data.title || 'Varukorg'}</h3>
+        <h3 className="font-medium text-lg">{data.title || 'Shopping Cart'}</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Visar besökarens varukorg
+          Displays the visitor's shopping cart
         </p>
       </div>
     );

@@ -54,7 +54,7 @@ export function PricingBlock({ data }: PricingBlockProps) {
     if (tier.productId) {
       // Wait for products to load
       if (productsLoading) {
-        toast.info('Laddar produkter...');
+        toast.info('Loading products...');
         return;
       }
       

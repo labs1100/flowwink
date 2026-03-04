@@ -461,7 +461,7 @@ export function ImageCropper({
                   {/* Contrast */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <Label className="text-xs text-muted-foreground">Kontrast</Label>
+                      <Label className="text-xs text-muted-foreground">Contrast</Label>
                       <span className="text-xs text-muted-foreground w-10 text-right">
                         {adjustments.contrast}%
                       </span>

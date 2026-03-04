@@ -138,7 +138,7 @@ export function ChatFeedbackDashboardWidget() {
             {(!articlesNeedingImprovement || articlesNeedingImprovement.length === 0) && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success text-sm">
                 <ThumbsUp className="h-4 w-4" />
-                <span>Inga artiklar behöver förbättras just nu!</span>
+                <span>No articles need improvement right now!</span>
               </div>
             )}
           </div>

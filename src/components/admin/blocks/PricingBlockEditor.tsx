@@ -179,9 +179,9 @@ export function PricingBlockEditor({ data, onChange, isEditing }: PricingBlockEd
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-muted-foreground" />
             <div>
-              <Label>Använd produkter från databasen</Label>
+              <Label>Use products from database</Label>
               <p className="text-xs text-muted-foreground">
-                Hämtar produkter automatiskt och kopplar till varukorgen
+                Fetches products automatically and connects to the cart
               </p>
             </div>
           </div>

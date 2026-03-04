@@ -804,11 +804,11 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
                 <div className="text-center py-8 border-2 border-dashed rounded-lg">
                   <LayoutGrid className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-foreground">
-                    Inga menygrupper ännu. Lägg till för att skapa dropdown-menyer.
+                    No menu groups yet. Add one to create dropdown menus.
                   </p>
                   <Button variant="outline" size="sm" className="mt-4" onClick={addNavItem}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Skapa första menygruppen
+                    Create first menu group
                   </Button>
                 </div>
               )}

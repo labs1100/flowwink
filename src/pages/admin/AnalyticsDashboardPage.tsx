@@ -693,7 +693,7 @@ export default function AnalyticsDashboardPage() {
                 </div>
               ) : (
                 <div className="py-8 text-center text-muted-foreground">
-                  Inga skickade nyhetsbrev ännu
+                  No newsletters sent yet
                 </div>
               )}
             </CardContent>
