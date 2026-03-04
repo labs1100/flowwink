@@ -711,7 +711,7 @@ export function HeaderBlockEditor({ data, onChange }: HeaderBlockEditorProps) {
 
               {(data.customNavItems || []).length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  Inga egna navigeringslänkar. CMS-sidor visas automatiskt.
+                  No custom navigation links. CMS pages are shown automatically.
                 </p>
               )}
             </CardContent>
