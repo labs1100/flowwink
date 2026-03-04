@@ -45,7 +45,7 @@ export function PricingBlock({ data }: PricingBlockProps) {
       currency: product.currency,
       imageUrl: product.image_url || undefined,
     });
-    toast.success(`${product.name} har lagts till i varukorgen`);
+    toast.success(`${product.name} added to cart`);
     navigate('/checkout');
   };
 
