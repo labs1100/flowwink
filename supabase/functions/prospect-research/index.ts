@@ -257,7 +257,7 @@ ${hunterContacts.length > 0 ? JSON.stringify(hunterContacts.slice(0, 5), null, 2
       companyRecord = inserted;
     }
 
-    const companyId = (company as any)?.id;
+    const companyId = companyRecord?.id;
 
     // --- Step 6: Create leads from Hunter contacts ---
     const createdLeads: any[] = [];
