@@ -241,6 +241,51 @@ Svara ENDAST med JSON i detta format:
 
     console.log(`Lead ${leadId} qualified: score=${totalScore}, status=${suggestedStatus}, needs_review=${needsReview}`);
 
+    // ── Emit signals for automation triggers ──────────────────────────
+    try {
+      // Signal: score_threshold — fire when score crosses thresholds
+      await fetch(`${supabaseUrl}/functions/v1/signal-dispatcher`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseServiceKey}` },
+        body: JSON.stringify({
+          signal: 'lead_score_updated',
+          data: {
+            score: totalScore,
+            previous_score: lead.score || 0,
+            status: suggestedStatus,
+            old_status: lead.status,
+            new_status: suggestedStatus,
+            email: lead.email,
+            name: lead.name,
+            confidence,
+            needs_review: needsReview,
+          },
+          context: { entity_type: 'lead', entity_id: leadId },
+        }),
+      });
+
+      // Signal: status_change — fire when lead status changes
+      if (suggestedStatus !== lead.status && confidence >= 75) {
+        await fetch(`${supabaseUrl}/functions/v1/signal-dispatcher`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseServiceKey}` },
+          body: JSON.stringify({
+            signal: 'lead_status_changed',
+            data: {
+              old_status: lead.status,
+              new_status: suggestedStatus,
+              score: totalScore,
+              email: lead.email,
+              name: lead.name,
+            },
+            context: { entity_type: 'lead', entity_id: leadId },
+          }),
+        });
+      }
+    } catch (signalErr) {
+      console.error('Signal dispatch error (non-blocking):', signalErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

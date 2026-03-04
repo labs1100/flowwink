@@ -72,6 +72,12 @@
 - Simple cron parser calculates `next_run_at` for common patterns (*/N, daily, weekly)
 
 - **Event-trigger dispatch** — `send-webhook` now also checks `agent_automations` with matching `event_name` and executes their skills via `agent-execute`, merging event data into arguments
+- **Signal-trigger dispatch** — `signal-dispatcher` edge function evaluates dynamic conditions (score thresholds, status changes, field matches, compound logic) against incoming data
+
+### Signal Integration Points
+- `qualify-lead` → emits `lead_score_updated` and `lead_status_changed` signals
+- `send-webhook` → emits every webhook event as a signal (e.g. `form.submitted`, `booking.submitted`)
+- Signal conditions supported: `score_threshold`, `count_threshold`, `status_change`, `field_match`, `compound` (all/any)
 
 ## Phase 5: Autonomy Unlocks ✅ DONE
 
@@ -80,24 +86,14 @@
 - **Approval re-execution** — approved pending actions auto-re-execute with original args
 - **Conversation persistence** — sessions saved to chat_conversations/chat_messages
 - **Markdown rendering** — assistant messages rendered with react-markdown
+- **Multi-skill result tracking** — Response format supports `skill_results[]` array
 
 ## Phase 6: Agent Self-Improvement ✅ DONE
 
 ### Completed
-- **skill_create** — FlowPilot can register new skills with handler routing and tool definitions
-- **skill_update** — Modify existing skill metadata (description, handler, scope, approval)
-- **skill_list** — Enumerate all registered skills with filtering
-- **skill_disable** — Turn off problematic or unused skills
-- **automation_create** — Create automations (cron/event/signal) linked to skills, disabled by default
-- **automation_list** — View all automations with run counts and status
-- **reflect** — Introspection tool that analyzes 7-day activity patterns, calculates error rates, identifies unused skills, and generates actionable improvement suggestions
-
-### Completed
-- **Multi-tool loop** — `agent-operate` now iterates up to 6 rounds, processing ALL tool_calls in parallel per round, allowing the agent to chain steps autonomously (e.g., search → analyze → write)
-- **Approval re-execution** — When admin approves a `pending_approval` activity, the original skill is automatically re-executed with its original arguments
-- **Conversation persistence** — FlowPilot sessions are saved to `chat_conversations` + `chat_messages`, surviving page refreshes and browser restarts
-- **Markdown rendering** — Assistant messages now render with `react-markdown` for proper formatting (headers, lists, code blocks, bold, etc.)
-- **Multi-skill result tracking** — Response format supports `skill_results[]` array for showing multiple tool executions per turn
+- **skill_create/update/list/disable** — FlowPilot can manage its own skill registry
+- **automation_create/list** — Create and view automations
+- **reflect** — Introspection: 7-day activity analysis, error rates, improvement suggestions
 
 ## Architecture Reference
 
