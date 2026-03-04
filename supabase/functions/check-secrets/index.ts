@@ -22,6 +22,7 @@ interface SecretsStatus {
     gemini: boolean;
     google_client_id: boolean;
     google_client_secret: boolean;
+    hunter: boolean;
   };
 }
 
