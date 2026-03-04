@@ -104,6 +104,29 @@
 - **Cron automation** — "Weekly Business Digest" scheduled Monday 9:00 AM (disabled by default for safety)
 - **Actionable callouts** — hot leads needing follow-up, pending bookings, unpublished drafts, low sentiment alerts
 
+## Phase 8: Sales Intelligence Pipeline ✅ DONE
+
+### Completed
+- **`prospect-research` edge function** — Replaces n8n ScoutOut workflows (MBA 1-3). Uses Jina Reader (website scraping), Jina Search (market context), Hunter Domain Search (contact discovery), and AI (OpenAI/Gemini) to generate qualifying Q&A. Upserts to `companies` table and creates `leads` entries.
+- **`prospect-fit-analysis` edge function** — Replaces n8n ScoutOut workflow 4 + ScoutIn. Loads company profile from `site_settings`, evaluates fit score (0-100), maps prospect problems to services, generates personalized introduction letter + email subject. Uses Hunter Email Finder for decision-maker lookup.
+- **Hunter.io integration** — New `HUNTER_API_KEY` secret, added to `check-secrets`, `useIntegrationStatus`, `useIntegrations` (category: Sales Intelligence), and `configure-secrets.sh`.
+- **2 new agent skills** — `prospect_research` (edge:prospect-research) and `prospect_fit_analysis` (edge:prospect-fit-analysis) registered in `agent_skills` table, category: crm, scope: internal.
+- **Company Profile** — Uses `site_settings` key `company_profile` to store business context (about_us, services, delivered_value, clients, etc.) for AI prompts.
+- **Data flow**: Research → `companies` + `leads` tables; Fit score → `leads.score`; Intro letters → `agent_memory`; Research Q&A → `agent_memory`.
+
+### External APIs (No n8n dependency)
+- **Jina Reader**: `https://r.jina.ai/{url}` — free, no key
+- **Jina Search**: `https://s.jina.ai/{query}` — free, no key
+- **Hunter Domain Search**: `https://api.hunter.io/v2/domain-search`
+- **Hunter Email Finder**: `https://api.hunter.io/v2/email-finder`
+
+### FlowPilot Usage
+```
+"Research Acme Corp" → prospect_research skill
+"Analyze fit for Acme Corp and draft an intro" → prospect_fit_analysis skill
+"Research Acme Corp and prepare an introduction if fit score > 70" → chained execution
+```
+
 ## Architecture Reference
 
 ```
@@ -118,6 +141,8 @@ skill.handler routing:
 | File | Purpose |
 |------|---------|
 | `supabase/functions/agent-execute/index.ts` | Unified skill executor |
+| `supabase/functions/prospect-research/index.ts` | Sales research pipeline |
+| `supabase/functions/prospect-fit-analysis/index.ts` | Fit scoring + intro drafting |
 | `src/types/agent.ts` | TypeScript types for skill engine |
 | `src/lib/module-registry.ts` | Existing module registry (14 modules) |
 | `supabase/functions/copilot-action/index.ts` | Current FlowPilot (to be refactored) |
