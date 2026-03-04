@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { GmailIntegrationCard } from "@/components/admin/integrations/GmailIntegrationCard";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminPageContainer } from "@/components/admin/AdminPageContainer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
