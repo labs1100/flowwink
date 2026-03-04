@@ -196,25 +196,25 @@ export default function AnalyticsDashboardPage() {
   // Build dynamic summary cards
   const summaryCards = [
     leadsEnabled && {
-      title: 'Totalt Leads',
+      title: 'Total Leads',
       value: summary?.totalLeads || 0,
       icon: Users,
       change: comparison?.leads.change,
     },
     dealsEnabled && {
-      title: 'Pipeline-värde',
+      title: 'Pipeline Value',
       value: formatCurrency(summary?.dealsPipelineValue || 0),
       icon: Briefcase,
-      description: `${summary?.totalDeals || 0} aktiva deals`,
+      description: `${summary?.totalDeals || 0} active deals`,
       change: comparison?.dealValue.change,
     },
     newsletterEnabled && {
-      title: 'Newsletter-prenumeranter',
+      title: 'Newsletter Subscribers',
       value: summary?.newsletterSubscribers || 0,
       icon: Mail,
     },
     formsEnabled && {
-      title: 'Formulärinskick',
+      title: 'Form Submissions',
       value: summary?.formSubmissions || 0,
       icon: Inbox,
     },
