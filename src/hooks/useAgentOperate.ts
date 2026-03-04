@@ -4,6 +4,7 @@
  * Hook for FlowPilot "Operate" mode — chat-based CMS control
  * through the agent-execute skill engine.
  * 
+ * Supports SSE streaming for token-by-token response rendering.
  * Conversations are persisted to chat_conversations/chat_messages.
  */
 
@@ -17,6 +18,12 @@ export interface OperateMessage {
   role: 'user' | 'assistant';
   content: string;
   createdAt: Date;
+  /** Tool execution status shown during streaming */
+  toolStatus?: {
+    phase: 'thinking' | 'executing' | 'streaming' | 'done';
+    tools?: string[];
+    iteration?: number;
+  };
   skillResults?: Array<{
     skill: string;
     status: 'success' | 'pending_approval' | 'error';
@@ -31,6 +38,89 @@ export interface OperateMessage {
 }
 
 const FLOWPILOT_CONVERSATION_KEY = 'flowpilot_conversation_id';
+const OPERATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-operate`;
+
+// ─── SSE stream parser ────────────────────────────────────────────────────────
+
+interface StreamCallbacks {
+  onDelta: (content: string) => void;
+  onToolStart: (tools: string[], iteration: number) => void;
+  onToolDone: (tools: string[], iteration: number) => void;
+  onSkillResults: (results: any[]) => void;
+  onError: (message: string) => void;
+  onDone: () => void;
+}
+
+async function parseOperateStream(response: Response, callbacks: StreamCallbacks, signal?: AbortSignal) {
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      if (signal?.aborted) break;
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+        let line = buffer.slice(0, newlineIndex);
+        buffer = buffer.slice(newlineIndex + 1);
+        if (line.endsWith('\r')) line = line.slice(0, -1);
+        if (line.trim() === '' || line.startsWith(':')) continue;
+
+        // Parse SSE event type
+        if (line.startsWith('event: ')) {
+          const eventType = line.slice(7).trim();
+          // Find next data line
+          const dataIdx = buffer.indexOf('\n');
+          if (dataIdx === -1) {
+            // Put event line back, wait for more data
+            buffer = line + '\n' + buffer;
+            break;
+          }
+          let dataLine = buffer.slice(0, dataIdx);
+          buffer = buffer.slice(dataIdx + 1);
+          if (dataLine.endsWith('\r')) dataLine = dataLine.slice(0, -1);
+
+          if (dataLine.startsWith('data: ')) {
+            const jsonStr = dataLine.slice(6).trim();
+            try {
+              const data = JSON.parse(jsonStr);
+              switch (eventType) {
+                case 'delta':
+                  if (data.content) callbacks.onDelta(data.content);
+                  break;
+                case 'tool_start':
+                  callbacks.onToolStart(data.tools || [], data.iteration || 0);
+                  break;
+                case 'tool_done':
+                  callbacks.onToolDone(data.tools || [], data.iteration || 0);
+                  break;
+                case 'skill_results':
+                  callbacks.onSkillResults(data);
+                  break;
+                case 'error':
+                  callbacks.onError(data.message || 'Unknown error');
+                  break;
+                case 'done':
+                  callbacks.onDone();
+                  return;
+              }
+            } catch { /* ignore parse errors */ }
+          }
+          continue;
+        }
+      }
+    }
+  } finally {
+    try { reader.cancel(); } catch { /* already closed */ }
+  }
+  callbacks.onDone();
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useAgentOperate() {
   const [messages, setMessages] = useState<OperateMessage[]>([]);
@@ -43,12 +133,10 @@ export function useAgentOperate() {
   // ─── Conversation persistence ───────────────────────────────────────
 
   const getOrCreateConversation = useCallback(async (): Promise<string> => {
-    // Check for existing conversation in localStorage
     const existingId = localStorage.getItem(FLOWPILOT_CONVERSATION_KEY);
     if (existingId && conversationId === existingId) return existingId;
 
     if (existingId) {
-      // Verify it still exists
       const { data } = await supabase
         .from('chat_conversations')
         .select('id')
@@ -60,7 +148,6 @@ export function useAgentOperate() {
       }
     }
 
-    // Create new conversation
     const { data, error } = await supabase
       .from('chat_conversations')
       .insert({
@@ -106,7 +193,6 @@ export function useAgentOperate() {
 
       setConversationId(existingId);
 
-      // Load messages
       const { data: msgs } = await supabase
         .from('chat_messages')
         .select('*')
@@ -152,7 +238,8 @@ export function useAgentOperate() {
     if (data) setActivities(data as unknown as AgentActivity[]);
   }, []);
 
-  // Send a message — AI decides which skills to call (multi-tool loop)
+  // ─── Send message with SSE streaming ────────────────────────────────
+
   const sendMessage = useCallback(async (content: string) => {
     const userMsg: OperateMessage = {
       id: crypto.randomUUID(),
@@ -160,51 +247,120 @@ export function useAgentOperate() {
       content,
       createdAt: new Date(),
     };
-    setMessages(prev => [...prev, userMsg]);
+
+    const assistantId = crypto.randomUUID();
+    const assistantMsg: OperateMessage = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      createdAt: new Date(),
+      toolStatus: { phase: 'thinking' },
+    };
+
+    setMessages(prev => [...prev, userMsg, assistantMsg]);
     setIsLoading(true);
+
+    // Abort controller for cancellation
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    let finalContent = '';
+    let skillResults: any[] = [];
 
     try {
       const convId = await getOrCreateConversation();
       await persistMessage(convId, 'user', content);
 
-      // Build conversation for AI
       const history = [...messages, userMsg].map(m => ({
         role: m.role,
         content: m.content,
       }));
 
-      const { data, error } = await supabase.functions.invoke('agent-operate', {
-        body: { messages: history, available_skills: skills.map(s => s.tool_definition) },
+      const resp = await fetch(OPERATE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: history,
+          available_skills: skills.map(s => s.tool_definition),
+        }),
+        signal: controller.signal,
       });
 
-      if (error) throw new Error(error.message);
+      if (!resp.ok || !resp.body) {
+        throw new Error(`Request failed: ${resp.status}`);
+      }
 
-      const skillResults = data.skill_results || (data.skill_result ? [data.skill_result] : undefined);
+      await parseOperateStream(resp, {
+        onDelta: (chunk) => {
+          finalContent += chunk;
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId
+              ? { ...m, content: finalContent, toolStatus: { phase: 'streaming' } }
+              : m
+          ));
+        },
+        onToolStart: (tools, iteration) => {
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId
+              ? { ...m, toolStatus: { phase: 'executing', tools, iteration } }
+              : m
+          ));
+        },
+        onToolDone: (tools, iteration) => {
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId
+              ? { ...m, toolStatus: { phase: 'thinking', tools, iteration } }
+              : m
+          ));
+        },
+        onSkillResults: (results) => {
+          skillResults = results;
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId
+              ? { ...m, skillResults: results, skillResult: results[0] }
+              : m
+          ));
+        },
+        onError: (message) => {
+          finalContent = `Something went wrong: ${message}`;
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId
+              ? { ...m, content: finalContent, toolStatus: { phase: 'done' } }
+              : m
+          ));
+        },
+        onDone: () => {
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId
+              ? { ...m, toolStatus: { phase: 'done' } }
+              : m
+          ));
+        },
+      }, controller.signal);
 
-      const assistantMsg: OperateMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: data.message || data.error || 'Done.',
-        createdAt: new Date(),
-        skillResults,
-        skillResult: skillResults?.[0],
-      };
-
-      setMessages(prev => [...prev, assistantMsg]);
-      await persistMessage(convId, 'assistant', assistantMsg.content, { skill_results: skillResults });
+      // Persist final assistant message
+      if (finalContent) {
+        await persistMessage(convId, 'assistant', finalContent, {
+          skill_results: skillResults.length > 0 ? skillResults : undefined,
+        });
+      }
       await loadActivity();
 
     } catch (err: any) {
-      const errorMsg: OperateMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: `Something went wrong: ${err.message}`,
-        createdAt: new Date(),
-      };
-      setMessages(prev => [...prev, errorMsg]);
+      if (err.name === 'AbortError') return;
+      const errorContent = `Something went wrong: ${err.message}`;
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId
+          ? { ...m, content: errorContent, toolStatus: { phase: 'done' } }
+          : m
+      ));
       toast.error('Agent error', { description: err.message });
     } finally {
       setIsLoading(false);
+      abortRef.current = null;
     }
   }, [messages, skills, loadActivity, getOrCreateConversation, persistMessage]);
 
@@ -240,7 +396,6 @@ export function useAgentOperate() {
 
   // Approve a pending action and re-execute it
   const approveAction = useCallback(async (activityId: string) => {
-    // Get the activity details for re-execution
     const { data: activity, error: fetchErr } = await supabase
       .from('agent_activity')
       .select('*')
@@ -252,7 +407,6 @@ export function useAgentOperate() {
       return;
     }
 
-    // Mark as approved
     const { error } = await supabase
       .from('agent_activity')
       .update({ status: 'approved' })
@@ -265,7 +419,6 @@ export function useAgentOperate() {
 
     toast.success('Action approved — re-executing...');
 
-    // Re-execute the skill with original arguments
     try {
       const { data, error: execErr } = await supabase.functions.invoke('agent-execute', {
         body: {
@@ -294,6 +447,10 @@ export function useAgentOperate() {
     await loadActivity();
   }, [loadActivity]);
 
+  const cancelRequest = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
   const clearMessages = useCallback(() => {
     setMessages([]);
     localStorage.removeItem(FLOWPILOT_CONVERSATION_KEY);
@@ -309,6 +466,7 @@ export function useAgentOperate() {
     sendMessage,
     executeSkill,
     approveAction,
+    cancelRequest,
     loadSkills,
     loadActivity,
     clearMessages,
