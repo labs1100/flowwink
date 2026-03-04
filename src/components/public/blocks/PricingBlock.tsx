@@ -33,7 +33,7 @@ export function PricingBlock({ data }: PricingBlockProps) {
     if (!product) return;
     
     if (isInCart(product.id)) {
-      toast.info('Produkten finns redan i varukorgen');
+      toast.info('Product is already in cart');
       navigate('/checkout');
       return;
     }
