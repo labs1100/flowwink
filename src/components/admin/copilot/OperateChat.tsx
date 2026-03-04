@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { ArrowUp, Loader2, Terminal, RotateCcw } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ArrowUp, Loader2, Terminal, RotateCcw, Wrench, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -15,6 +14,7 @@ interface OperateChatProps {
   isLoading: boolean;
   onSendMessage: (message: string) => void;
   onReset: () => void;
+  onCancel?: () => void;
 }
 
 const QUICK_ACTIONS = [
@@ -23,7 +23,37 @@ const QUICK_ACTIONS = [
   { label: 'Check leads', action: 'Show me recent lead activity' },
 ];
 
-export function OperateChat({ messages, skills, isLoading, onSendMessage, onReset }: OperateChatProps) {
+function ToolStatusIndicator({ toolStatus }: { toolStatus: OperateMessage['toolStatus'] }) {
+  if (!toolStatus || toolStatus.phase === 'done') return null;
+
+  return (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground animate-in fade-in slide-in-from-bottom-1 duration-200">
+      {toolStatus.phase === 'thinking' && (
+        <>
+          <Sparkles className="h-3 w-3 animate-pulse text-primary" />
+          <span>Thinking…</span>
+        </>
+      )}
+      {toolStatus.phase === 'executing' && (
+        <>
+          <Wrench className="h-3 w-3 animate-spin text-primary" />
+          <span>
+            Running {toolStatus.tools?.map(t => t.replace(/_/g, ' ')).join(', ')}
+            {toolStatus.iteration ? ` (step ${toolStatus.iteration})` : ''}
+          </span>
+        </>
+      )}
+      {toolStatus.phase === 'streaming' && (
+        <>
+          <Loader2 className="h-3 w-3 animate-spin text-primary" />
+          <span>Writing response…</span>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function OperateChat({ messages, skills, isLoading, onSendMessage, onReset, onCancel }: OperateChatProps) {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +71,6 @@ export function OperateChat({ messages, skills, isLoading, onSendMessage, onRese
 
   const isEmpty = messages.length === 0;
 
-  // Get all skill results (support both old and new format)
   const getSkillResults = (msg: OperateMessage) => {
     if (msg.skillResults?.length) return msg.skillResults;
     if (msg.skillResult) return [msg.skillResult];
@@ -96,6 +125,9 @@ export function OperateChat({ messages, skills, isLoading, onSendMessage, onRese
           <div className="py-4 px-4 space-y-4">
             {messages.map((msg) => {
               const results = getSkillResults(msg);
+              const isStreaming = msg.role === 'assistant' && msg.toolStatus && msg.toolStatus.phase !== 'done';
+              const showCursor = isStreaming && msg.toolStatus?.phase === 'streaming';
+
               return (
                 <div key={msg.id} className={cn(
                   'flex gap-3',
@@ -108,9 +140,22 @@ export function OperateChat({ messages, skills, isLoading, onSendMessage, onRese
                       : 'bg-muted'
                   )}>
                     {msg.role === 'assistant' ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
+                      <>
+                        {msg.content ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                            <ReactMarkdown>{msg.content + (showCursor ? '▍' : '')}</ReactMarkdown>
+                          </div>
+                        ) : isStreaming ? (
+                          <ToolStatusIndicator toolStatus={msg.toolStatus} />
+                        ) : null}
+
+                        {/* Show tool status below content when executing */}
+                        {msg.content && isStreaming && msg.toolStatus?.phase !== 'streaming' && (
+                          <div className="mt-2 pt-2 border-t border-border/30">
+                            <ToolStatusIndicator toolStatus={msg.toolStatus} />
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <p className="whitespace-pre-wrap">{msg.content}</p>
                     )}
@@ -138,13 +183,6 @@ export function OperateChat({ messages, skills, isLoading, onSendMessage, onRese
                 </div>
               );
             })}
-            {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="bg-muted rounded-2xl px-4 py-3">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -163,14 +201,26 @@ export function OperateChat({ messages, skills, isLoading, onSendMessage, onRese
             disabled={isLoading}
             className="rounded-full"
           />
-          <Button
-            size="icon"
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            className="shrink-0 rounded-full"
-          >
-            <ArrowUp className="h-4 w-4" />
-          </Button>
+          {isLoading && onCancel ? (
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={onCancel}
+              className="shrink-0 rounded-full"
+              title="Cancel"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+              className="shrink-0 rounded-full"
+            >
+              <ArrowUp className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
