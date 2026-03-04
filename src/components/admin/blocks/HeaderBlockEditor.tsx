@@ -337,7 +337,7 @@ function MegaMenuParentItem({
               </DndContext>
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4 border-2 border-dashed rounded-lg">
-                Inga dropdown-länkar ännu. Lägg till för att skapa en mega-meny.
+                No dropdown links yet. Add links to create a mega menu.
               </p>
             )}
           </div>
