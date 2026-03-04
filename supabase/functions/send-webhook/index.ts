@@ -212,8 +212,53 @@ Deno.serve(async (req) => {
 
     if (!webhooks || webhooks.length === 0) {
       console.log(`[send-webhook] No webhooks registered for event: ${event}`)
+      
+      // Still check for event automations even if no webhooks
+      let automationsDispatched = 0
+      try {
+        const { data: eventAutomations } = await supabase
+          .from('agent_automations')
+          .select('id, name, skill_id, skill_name, skill_arguments, trigger_config')
+          .eq('enabled', true)
+          .eq('trigger_type', 'event')
+
+        const matching = (eventAutomations || []).filter((a: any) => {
+          return a.trigger_config?.event_name === event
+        })
+
+        for (const auto of matching) {
+          try {
+            const mergedArgs = { ...auto.skill_arguments, event_data: data }
+            await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+              },
+              body: JSON.stringify({
+                skill_id: auto.skill_id,
+                skill_name: auto.skill_name,
+                arguments: mergedArgs,
+                agent_type: 'flowpilot',
+              }),
+            })
+            const { data: current } = await supabase.from('agent_automations').select('run_count').eq('id', auto.id).single()
+            await supabase.from('agent_automations').update({ 
+              last_triggered_at: new Date().toISOString(), 
+              run_count: (current?.run_count || 0) + 1 
+            }).eq('id', auto.id)
+            automationsDispatched++
+          } catch (err) {
+            console.error(`[send-webhook] Automation ${auto.name} failed:`, err)
+            await supabase.from('agent_automations').update({ last_error: err instanceof Error ? err.message : 'Unknown error' }).eq('id', auto.id)
+          }
+        }
+      } catch (autoErr) {
+        console.error('[send-webhook] Event automation check error:', autoErr)
+      }
+
       return new Response(
-        JSON.stringify({ message: 'No webhooks registered for this event', event }),
+        JSON.stringify({ message: 'No webhooks registered for this event', event, automations_dispatched: automationsDispatched }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
