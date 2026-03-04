@@ -19,6 +19,7 @@ import { LeadsDashboardWidget } from '@/components/admin/LeadsDashboardWidget';
 import { AeoDashboardWidget } from '@/components/admin/AeoDashboardWidget';
 import { ChatFeedbackDashboardWidget } from '@/components/admin/ChatFeedbackDashboardWidget';
 import { ChatAnalyticsDashboardWidget } from '@/components/admin/ChatAnalyticsDashboardWidget';
+import { AutomationHealthDashboardWidget } from '@/components/admin/AutomationHealthDashboardWidget';
 import { LiveSupportDashboardWidget } from '@/components/admin/LiveSupportDashboardWidget';
 import { usePages } from '@/hooks/usePages';
 import { useAuth } from '@/hooks/useAuth';
@@ -38,6 +39,7 @@ const WIDGET_META: Record<string, { title: string; description: string; moduleId
   'chat-analytics': { title: 'Chat Analytics', description: 'AI chat usage statistics', moduleId: 'chat' },
   'chat-feedback': { title: 'Chat Feedback', description: 'User feedback on AI chat', moduleId: 'chat' },
   'aeo': { title: 'AEO Insights', description: 'Answer Engine Optimization' },
+  'automation-health': { title: 'Automation Health', description: 'Automation run counts and error rates' },
   'recent-pages': { title: 'Recent Pages', description: 'Recently updated pages' },
   'quick-actions': { title: 'Quick Actions', description: 'Common shortcuts' },
 };
@@ -152,6 +154,7 @@ export default function AdminDashboard() {
     'chat-analytics': chatEnabled,
     'chat-feedback': chatEnabled,
     'aeo': true,
+    'automation-health': true,
     'recent-pages': true,
     'quick-actions': true,
   };
@@ -245,6 +248,9 @@ export default function AdminDashboard() {
 
       case 'aeo':
         return <AeoDashboardWidget key={widgetId} />;
+
+      case 'automation-health':
+        return <AutomationHealthDashboardWidget key={widgetId} />;
 
       case 'recent-pages':
         return (
@@ -378,7 +384,7 @@ export default function AdminDashboard() {
   };
 
   // Group widgets that should be in 2-col grid
-  const pairedWidgets = new Set(['leads', 'live-support', 'chat-analytics', 'chat-feedback', 'recent-pages', 'quick-actions']);
+  const pairedWidgets = new Set(['leads', 'live-support', 'chat-analytics', 'chat-feedback', 'automation-health', 'recent-pages', 'quick-actions']);
 
   // Render widgets in order, grouping paired ones
   const renderOrderedWidgets = () => {

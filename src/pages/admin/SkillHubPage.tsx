@@ -16,6 +16,7 @@ import { SkillEditorSheet } from '@/components/admin/skills/SkillEditorSheet';
 import { ActivityTable } from '@/components/admin/skills/ActivityTable';
 import { ObjectivesPanel } from '@/components/admin/skills/ObjectivesPanel';
 import { AutomationsPanel } from '@/components/admin/skills/AutomationsPanel';
+import { AutomationHealthPanel } from '@/components/admin/skills/AutomationHealthPanel';
 import { useSkills, useToggleSkill, useUpsertSkill, useDeleteSkill } from '@/hooks/useSkillHub';
 import type { AgentSkill } from '@/types/agent';
 
@@ -69,6 +70,7 @@ export default function SkillHubPage() {
         <TabsList>
           <TabsTrigger value="skills">Skills</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="objectives">Objectives</TabsTrigger>
           <TabsTrigger value="automations">Automations</TabsTrigger>
         </TabsList>
@@ -134,6 +136,11 @@ export default function SkillHubPage() {
         {/* Activity Tab */}
         <TabsContent value="activity">
           <ActivityTable />
+        </TabsContent>
+
+        {/* Health Tab */}
+        <TabsContent value="health">
+          <AutomationHealthPanel />
         </TabsContent>
 
         {/* Objectives Tab */}
