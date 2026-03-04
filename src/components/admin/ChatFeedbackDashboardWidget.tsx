@@ -51,7 +51,7 @@ export function ChatFeedbackDashboardWidget() {
           <div className="text-center py-6">
             <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-50" />
             <p className="text-sm text-muted-foreground">
-              Ingen feedback ännu. Feedback samlas in när användare interagerar med AI-chatten.
+              No feedback yet. Feedback is collected when users interact with the AI chat.
             </p>
           </div>
         ) : (
