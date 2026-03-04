@@ -73,6 +73,15 @@
 
 - **Event-trigger dispatch** — `send-webhook` now also checks `agent_automations` with matching `event_name` and executes their skills via `agent-execute`, merging event data into arguments
 
+## Phase 5: Autonomy Unlocks ✅ DONE
+
+### Completed
+- **Multi-tool loop** — `agent-operate` now iterates up to 6 rounds, processing ALL tool_calls in parallel per round, allowing the agent to chain steps autonomously (e.g., search → analyze → write)
+- **Approval re-execution** — When admin approves a `pending_approval` activity, the original skill is automatically re-executed with its original arguments
+- **Conversation persistence** — FlowPilot sessions are saved to `chat_conversations` + `chat_messages`, surviving page refreshes and browser restarts
+- **Markdown rendering** — Assistant messages now render with `react-markdown` for proper formatting (headers, lists, code blocks, bold, etc.)
+- **Multi-skill result tracking** — Response format supports `skill_results[]` array for showing multiple tool executions per turn
+
 ## Architecture Reference
 
 ```
