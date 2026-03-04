@@ -250,6 +250,17 @@ export const defaultIntegrationsSettings: IntegrationsSettings = {
     docsUrl: 'https://firecrawl.dev/docs',
     docsLabel: 'Get API key',
   },
+  hunter: {
+    enabled: false,
+    name: 'Hunter.io',
+    description: 'Email finder & domain search',
+    icon: 'Target',
+    category: 'sales',
+    features: ['Domain Search', 'Email Finder', 'Prospect Research'],
+    secretName: 'HUNTER_API_KEY',
+    docsUrl: 'https://hunter.io/api',
+    docsLabel: 'Get API key',
+  },
 };
 
 // Category definitions
