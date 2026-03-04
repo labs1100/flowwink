@@ -309,10 +309,10 @@ function MegaMenuParentItem({
         <CollapsibleContent>
           <div className="p-4 bg-muted/20 border-t space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Dropdown-länkar</h4>
+              <h4 className="text-sm font-medium">Dropdown links</h4>
               <Button variant="outline" size="sm" onClick={addSubItem}>
                 <Plus className="h-4 w-4 mr-2" />
-                Lägg till länk
+                Add link
               </Button>
             </div>
 
