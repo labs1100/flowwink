@@ -47,6 +47,16 @@ export function GmailIntegrationCard() {
   const [maxMessages, setMaxMessages] = useState(20);
   const [scanDays, setScanDays] = useState(7);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const redirectUri = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback`;
+
+  const handleCopyUri = async () => {
+    await navigator.clipboard.writeText(redirectUri);
+    setCopied(true);
+    toast.success('Redirect URI copied');
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const fetchStatus = useCallback(async () => {
     try {
