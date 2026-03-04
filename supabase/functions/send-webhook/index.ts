@@ -350,6 +350,24 @@ Deno.serve(async (req) => {
       console.error('[send-webhook] Event automation dispatch error:', autoErr)
     }
 
+    // ── Also dispatch as a signal for signal-type automations ─────────
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/signal-dispatcher`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          signal: event, // e.g. "form.submitted", "booking.submitted"
+          data,
+          context: { entity_type: event.split('.')[0] },
+        }),
+      })
+    } catch (signalErr) {
+      console.error('[send-webhook] Signal dispatch error (non-blocking):', signalErr)
+    }
+
     console.log(`[send-webhook] Completed: ${successful} successful, ${failed} failed, ${automationsDispatched} automations`)
 
     return new Response(
