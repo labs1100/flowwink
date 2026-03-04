@@ -218,9 +218,19 @@ export function GmailIntegrationCard() {
                   Google Cloud Console <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
-              <div className="rounded-md bg-muted px-3 py-2 font-mono text-xs break-all select-all">
-                <span className="text-muted-foreground font-sans font-medium mr-1.5">Redirect URI:</span>
-                {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-oauth-callback`}
+              <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2">
+                <div className="flex-1 font-mono text-xs break-all select-all">
+                  <span className="text-muted-foreground font-sans font-medium mr-1.5">Redirect URI:</span>
+                  {redirectUri}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={handleCopyUri}
+                >
+                  {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+                </Button>
               </div>
             </div>
             <Button onClick={handleConnect} className="gap-2">
