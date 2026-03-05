@@ -116,12 +116,17 @@ serve(async (req) => {
     }
 
     // 5. Log activity
-    await logActivity(supabase, {
+    const activityId = await logActivity(supabase, {
       agent: agent_type, skill_id: skill.id, skill_name: skill.name,
       input: args, output: result as Record<string, unknown>,
       status: 'success', conversation_id,
       duration_ms: Date.now() - startTime,
     });
+
+    // 6. Auto-track objective progress
+    if (activityId) {
+      await trackObjectiveProgress(supabase, skill.name, activityId);
+    }
 
     return new Response(JSON.stringify({ status: 'success', result }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
