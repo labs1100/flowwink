@@ -137,3 +137,6 @@ verify_jwt = false
 
 [functions.prospect-fit-analysis]
 verify_jwt = false
+
+[functions.flowpilot-heartbeat]
+verify_jwt = false
