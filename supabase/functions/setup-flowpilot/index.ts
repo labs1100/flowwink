@@ -393,7 +393,14 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { service_role_key, supabase_url, seed_skills = true, seed_soul = true } = body;
+    const { 
+      service_role_key, 
+      supabase_url, 
+      seed_skills = true, 
+      seed_soul = true,
+      // Template-aware configuration
+      template_flowpilot,
+    } = body;
 
     if (!service_role_key) {
       return new Response(
