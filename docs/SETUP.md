@@ -358,6 +358,36 @@ SELECT cron.schedule(
 );
 ```
 
+### FlowPilot Autonomous Loop
+
+```sql
+-- Heartbeat every 12 hours (00:00, 12:00 UTC)
+SELECT cron.schedule(
+  'flowpilot-heartbeat',
+  '0 0,12 * * *',
+  $$
+  SELECT net.http_post(
+    url := 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/flowpilot-heartbeat',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
+    body := concat('{"time": "', now(), '"}')::jsonb
+  ) AS request_id;
+  $$
+);
+
+-- Learn from usage data daily at 03:00 UTC
+SELECT cron.schedule(
+  'flowpilot-learn',
+  '0 3 * * *',
+  $$
+  SELECT net.http_post(
+    url := 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/flowpilot-learn',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
+    body := concat('{"time": "', now(), '"}')::jsonb
+  ) AS request_id;
+  $$
+);
+```
+
 ### Using External Cron (e.g., cron-job.org)
 
 Set up an HTTP POST request to:
