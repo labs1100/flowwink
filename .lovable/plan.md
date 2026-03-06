@@ -1,98 +1,178 @@
+# FlowPilot Agentic Architecture
 
+## Phase 1: Skill Registry + Unified Tool Engine ✅ DONE
 
-# Rewrite FlowWink Template: From "Headless CMS" to "Autonomous Agentic CMS"
+### Completed
+- **Database tables**: `agent_skills`, `agent_memory`, `agent_activity` with RLS policies
+- **Enums**: `agent_scope`, `agent_skill_category`, `agent_activity_status`, `agent_type`, `agent_memory_category`
+- **11 built-in skills** seeded: migrate_url, create_page_block, write_blog_post, send_newsletter, create_campaign, add_lead, search_web, book_appointment, check_order, update_settings, analyze_analytics
+- **`agent-execute` edge function**: Unified skill executor with scope validation, approval checks, handler routing (edge/module/db/webhook), and activity logging
+- **TypeScript types**: `src/types/agent.ts` with full type coverage
 
-## The Problem
+### Verified
+- Direct execution works (analyze_analytics returns real page view data)
+- Scope validation works (internal skills blocked from chat agent)
+- Approval gating works (send_newsletter returns 202 pending_approval)
 
-The current FlowWink template sells the platform as a "Keep Your Head While Going Headless" CMS — a headful+headless hybrid. That narrative is outdated. What we've actually built is far more radical: an **AI-first autonomous agent that operates your entire online presence**. The template needs to reflect this paradigm shift.
+## Phase 2: FlowPilot "Operate" Mode ✅ DONE
 
-## The New Narrative
+### Completed
+- Mode switcher (Operate | Migrate) in CopilotPage header using Tabs
+- OperateChat component — chat with quick actions, skill badges, and inline results
+- ActivityFeed sidebar — shows recent actions with status, duration, approve button
+- `agent-operate` edge function — AI router that picks skills via tool calling, executes via agent-execute, summarizes results
+- `useAgentOperate` hook — manages messages, skills, activity, and approval flow
 
-**FlowWink is not a CMS. It's an autonomous digital operator.**
+### TODO (refinement)
+- [ ] Refactor copilot-action to load tool definitions from agent_skills table
 
-Core positioning: *"Your website runs itself."* — powered by FlowPilot, an OpenClaw-inspired autonomous agent with persistent memory, self-evolving skills, goal-driven objectives, and real-time automation across all channels (web, blog, CRM, email, bookings, e-commerce).
+## Phase 2.5: Active Memory ✅ DONE
 
-## What Changes
+### Completed
+- **agent-operate** loads all `agent_memory` entries into system prompt before each AI call
+- **memory_write** built-in tool — FlowPilot saves preferences, facts, context to DB
+- **memory_read** built-in tool — FlowPilot searches memory by key/category
+- Memory tools handled locally in agent-operate (no round-trip to agent-execute)
+- Two new skills registered in `agent_skills` table (memory_write, memory_read)
+- FlowPilot proactively saves useful info when it learns something new
 
-### Home Page — Complete Rewrite
+## Phase 3.5: Skill Hub Admin UI ✅ DONE
 
-**Old structure** (feature-list CMS pitch):
-- Hero: "Keep Your Head While Going Headless"
-- Stats: block types, modules
-- Timeline: Deploy → Create → Publish
-- Features: HEAD / FLOWWINK / HEADLESS pillars
-- Bento: module showcase
-- Comparison table vs WordPress/Contentful
+### Completed
+- **SkillHubPage** (`/admin/skills`) with Skills, Activity, and Objectives (placeholder) tabs
+- **SkillCard** — card grid with inline enable/disable toggle, scope/category/handler badges
+- **SkillEditorSheet** — full CRUD sheet with JSON tool definition editor (CodeMirror)
+- **ActivityTable** — filterable activity log with expand for input/output JSON, approve/reject
+- **useSkillHub** hook — CRUD for skills, activity queries, approval mutations
+- **Sidebar** — "Skill Hub" added to Main group with Bot icon
 
-**New structure** (agentic AI pitch):
+## Phase 3: Public Chat Gets Skills ✅ DONE
 
-1. **Announcement Bar** — "FlowPilot: The first CMS that operates itself"
-2. **Hero** — Title: *"Your Website Runs Itself"* / Subtitle: *"FlowPilot is an autonomous AI agent that writes your content, qualifies your leads, runs your campaigns, and learns from every interaction. You set the objectives. It does the rest."* / CTA: "Watch It Work" + "Self-Host Free"
-3. **Chat Launcher** — *"Talk to FlowPilot Right Now"* — live demo of the agent
-4. **Stats** — `Autonomous Skills: 20+` / `Self-Improving: Yes` / `Channels Managed: 6` / `Human Required: Only When You Want`
-5. **Timeline (3 steps)** — *How FlowPilot Works*:
-   - "You Set Objectives" (e.g. "4 blog posts/month, qualify all leads")
-   - "FlowPilot Operates" (writes content, scores leads, sends campaigns, books meetings)
-   - "You Review & Approve" (human-in-the-loop activity feed, approval gating)
-6. **Bento Grid — The Agent Brain** — showcasing the 6 core agentic capabilities:
-   - Skill Engine (20+ skills, self-creating new ones)
-   - Persistent Memory (learns preferences, remembers context)
-   - Objectives & Goals (tracks progress, auto-updates)
-   - Autonomous Heartbeat (12h reflection cycles)
-   - Signal Automations (event-driven reactions)
-   - Self-Evolution (rewrites its own soul, instructions)
-7. **Parallax** — *"Not a chatbot. An operator."*
-8. **Features — What FlowPilot Manages** (replacing old AI features):
-   - Content & Blog (writes, schedules, publishes)
-   - Lead CRM (captures, scores, qualifies, enriches)
-   - Email Campaigns (newsletters, drip sequences)
-   - Bookings (schedules, confirms, follows up)
-   - E-commerce (product recommendations, order tracking)
-   - Analytics (reflects, reports, suggests improvements)
-9. **Two-Column — The Architecture** — simplified diagram showing Skill Engine → Agent Execute → Activity Log, with visitor chat + admin operate + automation layer
-10. **Comparison Table** — FlowWink vs Traditional CMS vs Chatbot vs Marketing Automation — showing that FlowWink is all four in one
-11. **Testimonials** — rewritten for agentic angle ("FlowPilot wrote 12 blog posts last month while I focused on strategy")
-12. **Social Proof** — same structure, updated copy
-13. **Badges** — Open Source / Self-Hosted / Private AI / GDPR
-14. **Pricing** — same tiers, updated descriptions emphasizing "autonomous operations included"
-15. **FAQ** — rewritten for agentic questions ("Is it safe?", "Can I control what it does?", "What if it makes mistakes?")
-16. **CTA** — *"Stop Managing. Start Directing."*
+### Completed
+- **chat-completion** loads external/both skills from `agent_skills` table as OpenAI-compatible tools
+- Skills are routed through `agent-execute` edge function (scope validation, approval gating, activity logging)
+- `agentSkillNames` map tracks which tool calls are agent skills vs built-in tools
+- System prompt dynamically extended with skill usage instructions
+- Works for both OpenAI and local AI providers (when tool calling is supported)
+- Approval-gated skills return friendly "pending approval" messages to visitors
 
-### Features Page — Rewrite Focus
+## Phase 4: Automation Layer ✅ DONE
 
-Replace the current "For Content Creators / Developers / Business" tabs with:
-- **For Founders** — "Set objectives, FlowPilot executes"
-- **For Marketing** — "Autonomous campaigns, lead qualification, content pipeline"
-- **For Compliance** — "Private LLM, self-hosted, full audit trail, approval gating"
+### Completed
+- **agent_automations table** with cron/event/signal trigger types and RLS policies
+- **AutomationsPanel** — full CRUD UI with trigger-type badges, skill linking, JSON config editor
+- **ObjectivesPanel** — full CRUD UI with status management, progress tracking, constraint/criteria JSON
+- **FlowPilot skills**: `create_objective` and `create_automation` registered in agent_skills
+- **agent-execute** updated with `module:objectives` and `module:automations` handlers
+- **5 seed automations** and **4 seed objectives** for onboarding
 
-Replace "Flowwink Loop" timeline with **"The Autonomous Loop"** showing the full cycle: Heartbeat → Reflect → Plan → Execute → Log → Learn → Repeat.
+### Runtime
+- **`automation-dispatcher` edge function** — reads due cron automations, executes via agent-execute, updates run metadata
+- **pg_cron** runs dispatcher every minute via pg_net HTTP POST
+- Simple cron parser calculates `next_run_at` for common patterns (*/N, daily, weekly)
 
-### Meta & Branding Updates
+- **Event-trigger dispatch** — `send-webhook` now also checks `agent_automations` with matching `event_name` and executes their skills via `agent-execute`, merging event data into arguments
+- **Signal-trigger dispatch** — `signal-dispatcher` edge function evaluates dynamic conditions (score thresholds, status changes, field matches, compound logic) against incoming data
 
-- Template description: "The first autonomous agentic CMS. Your website runs itself."
-- Tagline: "Set objectives. FlowPilot operates."
-- Home meta description updated
-- Announcement bar updated
+### Signal Integration Points
+- `qualify-lead` → emits `lead_score_updated` and `lead_status_changed` signals
+- `send-webhook` → emits every webhook event as a signal (e.g. `form.submitted`, `booking.submitted`)
+- Signal conditions supported: `score_threshold`, `count_threshold`, `status_change`, `field_match`, `compound` (all/any)
 
-### Pages Kept As-Is
-- **Demo page** — still valuable, shows live modules
-- **Blocks page** — still valuable for builder showcase
-- Blog posts and KB articles — kept (content is still relevant)
+## Phase 5: Autonomy Unlocks ✅ DONE
 
-## Technical Scope
+### Completed
+- **Multi-tool loop** — up to 6 iterations, all tool_calls processed in parallel per round
+- **Approval re-execution** — approved pending actions auto-re-execute with original args
+- **Conversation persistence** — sessions saved to chat_conversations/chat_messages
+- **Markdown rendering** — assistant messages rendered with react-markdown
+- **Multi-skill result tracking** — Response format supports `skill_results[]` array
 
-- **1 file changed**: `src/data/templates/flowwink-platform.ts`
-- All changes are block data/copy rewrites within existing block types
-- No new block types needed
-- No database changes
-- No edge function changes
-- Estimated: ~800 lines rewritten across home page and features page
+## Phase 6: Agent Self-Improvement ✅ DONE
 
-## Key Copy Lines
+### Completed
+- **skill_create/update/list/disable** — FlowPilot can manage its own skill registry
+- **automation_create/list** — Create and view automations
+- **reflect** — Introspection: 7-day activity analysis, error rates, improvement suggestions
 
-- Hero: *"Your Website Runs Itself"*
-- Sub: *"FlowPilot is an autonomous AI agent that writes your content, qualifies your leads, runs your campaigns, and learns from every interaction."*
-- Parallax: *"Not a chatbot. An operator."*
-- CTA: *"Stop Managing. Start Directing."*
-- FAQ lead: *"What happens while I sleep? FlowPilot keeps working."*
+## Phase 7: Weekly Business Digest ✅ DONE
 
+### Completed
+- **`business-digest` edge function** — queries 7-day data across all modules (page views, leads, bookings, orders, blog posts, newsletters, chat conversations, form submissions, subscribers)
+- **Structured + markdown output** — metrics table, top pages, hot leads, device/referrer breakdown, actionable callouts
+- **`weekly_business_digest` skill** — registered in agent_skills with `edge:business-digest` handler
+- **Cron automation** — "Weekly Business Digest" scheduled Monday 9:00 AM (disabled by default for safety)
+- **Actionable callouts** — hot leads needing follow-up, pending bookings, unpublished drafts, low sentiment alerts
+
+## Phase 8: Sales Intelligence Pipeline ✅ DONE
+
+### Completed
+- **`prospect-research` edge function** — Replaces n8n ScoutOut workflows (MBA 1-3). Uses Jina Reader (website scraping), Jina Search (market context), Hunter Domain Search (contact discovery), and AI (OpenAI/Gemini) to generate qualifying Q&A. Upserts to `companies` table and creates `leads` entries.
+- **`prospect-fit-analysis` edge function** — Replaces n8n ScoutOut workflow 4 + ScoutIn. Loads company profile from `site_settings`, evaluates fit score (0-100), maps prospect problems to services, generates personalized introduction letter + email subject. Uses Hunter Email Finder for decision-maker lookup.
+- **Hunter.io integration** — New `HUNTER_API_KEY` secret, added to `check-secrets`, `useIntegrationStatus`, `useIntegrations` (category: Sales Intelligence), and `configure-secrets.sh`.
+- **2 new agent skills** — `prospect_research` (edge:prospect-research) and `prospect_fit_analysis` (edge:prospect-fit-analysis) registered in `agent_skills` table, category: crm, scope: internal.
+- **Company Profile** — Uses `site_settings` key `company_profile` to store business context (about_us, services, delivered_value, clients, etc.) for AI prompts.
+- **Data flow**: Research → `companies` + `leads` tables; Fit score → `leads.score`; Intro letters → `agent_memory`; Research Q&A → `agent_memory`.
+
+### External APIs (No n8n dependency)
+- **Jina Reader**: `https://r.jina.ai/{url}` — free, no key
+- **Jina Search**: `https://s.jina.ai/{query}` — free, no key
+- **Hunter Domain Search**: `https://api.hunter.io/v2/domain-search`
+- **Hunter Email Finder**: `https://api.hunter.io/v2/email-finder`
+
+### FlowPilot Usage
+```
+"Research Acme Corp" → prospect_research skill
+"Analyze fit for Acme Corp and draft an intro" → prospect_fit_analysis skill
+"Research Acme Corp and prepare an introduction if fit score > 70" → chained execution
+```
+
+## Phase 9: Autonomous Wiring ✅ DONE
+
+### Completed
+- **Cron scheduling fix** — dispatcher picks up NULL `next_run_at` automations and initializes them
+- **DB triggers** — Postgres triggers on `leads`, `blog_posts`, `bookings`, `form_submissions`, `orders` fire events + signals via `pg_net`
+- **Objective progress auto-tracking** — `agent-execute` links successful skills to matching objectives
+
+## Phase 10: Agent Self-Evolution ✅ DONE
+
+### Completed
+- **SOUL/IDENTITY layer** — persistent personality stored in `agent_memory` (soul: purpose/values/tone/philosophy, identity: name/role/capabilities/boundaries), injected into every system prompt
+- **`soul_update` tool** — FlowPilot can evolve its own personality, values, and tone over time
+- **`instructions` field on `agent_skills`** — rich markdown knowledge (equivalent to OpenClaw's SKILL.md) injected into prompts when skills load
+- **`skill_instruct` tool** — FlowPilot can write knowledge/context/examples into any skill, making it smarter
+- **Reflect → auto-persist** — `reflect` tool now auto-saves error learnings and suggestions to `agent_memory` as lessons
+- **Skill Hub UI** — Instructions field added to SkillEditorSheet for manual editing
+- **Memory filtering** — soul/identity excluded from general memory list to avoid duplication in prompts
+
+### OpenClaw/NanoClaw Parity
+| Concept | OpenClaw | NanoClaw | FlowPilot |
+|---------|----------|----------|-----------|
+| Personality | SOUL.md file | SOUL.md + IDENTITY.md | `agent_memory` soul + identity entries |
+| Skill knowledge | SKILL.md markdown | .claude/skills/SKILL.md | `instructions` column on `agent_skills` |
+| Self-modification | Terminal (code rewrite) | Claude Code rewrite | DB tools (skill_create/update/instruct, soul_update) |
+| Heartbeat | HEARTBEAT.md config | task-scheduler.ts | `flowpilot-heartbeat` edge fn + pg_cron |
+| Learning loop | Manual | Implicit via Claude | reflect → auto-persist to memory |
+
+## Architecture Reference
+
+```
+skill.handler routing:
+  edge:function-name  →  supabase.functions.invoke()
+  module:name         →  Direct DB operations (blog, crm, booking, etc.)
+  db:table            →  DB read/write (settings, analytics)
+  webhook:n8n         →  External webhook POST
+```
+
+## Key Files
+| File | Purpose |
+|------|---------|
+| `supabase/functions/agent-execute/index.ts` | Unified skill executor + objective tracker |
+| `supabase/functions/agent-operate/index.ts` | FlowPilot operate mode with SOUL/IDENTITY |
+| `supabase/functions/flowpilot-heartbeat/index.ts` | Autonomous 12h heartbeat loop |
+| `supabase/functions/automation-dispatcher/index.ts` | Cron automation executor |
+| `supabase/functions/signal-dispatcher/index.ts` | Signal condition evaluator |
+| `supabase/functions/prospect-research/index.ts` | Sales research pipeline |
+| `supabase/functions/prospect-fit-analysis/index.ts` | Fit scoring + intro drafting |
+| `src/types/agent.ts` | TypeScript types for skill engine |
+| `src/components/admin/skills/SkillEditorSheet.tsx` | Skill editor with instructions field |
