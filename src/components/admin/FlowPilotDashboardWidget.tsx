@@ -126,7 +126,7 @@ export function FlowPilotDashboardWidget() {
                   <CheckCircle className="h-3 w-3 text-emerald-500 shrink-0" />
                 ) : action.status === 'failed' ? (
                   <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
-                ) : action.status === 'pending_approval' ? (
+                ) : (
                   <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
                 )}
                 <span className="truncate flex-1 font-mono">
