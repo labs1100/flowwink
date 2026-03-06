@@ -29,6 +29,7 @@ import { Trash2 } from 'lucide-react';
 const schema = z.object({
   name: z.string().min(1, 'Required'),
   description: z.string().optional(),
+  instructions: z.string().optional(),
   category: z.enum(['content', 'crm', 'communication', 'automation', 'search', 'analytics']),
   scope: z.enum(['internal', 'external', 'both']),
   handler: z.string().min(1, 'Required'),
