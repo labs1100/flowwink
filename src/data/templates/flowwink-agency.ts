@@ -531,21 +531,21 @@ const flowwinkAgencyPages: TemplatePage[] = [
         },
       },
       {
-        id: 'twocol-headless',
+        id: 'twocol-agent',
         type: 'two-column',
         data: {
           eyebrow: 'ARCHITECTURE',
-          title: 'Head + Headless:',
-          accentText: 'Best of Both',
+          title: 'Autonomous Agent +',
+          accentText: 'Content API',
           accentPosition: 'end',
           content: {
             type: 'doc',
             content: [
-              { type: 'paragraph', content: [{ type: 'text', text: 'Unlike pure headless CMS platforms, FlowWink includes a beautiful built-in website. But when clients need custom frontends or mobile apps, the full API is available.' }] },
+              { type: 'paragraph', content: [{ type: 'text', text: 'FlowPilot operates your clients\' websites autonomously — writing content, qualifying leads, managing campaigns. When clients need custom frontends or mobile apps, the full Content API is available.' }] },
               { type: 'bulletList', content: [
-                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Use the visual site for standard clients' }] }] },
-                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Use the API for custom React/Vue apps' }] }] },
-                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Mix both for hybrid solutions' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'FlowPilot manages standard client sites autonomously' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Content API for custom React/Vue/mobile apps' }] }] },
+                { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Set per-client objectives and approval rules' }] }] },
               ]},
             ],
           },
