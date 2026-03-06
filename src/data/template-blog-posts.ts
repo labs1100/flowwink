@@ -604,7 +604,7 @@ export const agencyBlogPosts: TemplateBlogPost[] = [
             'And the costs only grow as you add more clients'
           ),
           h2('The Self-Hosted Alternative'),
-          p('With a self-hosted CMS like FlowWink, you pay for infrastructure, not per-site licenses. A €20/month VPS can host dozens of client sites. The math becomes dramatically different:'),
+          p('With an autonomous platform like FlowWink, you pay for infrastructure, not per-site licenses. A €20/month VPS can host dozens of client sites — each one operated by FlowPilot. The math becomes dramatically different:'),
           ul(
             '20 sites on €20/month VPS = €240/year total',
             'Savings: €9,360/year that stays in your pocket',
