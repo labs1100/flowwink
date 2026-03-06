@@ -105,6 +105,7 @@ export function SkillEditorSheet({ skill, open, onClose, onSave, onDelete }: Ski
       id: skill?.id,
       name: values.name,
       description: values.description || null,
+      instructions: values.instructions || null,
       category: values.category,
       scope: values.scope,
       handler: values.handler,
