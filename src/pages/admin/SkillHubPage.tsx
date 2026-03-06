@@ -154,6 +154,11 @@ export default function SkillHubPage() {
         <TabsContent value="automations">
           <AutomationsPanel />
         </TabsContent>
+
+        {/* Evolution Tab */}
+        <TabsContent value="evolution">
+          <EvolutionPanel />
+        </TabsContent>
       </Tabs>
 
       {/* Editor */}
