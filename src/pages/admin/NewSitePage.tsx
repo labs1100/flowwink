@@ -985,47 +985,49 @@ export default function NewSitePage() {
         )}
 
         {step === 'done' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-primary">
-                <Check className="h-5 w-5" />
-                Site Created Successfully!
-              </CardTitle>
-              <CardDescription>
-                Your website has been created with {selectedTemplate?.pages.length} pages.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {selectedTemplate?.pages.map((page) => (
-                  <Badge key={page.slug} variant="secondary" className="gap-1">
-                    <Check className="h-3 w-3" />
-                    {page.title}
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button variant="outline" onClick={() => navigate('/admin/pages')}>
-                  View All Pages
-                </Button>
-                <Button variant="outline" onClick={() => setShowOnboardingWizard(true)} className="gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Set Business Goals
-                </Button>
-                {createdPageIds[0] && (
-                  <Button onClick={() => navigate(`/admin/pages/${createdPageIds[0]}`)}>
-                    Edit Homepage
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <Check className="h-5 w-5" />
+                  Site Created Successfully!
+                </CardTitle>
+                <CardDescription>
+                  Your website has been created with {selectedTemplate?.pages.length} pages.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {selectedTemplate?.pages.map((page) => (
+                    <Badge key={page.slug} variant="secondary" className="gap-1">
+                      <Check className="h-3 w-3" />
+                      {page.title}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <Button variant="outline" onClick={() => navigate('/admin/pages')}>
+                    View All Pages
                   </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  <Button variant="outline" onClick={() => setShowOnboardingWizard(true)} className="gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Set Business Goals
+                  </Button>
+                  {createdPageIds[0] && (
+                    <Button onClick={() => navigate(`/admin/pages/${createdPageIds[0]}`)}>
+                      Edit Homepage
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-          <FlowPilotOnboardingWizard
-            open={showOnboardingWizard}
-            onOpenChange={setShowOnboardingWizard}
-            templateName={selectedTemplate?.name}
-          />
+            <FlowPilotOnboardingWizard
+              open={showOnboardingWizard}
+              onOpenChange={setShowOnboardingWizard}
+              templateName={selectedTemplate?.name}
+            />
+          </>
         )}
       </div>
     </AdminLayout>
