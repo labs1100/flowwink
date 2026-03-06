@@ -589,6 +589,8 @@ async function executeToolCall(
     case 'skill_update': return handleSkillUpdate(supabase, fnArgs);
     case 'skill_list': return handleSkillList(supabase, fnArgs);
     case 'skill_disable': return handleSkillDisable(supabase, fnArgs);
+    case 'skill_instruct': return handleSkillInstruct(supabase, fnArgs);
+    case 'soul_update': return handleSoulUpdate(supabase, fnArgs);
     case 'automation_create': return handleAutomationCreate(supabase, fnArgs);
     case 'automation_list': return handleAutomationList(supabase, fnArgs);
     case 'reflect': return handleReflect(supabase, fnArgs);
