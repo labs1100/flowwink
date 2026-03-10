@@ -331,7 +331,9 @@ function useSiteSettings<T>(key: string, defaultValue: T) {
         .maybeSingle();
 
       if (error) throw error;
-      return (data?.value as unknown as T) || defaultValue;
+      if (!data?.value) return defaultValue;
+      // Always merge with defaults so new fields get their default values
+      return { ...defaultValue, ...(data.value as unknown as T) };
     },
     staleTime: 1000 * 60 * 5,
   });
