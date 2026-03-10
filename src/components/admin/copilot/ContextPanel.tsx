@@ -121,7 +121,7 @@ function PanelSection({
         {open ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="px-4 pb-3">
+        <div className="px-3 pb-3 overflow-hidden">
           {children}
         </div>
       </CollapsibleContent>
