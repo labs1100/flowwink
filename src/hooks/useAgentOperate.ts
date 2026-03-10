@@ -501,8 +501,16 @@ export function useAgentOperate() {
   }, [conversationId]);
 
   const deleteConversation = useCallback(async (targetId: string) => {
-    await supabase.from('chat_messages').delete().eq('conversation_id', targetId);
-    await supabase.from('chat_conversations').delete().eq('id', targetId);
+    // Hard delete: clean up related records first
+    await Promise.all([
+      supabase.from('chat_messages').delete().eq('conversation_id', targetId),
+      supabase.from('chat_feedback').delete().eq('conversation_id', targetId),
+    ]);
+    const { error } = await supabase.from('chat_conversations').delete().eq('id', targetId);
+    if (error) {
+      console.error('Failed to delete conversation:', error);
+      return;
+    }
     setConversations(prev => prev.filter(c => c.id !== targetId));
     if (conversationId === targetId) {
       setConversationId(null);
