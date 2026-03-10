@@ -135,6 +135,35 @@ export default function CopilotPage() {
             )}
           </div>
 
+          {/* Escalations section */}
+          {showEscalations && escalations.length > 0 && (
+            <div className="px-2 pb-2 border-t border-sidebar-border pt-2">
+              <div className="text-[10px] text-sidebar-foreground/40 uppercase tracking-widest font-normal mb-1 px-2 flex items-center gap-1.5">
+                <AlertTriangle className="h-3 w-3 text-warning" />
+                Escalations ({escalations.length})
+              </div>
+              {escalations.map((esc) => (
+                <button
+                  key={esc.id}
+                  onClick={() => {
+                    if (esc.conversation_id) {
+                      handleSwitchConversation(esc.conversation_id);
+                    }
+                  }}
+                  className="w-full flex items-start gap-2 px-2 py-1.5 rounded-md text-left transition-colors hover:bg-sidebar-accent/50"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-warning" />
+                  <div className="flex-1 min-w-0">
+                    <span className="block truncate text-sm">{esc.reason}</span>
+                    <span className="block text-[10px] text-sidebar-foreground/50">
+                      {esc.priority} · {formatDistanceToNow(new Date(esc.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Footer */}
           <div className="border-t border-sidebar-border p-3">
             <div className="flex items-center gap-2 text-sidebar-foreground/50">
