@@ -459,11 +459,57 @@ export function useAgentOperate() {
     abortRef.current?.abort();
   }, []);
 
-  const clearMessages = useCallback(() => {
-    setMessages([]);
-    localStorage.removeItem(FLOWPILOT_CONVERSATION_KEY);
-    setConversationId(null);
+  // ─── Conversation history ────────────────────────────────────────────
+
+  const loadConversations = useCallback(async () => {
+    const { data } = await supabase
+      .from('chat_conversations')
+      .select('id, title, created_at, updated_at')
+      .eq('conversation_status', 'active')
+      .not('title', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(50);
+    if (data) setConversations(data as FlowPilotConversation[]);
   }, []);
+
+  const switchConversation = useCallback(async (targetId: string) => {
+    if (targetId === conversationId) return;
+
+    localStorage.setItem(FLOWPILOT_CONVERSATION_KEY, targetId);
+    setConversationId(targetId);
+    setMessages([]);
+
+    const { data: msgs } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('conversation_id', targetId)
+      .order('created_at', { ascending: true });
+
+    if (msgs && msgs.length > 0) {
+      const loaded: OperateMessage[] = msgs
+        .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+        .map((m: any) => ({
+          id: m.id,
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          createdAt: new Date(m.created_at),
+          skillResults: m.metadata?.skill_results || undefined,
+          skillResult: m.metadata?.skill_results?.[0] || undefined,
+        }));
+      setMessages(loaded);
+    }
+  }, [conversationId]);
+
+  const deleteConversation = useCallback(async (targetId: string) => {
+    await supabase.from('chat_messages').delete().eq('conversation_id', targetId);
+    await supabase.from('chat_conversations').delete().eq('id', targetId);
+    setConversations(prev => prev.filter(c => c.id !== targetId));
+    if (conversationId === targetId) {
+      setConversationId(null);
+      setMessages([]);
+      localStorage.removeItem(FLOWPILOT_CONVERSATION_KEY);
+    }
+  }, [conversationId]);
 
   return {
     messages,
@@ -471,12 +517,16 @@ export function useAgentOperate() {
     skills,
     activities,
     conversationId,
+    conversations,
     sendMessage,
     executeSkill,
     approveAction,
     cancelRequest,
     loadSkills,
     loadActivity,
+    loadConversations,
+    switchConversation,
+    deleteConversation,
     clearMessages,
   };
 }
