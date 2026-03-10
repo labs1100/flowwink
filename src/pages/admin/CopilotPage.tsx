@@ -22,6 +22,7 @@ export default function CopilotPage() {
   const { searchOpen, setSearchOpen } = useAdminSearch();
   const adminName = branding?.adminName || 'FlowWink';
   const showEscalations = chatSettings?.showEscalationsInCopilot ?? false;
+  const showPublicChats = chatSettings?.showPublicChatsInCopilot ?? false;
 
   // Fetch unresolved escalations
   const { data: escalations = [] } = useQuery({
@@ -38,6 +39,23 @@ export default function CopilotPage() {
     },
     enabled: showEscalations,
     refetchInterval: 30_000,
+  });
+
+  // Fetch active public chat conversations
+  const { data: publicChats = [] } = useQuery({
+    queryKey: ['copilot-public-chats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('chat_conversations')
+        .select('id, title, customer_name, customer_email, updated_at, conversation_status, session_id')
+        .not('session_id', 'is', null)
+        .order('updated_at', { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: showPublicChats,
+    refetchInterval: 15_000,
   });
 
   useEffect(() => {
