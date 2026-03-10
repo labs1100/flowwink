@@ -1107,6 +1107,31 @@ export default function ChatSettingsPage() {
                     </AlertDescription>
                   </Alert>
                 )}
+
+                {/* FlowPilot Escalation Feed */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                          <Zap className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div>
+                          <CardTitle>Show Escalations in FlowPilot</CardTitle>
+                          <CardDescription>
+                            Surface escalated visitor chats directly in the FlowPilot sidebar for quick action
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={formData.showEscalationsInCopilot ?? false}
+                        onCheckedChange={(showEscalationsInCopilot) => 
+                          setFormData({ ...formData, showEscalationsInCopilot })
+                        }
+                      />
+                    </div>
+                  </CardHeader>
+                </Card>
               </div>
             </TabsContent>
 
