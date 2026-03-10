@@ -201,7 +201,10 @@ const navigationGroups: NavGroup[] = [
 export function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, role, signOut, isAdmin } = useAuth();
+  const { user, profile, role, signOut, isAdmin } = useAuth();
+  const { state } = useSidebar();
+  const { data: modules } = useModules();
+  const { pins, addPin, removePin, isPinned } = usePinnedPages(user?.id);
   const { state } = useSidebar();
   const { data: modules } = useModules();
   const { data: branding } = useBrandingSettings();
