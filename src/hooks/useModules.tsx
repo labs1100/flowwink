@@ -33,6 +33,7 @@ export interface ModulesSettings {
   mediaLibrary: ModuleConfig;
   webinars: ModuleConfig;
   salesIntelligence: ModuleConfig;
+  resume: ModuleConfig;
 }
 
 export const defaultModulesSettings: ModulesSettings = {
