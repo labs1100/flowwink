@@ -204,6 +204,7 @@ export function AdminSidebar() {
   const { user, profile, role, signOut, isAdmin } = useAuth();
   const { state } = useSidebar();
   const { data: modules } = useModules();
+  const { addPin, removePin, isPinned } = usePinnedPages(user?.id);
   const { data: branding } = useBrandingSettings();
   const { data: siteSetupComplete } = useSiteSetupComplete();
   const { currentVersion, latestVersion, latestReleaseUrl, hasUpdate } = useVersionCheck();
