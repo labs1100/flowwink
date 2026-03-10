@@ -210,15 +210,15 @@ export default function CopilotPage() {
                 Public chats ({publicChats.length})
               </div>
               {publicChats.map((chat) => (
-                <button
+                <div
                   key={chat.id}
-                  onClick={() => handleSwitchConversation(chat.id)}
                   className={cn(
-                    'w-full flex items-start gap-2 px-2 py-1.5 rounded-md text-left transition-colors',
+                    'group w-full flex items-start gap-2 px-2 py-1.5 rounded-md text-left transition-colors cursor-pointer',
                     operate.conversationId === chat.id
                       ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                       : 'hover:bg-sidebar-accent/50'
                   )}
+                  onClick={() => handleSwitchConversation(chat.id)}
                 >
                   <MessageSquare className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/60" />
                   <div className="flex-1 min-w-0">
@@ -229,7 +229,14 @@ export default function CopilotPage() {
                       {chat.conversation_status || 'active'} · {formatDistanceToNow(new Date(chat.updated_at), { addSuffix: true })}
                     </span>
                   </div>
-                </button>
+                  <button
+                    onClick={(e) => handleDeletePublicChat(chat.id, e)}
+                    className="opacity-0 group-hover:opacity-100 h-5 w-5 shrink-0 inline-flex items-center justify-center rounded text-sidebar-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all"
+                    title="Delete conversation"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
               ))}
             </div>
           )}
