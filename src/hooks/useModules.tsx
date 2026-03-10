@@ -172,6 +172,13 @@ export const defaultModulesSettings: ModulesSettings = {
     icon: 'Target',
     category: 'data',
   },
+  resume: {
+    enabled: false,
+    name: 'Resume',
+    description: 'AI-powered consultant matching with tailored CVs and cover letters',
+    icon: 'FileUser',
+    category: 'data',
+  },
 };
 
 // Map sidebar items to module IDs
