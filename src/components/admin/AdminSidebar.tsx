@@ -38,6 +38,7 @@ import {
   Code2,
   ChevronRight,
   Video,
+  Target,
   Pin,
   PinOff,
 } from "lucide-react";
