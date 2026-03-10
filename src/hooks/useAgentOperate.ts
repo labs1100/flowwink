@@ -467,6 +467,7 @@ export function useAgentOperate() {
       .select('id, title, created_at, updated_at')
       .eq('conversation_status', 'active')
       .not('title', 'is', null)
+      .is('session_id', null)        // Exclude public/visitor chats
       .order('updated_at', { ascending: false })
       .limit(50);
     if (data) setConversations(data as FlowPilotConversation[]);
