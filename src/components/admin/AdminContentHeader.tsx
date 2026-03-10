@@ -7,6 +7,7 @@ import {
   Github, ArrowUpCircle,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { AdminThemeToggle } from './AdminThemeToggle';
 import { usePinnedPages } from '@/hooks/usePinnedPages';
 import { useVersionCheck } from '@/hooks/useVersionCheck';
 
