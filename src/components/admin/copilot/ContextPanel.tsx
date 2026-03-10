@@ -108,9 +108,9 @@ function PanelSection({
   
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex items-center gap-2 w-full px-4 py-2.5 hover:bg-accent/50 transition-colors">
-        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex-1 text-left">
+      <CollapsibleTrigger className="flex items-center gap-2 w-full px-3 py-2.5 hover:bg-accent/50 transition-colors">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex-1 text-left truncate">
           {title}
         </span>
         {badge !== undefined && (
