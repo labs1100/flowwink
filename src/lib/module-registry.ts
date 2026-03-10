@@ -28,6 +28,7 @@ import {
   formsModule,
   ordersModule,
   webinarsModule,
+  resumeModule,
 } from '@/lib/modules';
 
 // =============================================================================
