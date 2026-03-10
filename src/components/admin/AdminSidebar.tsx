@@ -91,6 +91,19 @@ import {
 
 import { navigationGroups, type NavItem, type NavGroup } from './adminNavigation';
 
+function useSiteSetupComplete() {
+  return useQuery({
+    queryKey: ['site-setup-complete'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('pages')
+        .select('id', { count: 'exact', head: true });
+      return (count ?? 0) > 0;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
