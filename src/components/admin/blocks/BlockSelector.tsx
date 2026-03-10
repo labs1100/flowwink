@@ -189,6 +189,12 @@ const BLOCK_GROUPS: BlockGroup[] = [
         icon: <GalleryHorizontalEnd className="h-5 w-5" />,
         description: 'Auto-rotating slides with images and CTA',
       },
+      {
+        type: 'resume-matcher',
+        label: 'Resume Matcher',
+        icon: <FileUser className="h-5 w-5" />,
+        description: 'AI-powered consultant matching from job descriptions',
+      },
     ],
   },
   {

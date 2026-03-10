@@ -1062,6 +1062,36 @@ export function BlockEditor({ blocks, onChange, canEdit }: BlockEditorProps) {
             isEditing={isEditing}
           />
         );
+      case 'resume-matcher':
+        return (
+          <div className="p-6 border rounded-lg bg-muted/30 text-center space-y-2">
+            <FileUser className="w-8 h-8 mx-auto text-primary" />
+            <p className="font-medium text-foreground">Resume Matcher Block</p>
+            <p className="text-sm text-muted-foreground">Visitors can paste a job description to get AI-matched consultant profiles</p>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Title</label>
+                <input
+                  type="text"
+                  className="w-full mt-1 px-3 py-1.5 text-sm border rounded bg-background"
+                  value={(block.data as any).title || ''}
+                  onChange={(e) => handleUpdateBlock(block.id, { ...block.data, title: e.target.value })}
+                  placeholder="Find the Perfect Consultant"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Button Text</label>
+                <input
+                  type="text"
+                  className="w-full mt-1 px-3 py-1.5 text-sm border rounded bg-background"
+                  value={(block.data as any).buttonText || ''}
+                  onChange={(e) => handleUpdateBlock(block.id, { ...block.data, buttonText: e.target.value })}
+                  placeholder="Find Match"
+                />
+              </div>
+            </div>
+          </div>
+        );
       default:
         return <div className="p-4 text-muted-foreground">Unknown block type</div>;
     }
