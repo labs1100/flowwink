@@ -2,6 +2,7 @@ import { ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminSidebar } from './AdminSidebar';
+import { AdminContentHeader } from './AdminContentHeader';
 import { Loader2 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
@@ -57,9 +58,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <SidebarProvider>
       <div className="flex h-screen w-full bg-background">
         <AdminSidebar />
-        <main className="flex-1 overflow-auto animate-fade-in p-8">
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col min-w-0">
+          <AdminContentHeader />
+          <main className="flex-1 overflow-auto animate-fade-in p-8">
+            {children}
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );

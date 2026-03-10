@@ -39,11 +39,14 @@ import {
   ChevronRight,
   Video,
   Target,
+  Pin,
+  PinOff,
 } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { ROLE_LABELS } from "@/types/cms";
 import { useModules, type ModulesSettings } from "@/hooks/useModules";
+import { usePinnedPages } from "@/hooks/usePinnedPages";
 import { useBrandingSettings } from "@/hooks/useSiteSettings";
 import { useVersionCheck } from "@/hooks/useVersionCheck";
 import {
@@ -198,9 +201,10 @@ const navigationGroups: NavGroup[] = [
 export function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, role, signOut, isAdmin } = useAuth();
+  const { user, profile, role, signOut, isAdmin } = useAuth();
   const { state } = useSidebar();
   const { data: modules } = useModules();
+  const { addPin, removePin, isPinned } = usePinnedPages(user?.id);
   const { data: branding } = useBrandingSettings();
   const { data: siteSetupComplete } = useSiteSetupComplete();
   const { currentVersion, latestVersion, latestReleaseUrl, hasUpdate } = useVersionCheck();
@@ -364,14 +368,33 @@ export function AdminSidebar() {
                           <SidebarMenu>
                             {group.items.map((item) => {
                               const isActive = isItemActive(item.href);
+                              const pinned = isPinned(item.href);
                               return (
-                                <SidebarMenuItem key={item.name}>
+                                <SidebarMenuItem key={item.name} className="group/pin">
                                   <SidebarMenuButton asChild isActive={isActive} tooltip={item.name}>
                                     <Link to={item.href}>
                                       <item.icon className="h-4 w-4" />
                                       <span>{item.name}</span>
                                     </Link>
                                   </SidebarMenuButton>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (pinned) {
+                                        removePin(item.href);
+                                      } else {
+                                        addPin({ href: item.href, name: item.name, icon: item.icon.displayName || item.icon.name || 'FileText' });
+                                      }
+                                    }}
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/pin:opacity-100 transition-opacity p-1 rounded hover:bg-sidebar-accent"
+                                    title={pinned ? 'Unpin from header' : 'Pin to header'}
+                                  >
+                                    {pinned ? (
+                                      <PinOff className="h-3 w-3 text-sidebar-foreground/60" />
+                                    ) : (
+                                      <Pin className="h-3 w-3 text-sidebar-foreground/40" />
+                                    )}
+                                  </button>
                                 </SidebarMenuItem>
                               );
                             })}
@@ -397,8 +420,9 @@ export function AdminSidebar() {
                     <SidebarMenu>
                       {group.items.map((item) => {
                         const isActive = isItemActive(item.href);
+                        const pinned = isPinned(item.href);
                         return (
-                          <SidebarMenuItem key={item.name}>
+                          <SidebarMenuItem key={item.name} className="group/pin">
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <SidebarMenuButton asChild isActive={isActive} tooltip={item.name}>
@@ -410,6 +434,26 @@ export function AdminSidebar() {
                               </TooltipTrigger>
                               {isCollapsed && <TooltipContent side="right">{item.name}</TooltipContent>}
                             </Tooltip>
+                            {!isCollapsed && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (pinned) {
+                                    removePin(item.href);
+                                  } else {
+                                    addPin({ href: item.href, name: item.name, icon: item.icon.displayName || item.icon.name || 'FileText' });
+                                  }
+                                }}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover/pin:opacity-100 transition-opacity p-1 rounded hover:bg-sidebar-accent"
+                                title={pinned ? 'Unpin from header' : 'Pin to header'}
+                              >
+                                {pinned ? (
+                                  <PinOff className="h-3 w-3 text-sidebar-foreground/60" />
+                                ) : (
+                                  <Pin className="h-3 w-3 text-sidebar-foreground/40" />
+                                )}
+                              </button>
+                            )}
                           </SidebarMenuItem>
                         );
                       })}
