@@ -780,6 +780,8 @@ const SKILL_OBJECTIVE_MAP: Record<string, string[]> = {
   learn_from_data: ['learn', 'insight', 'analytics', 'performance'],
   seo_audit_page: ['seo', 'content', 'page', 'traffic', 'search', 'performance'],
   kb_gap_analysis: ['knowledge', 'support', 'chat', 'content', 'article', 'kb'],
+  manage_consultant_profile: ['resume', 'consultant', 'profile', 'talent'],
+  match_consultant: ['resume', 'consultant', 'match', 'talent', 'recruitment'],
 };
 
 async function trackObjectiveProgress(
