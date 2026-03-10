@@ -16,7 +16,7 @@ export default function CopilotPage() {
 
   return (
     <AdminLayout>
-      <div className="flex flex-col h-[calc(100vh-4rem)]">
+      <div className="flex flex-col h-[calc(100vh-6.5rem)]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex items-center gap-3">
