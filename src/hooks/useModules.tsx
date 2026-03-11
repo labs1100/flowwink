@@ -4,6 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Json } from '@/integrations/supabase/types';
 
+/**
+ * Module autonomy levels determine whether an admin UI is required:
+ * - 'view-required': Data flows in passively; useless without a UI to review (Forms, Leads, Orders)
+ * - 'config-required': Needs visual setup/configuration (Bookings, Products, Global Elements)
+ * - 'agent-capable': Fully operable via FlowPilot; admin UI is optional (Resume, Sales Intelligence)
+ */
+export type ModuleAutonomy = 'view-required' | 'config-required' | 'agent-capable';
+
 export interface ModuleConfig {
   enabled: boolean;
   name: string;
@@ -11,6 +19,8 @@ export interface ModuleConfig {
   icon: string;
   category: 'content' | 'data' | 'communication' | 'system' | 'insights';
   core?: boolean; // Core modules cannot be disabled
+  autonomy: ModuleAutonomy;
+  adminUI: boolean; // Whether admin interface is shown (default: true for view/config-required)
 }
 
 export interface ModulesSettings {
@@ -43,6 +53,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Dashboard with insights on leads, deals, and newsletter performance',
     icon: 'BarChart3',
     category: 'insights',
+    autonomy: 'view-required',
+    adminUI: true,
   },
   bookings: {
     enabled: true,
@@ -50,6 +62,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Appointment scheduling with calendar view and email confirmations',
     icon: 'CalendarDays',
     category: 'data',
+    autonomy: 'config-required',
+    adminUI: true,
   },
   pages: {
     enabled: true,
@@ -58,6 +72,8 @@ export const defaultModulesSettings: ModulesSettings = {
     icon: 'FileText',
     category: 'content',
     core: true,
+    autonomy: 'config-required',
+    adminUI: true,
   },
   blog: {
     enabled: true,
@@ -65,6 +81,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Blog posts with categories, tags and RSS feed',
     icon: 'BookOpen',
     category: 'content',
+    autonomy: 'config-required',
+    adminUI: true,
   },
   knowledgeBase: {
     enabled: false,
@@ -72,6 +90,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Structured FAQ with categories and AI Chat integration',
     icon: 'Library',
     category: 'content',
+    autonomy: 'config-required',
+    adminUI: true,
   },
   chat: {
     enabled: false,
@@ -79,6 +99,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Intelligent chatbot with Context-Augmented Generation',
     icon: 'MessageSquare',
     category: 'communication',
+    autonomy: 'view-required',
+    adminUI: true,
   },
   liveSupport: {
     enabled: false,
@@ -86,6 +108,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Human agent support with AI handoff and escalation',
     icon: 'Headphones',
     category: 'communication',
+    autonomy: 'view-required',
+    adminUI: true,
   },
   newsletter: {
     enabled: false,
@@ -93,6 +117,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Email campaigns and subscriber management via Resend',
     icon: 'Mail',
     category: 'communication',
+    autonomy: 'config-required',
+    adminUI: true,
   },
   forms: {
     enabled: true,
@@ -100,6 +126,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Form submissions and contact requests',
     icon: 'Inbox',
     category: 'data',
+    autonomy: 'view-required',
+    adminUI: true,
   },
   leads: {
     enabled: true,
@@ -107,6 +135,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'AI-driven lead management with automatic qualification',
     icon: 'UserCheck',
     category: 'data',
+    autonomy: 'view-required',
+    adminUI: true,
   },
   deals: {
     enabled: true,
@@ -114,6 +144,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Pipeline management for sales opportunities',
     icon: 'Briefcase',
     category: 'data',
+    autonomy: 'view-required',
+    adminUI: true,
   },
   companies: {
     enabled: true,
@@ -121,6 +153,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Organization management with multiple contacts',
     icon: 'Building2',
     category: 'data',
+    autonomy: 'view-required',
+    adminUI: true,
   },
   products: {
     enabled: true,
@@ -128,6 +162,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Product catalog for deals and services',
     icon: 'Package',
     category: 'data',
+    autonomy: 'config-required',
+    adminUI: true,
   },
   orders: {
     enabled: true,
@@ -135,6 +171,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Order management and e-commerce transactions',
     icon: 'ShoppingCart',
     category: 'data',
+    autonomy: 'view-required',
+    adminUI: true,
   },
   contentApi: {
     enabled: false,
@@ -142,6 +180,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'REST and GraphQL API for headless CMS',
     icon: 'Database',
     category: 'system',
+    autonomy: 'config-required',
+    adminUI: true,
   },
   globalElements: {
     enabled: true,
@@ -149,6 +189,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Header, footer and other reusable components',
     icon: 'LayoutGrid',
     category: 'system',
+    autonomy: 'config-required',
+    adminUI: true,
   },
   mediaLibrary: {
     enabled: true,
@@ -157,6 +199,8 @@ export const defaultModulesSettings: ModulesSettings = {
     icon: 'Image',
     category: 'data',
     core: true,
+    autonomy: 'config-required',
+    adminUI: true,
   },
   webinars: {
     enabled: false,
@@ -164,6 +208,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Plan, promote and follow up webinars and online events',
     icon: 'Video',
     category: 'communication',
+    autonomy: 'config-required',
+    adminUI: true,
   },
   salesIntelligence: {
     enabled: false,
@@ -171,6 +217,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'Prospect research, fit analysis, and AI-powered introduction letters',
     icon: 'Target',
     category: 'data',
+    autonomy: 'agent-capable',
+    adminUI: true,
   },
   resume: {
     enabled: false,
@@ -178,6 +226,8 @@ export const defaultModulesSettings: ModulesSettings = {
     description: 'AI-powered consultant matching with tailored CVs and cover letters',
     icon: 'FileUser',
     category: 'data',
+    autonomy: 'agent-capable',
+    adminUI: true,
   },
 };
 

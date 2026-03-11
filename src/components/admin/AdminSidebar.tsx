@@ -139,8 +139,10 @@ export function AdminSidebar() {
         if (!item.moduleId) return true;
         // If modules not loaded yet, show all
         if (!modules) return true;
-        // Check if module is enabled
-        return modules[item.moduleId]?.enabled ?? true;
+        // Check if module is enabled and has admin UI active
+        const mod = modules[item.moduleId];
+        if (!mod?.enabled) return false;
+        return mod.adminUI !== false;
       }),
     }))
     .filter(group => group.items.length > 0), [roleFilteredGroups, modules, siteSetupComplete]);
@@ -157,8 +159,9 @@ export function AdminSidebar() {
           if (!item.moduleId) return true;
           // If modules not loaded yet, show all
           if (!modules) return true;
-          // Check if module is enabled
-          return modules[item.moduleId]?.enabled ?? true;
+          const mod = modules[item.moduleId];
+          if (!mod?.enabled) return false;
+          return mod.adminUI !== false;
         }),
       }))
       .filter(group => group.items.length > 0)
@@ -197,7 +200,9 @@ export function AdminSidebar() {
                 if (item.setupOnly && siteSetupComplete) return false;
                 if (!item.moduleId) return true;
                 if (!modules) return true;
-                return modules[item.moduleId]?.enabled ?? true;
+                const mod = modules[item.moduleId];
+                if (!mod?.enabled) return false;
+                return mod.adminUI !== false;
               }),
             }))
             .filter(group => group.items.length > 0)

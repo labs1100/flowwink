@@ -19,6 +19,9 @@ import {
   Headphones,
   CalendarDays,
   BarChart3,
+  Video,
+  Target,
+  FileUser,
 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -48,6 +51,9 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Headphones,
   CalendarDays,
   BarChart3,
+  Video,
+  Target,
+  FileUser,
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -92,7 +98,6 @@ export default function ModulesPage() {
     
     // Handle cascading disables (when parent is disabled, disable dependents)
     if (!enabled) {
-      // Find all modules that depend on this one and disable them
       for (const [depId, parentId] of Object.entries(MODULE_DEPENDENCIES)) {
         if (parentId === moduleId) {
           updated = {
@@ -113,6 +118,18 @@ export default function ModulesPage() {
         };
       }
     }
+    
+    setLocalModules(updated);
+    await updateModules.mutateAsync(updated);
+  };
+
+  const handleAdminUIToggle = async (moduleId: keyof ModulesSettings, adminUI: boolean) => {
+    if (!localModules) return;
+    
+    const updated = {
+      ...localModules,
+      [moduleId]: { ...localModules[moduleId], adminUI },
+    };
     
     setLocalModules(updated);
     await updateModules.mutateAsync(updated);
@@ -234,6 +251,7 @@ export default function ModulesPage() {
                         dependsOnName={dependency ? localModules?.[dependency]?.name : undefined}
                         stats={stats?.[module.id]}
                         onToggle={(enabled) => handleToggle(module.id, enabled)}
+                        onAdminUIToggle={module.autonomy === 'agent-capable' ? (adminUI) => handleAdminUIToggle(module.id, adminUI) : undefined}
                         isUpdating={updateModules.isPending}
                         IconComponent={IconComponent}
                       />

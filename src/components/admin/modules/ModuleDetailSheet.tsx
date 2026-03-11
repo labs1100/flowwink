@@ -17,10 +17,15 @@ import {
   CheckCircle2,
   Clock,
   Hash,
+  Bot,
+  Settings2,
+  Eye,
+  Monitor,
 } from "lucide-react";
 import { moduleRegistry } from "@/lib/module-registry";
 import type { ModuleCapability } from "@/types/module-contracts";
 import type { ModuleStats } from "@/hooks/useModuleStats";
+import type { ModuleAutonomy } from "@/hooks/useModules";
 import { formatDistanceToNow } from "date-fns";
 
 interface ModuleDetailSheetProps {
@@ -31,6 +36,8 @@ interface ModuleDetailSheetProps {
   moduleDescription: string;
   stats?: ModuleStats;
   isEnabled: boolean;
+  autonomy: ModuleAutonomy;
+  adminUI: boolean;
 }
 
 const CAPABILITY_INFO: Record<ModuleCapability, { label: string; description: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -282,6 +289,8 @@ export function ModuleDetailSheet({
   moduleDescription,
   stats,
   isEnabled,
+  autonomy,
+  adminUI,
 }: ModuleDetailSheetProps) {
   // Get module info from registry
   const registryModule = moduleRegistry.list().find(m => m.id === moduleId);
@@ -310,6 +319,29 @@ export function ModuleDetailSheet({
               <span className="text-sm font-medium">
                 {isEnabled ? 'Module Active' : 'Module Disabled'}
               </span>
+            </div>
+
+            {/* Autonomy Level */}
+            <div className="rounded-lg border p-3 bg-muted/20">
+              <div className="flex items-center gap-2 mb-2">
+                {autonomy === 'agent-capable' && <Bot className="h-4 w-4 text-primary" />}
+                {autonomy === 'config-required' && <Settings2 className="h-4 w-4 text-muted-foreground" />}
+                {autonomy === 'view-required' && <Eye className="h-4 w-4 text-muted-foreground" />}
+                <span className="text-sm font-medium capitalize">{autonomy.replace('-', ' ')}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {autonomy === 'agent-capable' && 'This module can be fully managed by FlowPilot without an admin interface. The admin UI is optional.'}
+                {autonomy === 'config-required' && 'This module requires visual configuration. The admin interface is always available when the module is enabled.'}
+                {autonomy === 'view-required' && 'Data flows into this module passively. The admin interface is required to review and manage entries.'}
+              </p>
+              {autonomy === 'agent-capable' && (
+                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
+                  <Monitor className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Admin UI: <span className="font-medium text-foreground">{adminUI ? 'Enabled' : 'Disabled (agent-only)'}</span>
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Statistics */}
