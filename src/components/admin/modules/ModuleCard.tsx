@@ -90,9 +90,11 @@ export function ModuleCard({
   const canReceiveContent = capabilities.includes('content:receive');
   const triggersWebhooks = capabilities.includes('webhook:trigger');
 
-  const autonomyInfo = AUTONOMY_CONFIG[config.autonomy];
+  const autonomy = config.autonomy || 'config-required';
+  const autonomyInfo = AUTONOMY_CONFIG[autonomy];
   const AutonomyIcon = autonomyInfo.icon;
-  const canToggleUI = config.autonomy === 'agent-capable';
+  const canToggleUI = autonomy === 'agent-capable';
+  const adminUI = config.adminUI !== false; // default true
 
   return (
     <>
