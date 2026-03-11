@@ -20,6 +20,7 @@ interface WebScrapeInput {
   url: string;
   max_length?: number;
   formats?: string[];
+  preferred_provider?: 'firecrawl' | 'jina' | 'auto';
 }
 
 async function getJinaConfig(): Promise<{ preferFreeTier: boolean }> {
