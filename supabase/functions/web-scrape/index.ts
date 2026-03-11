@@ -20,6 +20,7 @@ interface WebScrapeInput {
   url: string;
   max_length?: number;
   formats?: string[];
+  preferred_provider?: 'firecrawl' | 'jina' | 'auto';
 }
 
 async function getJinaConfig(): Promise<{ preferFreeTier: boolean }> {
@@ -67,7 +68,7 @@ serve(async (req) => {
   }
 
   try {
-    const { url, max_length = 10000, formats = ['markdown'] } = await req.json() as WebScrapeInput;
+    const { url, max_length = 10000, formats = ['markdown'], preferred_provider = 'auto' } = await req.json() as WebScrapeInput;
 
     if (!url) {
       return new Response(JSON.stringify({ success: false, error: 'url is required' }), {
@@ -81,8 +82,11 @@ serve(async (req) => {
     let metadata: Record<string, unknown> = {};
     let provider = 'none';
 
+    const useFirecrawl = preferred_provider === 'firecrawl' || (preferred_provider === 'auto' && firecrawlKey);
+    const useJina = preferred_provider === 'jina' || preferred_provider === 'auto';
+
     // --- Strategy 1: Firecrawl Scrape (paid, higher quality, JS rendering) ---
-    if (firecrawlKey) {
+    if (useFirecrawl && firecrawlKey) {
       console.log('[web-scrape] Using Firecrawl for:', url);
       try {
         const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -112,7 +116,7 @@ serve(async (req) => {
     }
 
     // --- Strategy 2: Jina Reader (free first → API key → keyless fallback) ---
-    if (!content) {
+    if (!content && useJina) {
       const { preferFreeTier } = await getJinaConfig();
 
       if (preferFreeTier) {

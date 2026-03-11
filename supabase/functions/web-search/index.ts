@@ -21,6 +21,7 @@ interface WebSearchInput {
   limit?: number;
   lang?: string;
   country?: string;
+  preferred_provider?: 'firecrawl' | 'jina' | 'auto';
 }
 
 interface SearchResult {
@@ -78,7 +79,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query, limit = 5, lang, country } = await req.json() as WebSearchInput;
+    const { query, limit = 5, lang, country, preferred_provider = 'auto' } = await req.json() as WebSearchInput;
 
     if (!query) {
       return new Response(JSON.stringify({ success: false, error: 'query is required' }), {
@@ -91,8 +92,11 @@ serve(async (req) => {
     let results: SearchResult[] = [];
     let provider = 'none';
 
+    const useFirecrawl = preferred_provider === 'firecrawl' || (preferred_provider === 'auto' && firecrawlKey);
+    const useJina = preferred_provider === 'jina' || preferred_provider === 'auto';
+
     // --- Strategy 1: Firecrawl Search (paid, higher quality) ---
-    if (firecrawlKey) {
+    if (useFirecrawl && firecrawlKey) {
       console.log('[web-search] Using Firecrawl for:', query);
       try {
         const res = await fetch('https://api.firecrawl.dev/v1/search', {
@@ -127,7 +131,7 @@ serve(async (req) => {
     }
 
     // --- Strategy 2: Jina Search (free first → API key → keyless fallback) ---
-    if (results.length === 0) {
+    if (results.length === 0 && useJina) {
       const { preferFreeTier } = await getJinaConfig();
 
       if (preferFreeTier) {
