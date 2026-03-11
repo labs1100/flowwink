@@ -92,8 +92,11 @@ serve(async (req) => {
     let results: SearchResult[] = [];
     let provider = 'none';
 
+    const useFirecrawl = preferred_provider === 'firecrawl' || (preferred_provider === 'auto' && firecrawlKey);
+    const useJina = preferred_provider === 'jina' || preferred_provider === 'auto';
+
     // --- Strategy 1: Firecrawl Search (paid, higher quality) ---
-    if (firecrawlKey) {
+    if (useFirecrawl && firecrawlKey) {
       console.log('[web-search] Using Firecrawl for:', query);
       try {
         const res = await fetch('https://api.firecrawl.dev/v1/search', {
