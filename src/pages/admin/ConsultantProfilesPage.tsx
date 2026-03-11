@@ -56,6 +56,42 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+/**
+ * Extract text from a PDF ArrayBuffer using pdf.js CDN.
+ */
+async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<string> {
+  try {
+    // Dynamically load pdf.js from CDN
+    const pdfjsLib = await import(/* @vite-ignore */ "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
+    
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pages: string[] = [];
+    
+    for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items
+        .map((item: { str?: string }) => item.str || "")
+        .join(" ");
+      pages.push(text);
+    }
+    
+    return pages.join("\n\n");
+  } catch (err) {
+    console.warn("pdf.js failed, trying basic extraction:", err);
+    // Basic fallback: extract readable strings from binary
+    const bytes = new Uint8Array(arrayBuffer);
+    const decoder = new TextDecoder("utf-8", { fatal: false });
+    const raw = decoder.decode(bytes);
+    const matches = raw.match(/\(([^)]+)\)/g);
+    if (matches) {
+      return matches.map(m => m.slice(1, -1)).join(" ");
+    }
+    return "";
+  }
+}
+
 type ConsultantProfile = {
   id: string;
   name: string;
