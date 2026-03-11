@@ -64,6 +64,7 @@ const iconMap = {
   BarChart3,
   Target,
   MessageSquare,
+  Search,
 };
 
 type IntegrationStatus = 'active' | 'disabled' | 'not_configured';
