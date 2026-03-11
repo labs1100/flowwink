@@ -116,6 +116,21 @@ export function AdminSidebar() {
   const { currentVersion, latestVersion, latestReleaseUrl, hasUpdate } = useVersionCheck();
   const isCollapsed = state === "collapsed";
   const [searchOpen, setSearchOpen] = useState(false);
+  const sidebarScrollRef = useRef<HTMLDivElement>(null);
+  const scrollPositionRef = useRef(0);
+
+  // Preserve sidebar scroll position across route changes
+  const saveScrollPosition = useCallback(() => {
+    if (sidebarScrollRef.current) {
+      scrollPositionRef.current = sidebarScrollRef.current.scrollTop;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (sidebarScrollRef.current) {
+      sidebarScrollRef.current.scrollTop = scrollPositionRef.current;
+    }
+  }, [location.pathname]);
   
   const adminName = branding?.adminName || 'FlowWink';
   const GITHUB_RELEASES_URL = 'https://github.com/magnusfroste/flowwink/releases';
