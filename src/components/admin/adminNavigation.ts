@@ -3,7 +3,6 @@ import {
   Puzzle, Webhook, UserCheck, Briefcase, Building2, Package, Library, ShoppingCart,
   CalendarDays, Plug, Bot, Zap, MessageSquare, Headphones, Megaphone, Code2,
   Video, Target, Rocket, LayoutGrid, Inbox, Menu, UserCircle, Palette, FileUser,
-  Globe,
 } from 'lucide-react';
 
 export type NavItem = {
@@ -71,13 +70,6 @@ export const navigationGroups: NavGroup[] = [
       { name: "Bookings", href: "/admin/bookings", icon: CalendarDays, moduleId: "bookings" },
       { name: "Products", href: "/admin/products", icon: Package, moduleId: "products" },
       { name: "Orders", href: "/admin/orders", icon: ShoppingCart, moduleId: "orders" },
-    ],
-  },
-  {
-    label: "Operator",
-    adminOnly: true,
-    items: [
-      { name: "Browser Control", href: "/admin/browser-control", icon: Globe, moduleId: "browserControl" },
     ],
   },
   {
