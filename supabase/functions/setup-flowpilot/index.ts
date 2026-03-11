@@ -662,7 +662,13 @@ For non-resume PDFs, return the extracted text directly to the user.`,
 
 ## Chaining examples
 1. "Read Magnus Froste's latest LinkedIn post and write a blog post" →
-   search_web (find LinkedIn URL) → browser_fetch (read it via relay) → write_blog_post
+   search_web (find LinkedIn URL) → browser_fetch (read it via relay) → write_blog_post (IMPORTANT: pass the full blog content in the 'content' field as markdown)
+   
+## CRITICAL: write_blog_post content
+When calling write_blog_post, ALWAYS provide the 'content' parameter with the full blog post body as markdown.
+- If you have source material (from browser_fetch, search, etc.), write the blog post yourself based on that material and pass it as 'content'.
+- Do NOT call write_blog_post without content — it will create an empty draft.
+- The content should be 600-1200 words of well-structured markdown with ## headings and paragraphs.
 2. "Summarize this article" → browser_fetch → respond with summary
 3. "Research this company" → browser_fetch (their website) → enrich_company
 
