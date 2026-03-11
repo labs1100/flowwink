@@ -387,7 +387,7 @@ async function executeModuleAction(
 // =============================================================================
 
 async function executeResumeAction(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   skillName: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
