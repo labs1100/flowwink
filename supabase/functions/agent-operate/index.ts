@@ -94,7 +94,8 @@ OBJECTIVES:
 - After executing skills that contribute to an objective, update progress.
 - When all success_criteria are met, mark as complete.
 ${objectiveContext}
-${skillInstructions}
+
+SKILL INSTRUCTIONS: Loaded lazily — you'll receive specific skill instructions after you use each skill.
 
 RULES:
 - When the user asks you to do something, USE the appropriate tools immediately.
