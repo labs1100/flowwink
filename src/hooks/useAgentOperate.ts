@@ -353,6 +353,11 @@ export function useAgentOperate() {
                 // Replace the relay_required result with actual content
                 result.result = fetchResult;
                 result.status = 'success';
+
+                // Build follow-up content for the agent to continue reasoning
+                const title = relayResult.title || '';
+                const content = relayResult.content || fetchResult?.content || '';
+                relayFollowUp = `Here is the fetched content from ${relayUrl}:\n\n**${title}**\n\n${content}`;
               } else {
                 result.result = { error: relayResult?.error || 'Browser relay failed' };
                 result.status = 'failed';
