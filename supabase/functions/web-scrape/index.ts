@@ -82,8 +82,11 @@ serve(async (req) => {
     let metadata: Record<string, unknown> = {};
     let provider = 'none';
 
+    const useFirecrawl = preferred_provider === 'firecrawl' || (preferred_provider === 'auto' && firecrawlKey);
+    const useJina = preferred_provider === 'jina' || preferred_provider === 'auto';
+
     // --- Strategy 1: Firecrawl Scrape (paid, higher quality, JS rendering) ---
-    if (firecrawlKey) {
+    if (useFirecrawl && firecrawlKey) {
       console.log('[web-scrape] Using Firecrawl for:', url);
       try {
         const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
