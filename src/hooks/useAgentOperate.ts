@@ -46,7 +46,7 @@ interface StreamCallbacks {
   onDelta: (content: string) => void;
   onToolStart: (tools: string[], iteration: number) => void;
   onToolDone: (tools: string[], iteration: number) => void;
-  onSkillResults: (results: any[]) => void;
+  onSkillResults: (results: any[]) => Promise<void> | void;
   onError: (message: string) => void;
   onDone: () => void;
 }
