@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -116,6 +116,21 @@ export function AdminSidebar() {
   const { currentVersion, latestVersion, latestReleaseUrl, hasUpdate } = useVersionCheck();
   const isCollapsed = state === "collapsed";
   const [searchOpen, setSearchOpen] = useState(false);
+  const sidebarScrollRef = useRef<HTMLDivElement>(null);
+  const scrollPositionRef = useRef(0);
+
+  // Preserve sidebar scroll position across route changes
+  const saveScrollPosition = useCallback(() => {
+    if (sidebarScrollRef.current) {
+      scrollPositionRef.current = sidebarScrollRef.current.scrollTop;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (sidebarScrollRef.current) {
+      sidebarScrollRef.current.scrollTop = scrollPositionRef.current;
+    }
+  }, [location.pathname]);
   
   const adminName = branding?.adminName || 'FlowWink';
   const GITHUB_RELEASES_URL = 'https://github.com/magnusfroste/flowwink/releases';
@@ -256,7 +271,7 @@ export function AdminSidebar() {
         </div>
 
         {/* Navigation */}
-        <SidebarContent className="px-2 pt-1 pb-2">
+        <SidebarContent ref={sidebarScrollRef} className="px-2 pt-1 pb-2">
           {filteredGroups.map((group, index) => {
             const hasActiveItem = group.items.some(item => isItemActive(item.href));
 
@@ -281,7 +296,7 @@ export function AdminSidebar() {
                               return (
                                 <SidebarMenuItem key={item.name} className="group/pin">
                                   <SidebarMenuButton asChild isActive={isActive} tooltip={item.name}>
-                                    <Link to={item.href}>
+                                    <Link to={item.href} onClick={saveScrollPosition}>
                                       <item.icon className="h-4 w-4" />
                                       <span>{item.name}</span>
                                     </Link>
@@ -335,7 +350,7 @@ export function AdminSidebar() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <SidebarMenuButton asChild isActive={isActive} tooltip={item.name}>
-                                  <Link to={item.href}>
+                                  <Link to={item.href} onClick={saveScrollPosition}>
                                     <item.icon className="h-4 w-4" />
                                     <span>{item.name}</span>
                                   </Link>
