@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,11 +49,49 @@ import {
   Users,
   Search,
   FileUser,
-  ExternalLink,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+/**
+ * Extract text from a PDF ArrayBuffer using pdf.js CDN.
+ */
+async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<string> {
+  try {
+    // Dynamically load pdf.js from CDN
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfjsLib = await (Function('return import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs")')() as Promise<any>);
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
+    
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pages: string[] = [];
+    
+    for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items
+        .map((item: { str?: string }) => item.str || "")
+        .join(" ");
+      pages.push(text);
+    }
+    
+    return pages.join("\n\n");
+  } catch (err) {
+    console.warn("pdf.js failed, trying basic extraction:", err);
+    // Basic fallback: extract readable strings from binary
+    const bytes = new Uint8Array(arrayBuffer);
+    const decoder = new TextDecoder("utf-8", { fatal: false });
+    const raw = decoder.decode(bytes);
+    const matches = raw.match(/\(([^)]+)\)/g);
+    if (matches) {
+      return matches.map(m => m.slice(1, -1)).join(" ");
+    }
+    return "";
+  }
+}
 
 type ConsultantProfile = {
   id: string;
@@ -181,6 +219,8 @@ export default function ConsultantProfilesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProfileFormData>(emptyForm);
+  const [isParsing, setIsParsing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const saveMutation = useMutation({
     mutationFn: async (data: { id?: string; payload: ReturnType<typeof formToPayload> }) => {
@@ -225,6 +265,74 @@ export default function ConsultantProfilesPage() {
     },
   });
 
+  const handlePdfImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    if (file.type !== "application/pdf" && !file.name.endsWith(".pdf")) {
+      toast({ title: "Invalid file", description: "Please select a PDF file.", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Maximum file size is 10 MB.", variant: "destructive" });
+      return;
+    }
+
+    setIsParsing(true);
+    try {
+      // Extract text from PDF using browser
+      const arrayBuffer = await file.arrayBuffer();
+      const text = await extractTextFromPdf(arrayBuffer);
+
+      if (!text || text.length < 20) {
+        toast({ title: "Could not read PDF", description: "The PDF appears to be empty or image-only. Try a text-based resume.", variant: "destructive" });
+        return;
+      }
+
+      // Send to AI for structured extraction
+      const { data, error } = await supabase.functions.invoke("parse-resume", {
+        body: { resume_text: text },
+      });
+
+      if (error || !data?.success) {
+        toast({ title: "Parsing failed", description: data?.error || "Could not parse the resume.", variant: "destructive" });
+        return;
+      }
+
+      const p = data.profile;
+      setEditingId(null);
+      setForm({
+        name: p.name || "",
+        title: p.title || "",
+        email: p.email || "",
+        phone: p.phone || "",
+        skills: (p.skills || []).join(", "),
+        experience_years: p.experience_years || 0,
+        summary: p.summary || "",
+        bio: p.bio || "",
+        availability: "available",
+        is_active: true,
+        hourly_rate_cents: 0,
+        currency: "SEK",
+        languages: (p.languages || []).join(", "),
+        certifications: (p.certifications || []).join(", "),
+        linkedin_url: p.linkedin_url || "",
+        portfolio_url: p.portfolio_url || "",
+      });
+      setDialogOpen(true);
+      toast({ title: "Resume parsed", description: `Extracted profile for ${p.name || "consultant"}. Review and save.` });
+    } catch (err) {
+      console.error("PDF import error:", err);
+      toast({ title: "Import failed", description: "An error occurred while processing the PDF.", variant: "destructive" });
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
@@ -266,10 +374,31 @@ export default function ConsultantProfilesPage() {
           title="Consultant Profiles"
           description="Manage consultants for AI-powered resume matching and cover letter generation."
         >
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Consultant
-          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={handlePdfImport}
+            />
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isParsing}
+            >
+              {isParsing ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4 mr-2" />
+              )}
+              {isParsing ? "Parsing..." : "Import PDF"}
+            </Button>
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Consultant
+            </Button>
+          </div>
         </AdminPageHeader>
 
         {/* Summary */}
