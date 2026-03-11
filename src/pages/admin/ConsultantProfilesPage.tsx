@@ -182,6 +182,8 @@ export default function ConsultantProfilesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProfileFormData>(emptyForm);
+  const [isParsing, setIsParsing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const saveMutation = useMutation({
     mutationFn: async (data: { id?: string; payload: ReturnType<typeof formToPayload> }) => {
