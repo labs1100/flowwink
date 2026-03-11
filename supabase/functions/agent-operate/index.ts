@@ -6,7 +6,7 @@ import {
   buildSoulPrompt,
   loadMemories,
   loadObjectives,
-  loadSkillInstructions,
+  fetchSkillInstructions,
   loadSkillTools,
   getBuiltInTools,
   executeBuiltInTool,
@@ -53,11 +53,10 @@ serve(async (req) => {
     const { apiKey, apiUrl, model } = await resolveAiConfig(supabase);
 
     // Load context in parallel via shared module
-    const [{ soul, identity }, memoryContext, objectiveContext, skillInstructions] = await Promise.all([
+    const [{ soul, identity }, memoryContext, objectiveContext] = await Promise.all([
       loadSoulIdentity(supabase),
       loadMemories(supabase),
       loadObjectives(supabase),
-      loadSkillInstructions(supabase),
     ]);
 
     const soulPrompt = buildSoulPrompt(soul, identity);
@@ -95,7 +94,8 @@ OBJECTIVES:
 - After executing skills that contribute to an objective, update progress.
 - When all success_criteria are met, mark as complete.
 ${objectiveContext}
-${skillInstructions}
+
+SKILL INSTRUCTIONS: Loaded lazily — you'll receive specific skill instructions after you use each skill.
 
 RULES:
 - When the user asks you to do something, USE the appropriate tools immediately.
@@ -132,6 +132,7 @@ RULES:
         ];
 
         const allSkillResults: any[] = [];
+        const loadedInstructions = new Set<string>();
 
         for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
           const aiResponse = await fetch(apiUrl, {
@@ -200,6 +201,18 @@ RULES:
           );
 
           conversationMessages.push(...toolResults);
+
+          // Lazy instruction loading: inject instructions for non-built-in skills just called
+          const calledSkillNames = assistantMessage.tool_calls
+            .map((tc: any) => tc.function.name)
+            .filter((n: string) => !isBuiltInTool(n));
+          if (calledSkillNames.length > 0) {
+            const instrContext = await fetchSkillInstructions(supabase, calledSkillNames, loadedInstructions);
+            if (instrContext) {
+              conversationMessages.push({ role: 'system', content: instrContext });
+            }
+          }
+
           await sseEvent(writer, encoder, 'tool_done', { iteration: iteration + 1, tools: toolNames, results_count: toolResults.length });
         }
       } catch (err: any) {
