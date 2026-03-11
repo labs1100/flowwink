@@ -498,7 +498,7 @@ async function executeDbAction(
 // =============================================================================
 
 async function executeAnalyticsAction(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   skillName: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
