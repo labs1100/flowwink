@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     // Accept anon key or publishable key directly
+    console.log(`[signal-ingest] Token prefix: ${token.slice(0, 20)}..., anonKey prefix: ${anonKey.slice(0, 20)}..., pubKey prefix: ${publishableKey.slice(0, 20)}...`);
     let authorized = (anonKey && token === anonKey) || (publishableKey && token === publishableKey);
 
     // Also check custom token in site_settings
