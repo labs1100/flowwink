@@ -756,7 +756,7 @@ async function executeAnalyticsAction(
 }
 
 async function executeWebhook(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   args: Record<string, unknown>,
 ): Promise<unknown> {
   // Get active webhooks, find one matching the event
