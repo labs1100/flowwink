@@ -4,6 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Json } from '@/integrations/supabase/types';
 
+/**
+ * Module autonomy levels determine whether an admin UI is required:
+ * - 'view-required': Data flows in passively; useless without a UI to review (Forms, Leads, Orders)
+ * - 'config-required': Needs visual setup/configuration (Bookings, Products, Global Elements)
+ * - 'agent-capable': Fully operable via FlowPilot; admin UI is optional (Resume, Sales Intelligence)
+ */
+export type ModuleAutonomy = 'view-required' | 'config-required' | 'agent-capable';
+
 export interface ModuleConfig {
   enabled: boolean;
   name: string;
@@ -11,6 +19,8 @@ export interface ModuleConfig {
   icon: string;
   category: 'content' | 'data' | 'communication' | 'system' | 'insights';
   core?: boolean; // Core modules cannot be disabled
+  autonomy: ModuleAutonomy;
+  adminUI: boolean; // Whether admin interface is shown (default: true for view/config-required)
 }
 
 export interface ModulesSettings {
