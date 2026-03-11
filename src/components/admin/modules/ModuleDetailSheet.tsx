@@ -289,6 +289,8 @@ export function ModuleDetailSheet({
   moduleDescription,
   stats,
   isEnabled,
+  autonomy,
+  adminUI,
 }: ModuleDetailSheetProps) {
   // Get module info from registry
   const registryModule = moduleRegistry.list().find(m => m.id === moduleId);
