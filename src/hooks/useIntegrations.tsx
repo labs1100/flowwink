@@ -77,6 +77,7 @@ export interface IntegrationsSettings {
   meta_pixel: IntegrationConfig;
   slack: IntegrationConfig;
   hunter: IntegrationConfig;
+  jina: IntegrationConfig;
 }
 
 // Default settings - all disabled by default, requiring explicit activation
