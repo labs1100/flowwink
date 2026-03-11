@@ -46,7 +46,7 @@ interface StreamCallbacks {
   onDelta: (content: string) => void;
   onToolStart: (tools: string[], iteration: number) => void;
   onToolDone: (tools: string[], iteration: number) => void;
-  onSkillResults: (results: any[]) => void;
+  onSkillResults: (results: any[]) => Promise<void> | void;
   onError: (message: string) => void;
   onDone: () => void;
 }
@@ -99,7 +99,7 @@ async function parseOperateStream(response: Response, callbacks: StreamCallbacks
                   callbacks.onToolDone(data.tools || [], data.iteration || 0);
                   break;
                 case 'skill_results':
-                  callbacks.onSkillResults(data);
+                  await callbacks.onSkillResults(data);
                   break;
                 case 'error':
                   callbacks.onError(data.message || 'Unknown error');
@@ -332,7 +332,33 @@ export function useAgentOperate() {
               : m
           ));
         },
-        onSkillResults: (results) => {
+        onSkillResults: async (results) => {
+          // Check for relay_required responses from browser_fetch
+          for (const result of results) {
+            if (result?.result?.action === 'relay_required' && result?.result?.url && relayHandlerRef.current) {
+              const relayUrl = result.result.url;
+              setMessages(prev => prev.map(m =>
+                m.id === assistantId
+                  ? { ...m, content: `🔗 Fetching via browser relay: ${relayUrl}`, toolStatus: { phase: 'executing', tools: ['browser_relay'] } }
+                  : m
+              ));
+
+              const relayResult = await relayHandlerRef.current(relayUrl);
+              if (relayResult && !relayResult.error) {
+                // Send relay result back to browser-fetch to get formatted response
+                const { data: fetchResult } = await supabase.functions.invoke('browser-fetch', {
+                  body: { url: relayUrl, relay_result: relayResult },
+                });
+                // Replace the relay_required result with actual content
+                result.result = fetchResult;
+                result.status = 'success';
+              } else {
+                result.result = { error: relayResult?.error || 'Browser relay failed' };
+                result.status = 'failed';
+              }
+            }
+          }
+
           skillResults = results;
           setMessages(prev => prev.map(m =>
             m.id === assistantId
