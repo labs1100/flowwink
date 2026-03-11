@@ -6,7 +6,7 @@ import {
   buildSoulPrompt,
   loadMemories,
   loadObjectives,
-  loadSkillInstructions,
+  fetchSkillInstructions,
   loadSkillTools,
   getBuiltInTools,
   executeBuiltInTool,
