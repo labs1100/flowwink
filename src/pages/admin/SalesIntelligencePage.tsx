@@ -195,6 +195,10 @@ export default function SalesIntelligencePage() {
             <SalesProfileSetup />
           </TabsContent>
 
+          <TabsContent value="company" className="space-y-4">
+            <CompanyProfileCard />
+          </TabsContent>
+
           <TabsContent value="history" className="space-y-4">
             <ResearchHistory />
           </TabsContent>
