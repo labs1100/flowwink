@@ -384,7 +384,14 @@
   chrome.runtime.onMessage?.addListener((msg, sender, sendResponse) => {
     if (msg.type === "scrape_page") {
       const meta = getPageMeta();
-      sendResponse({ success: true, data: meta });
+      sendResponse({
+        success: true,
+        title: meta.title,
+        content: meta.content,
+        url: meta.url,
+        source_type: meta.source_type,
+        html: document.documentElement.outerHTML.substring(0, 50000),
+      });
     }
   });
 

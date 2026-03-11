@@ -59,12 +59,14 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
         if (updatedTabId === tabId && info.status === "complete") {
           chrome.tabs.onUpdated.removeListener(listener);
           
-          // Scrape the page
-          chrome.tabs.sendMessage(tabId, { type: "scrape_page" }, (response) => {
-            // Close the tab
-            chrome.tabs.remove(tabId);
-            sendResponse(response);
-          });
+          // Small delay to let content script initialize
+          setTimeout(() => {
+            chrome.tabs.sendMessage(tabId, { type: "scrape_page" }, (response) => {
+              // Close the tab
+              chrome.tabs.remove(tabId);
+              sendResponse(response || { success: false, error: "No response from content script" });
+            });
+          }, 1500);
         }
       });
     });
