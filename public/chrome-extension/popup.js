@@ -45,9 +45,12 @@ function applyPreset(presetKey) {
 
   document.getElementById("project-name").value = preset.name;
   document.getElementById("endpoint").value = preset.endpoint;
+  if (preset.token) {
+    document.getElementById("token").value = preset.token;
+  }
   
   updatePresetButtons(preset.endpoint);
-  showStatus("Preset applied! Now enter your token.", "success");
+  showStatus(preset.token ? "Preset applied! Ready to save." : "Preset applied! Now enter your token.", "success");
 }
 
 // Save settings
