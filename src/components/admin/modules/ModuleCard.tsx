@@ -90,9 +90,11 @@ export function ModuleCard({
   const canReceiveContent = capabilities.includes('content:receive');
   const triggersWebhooks = capabilities.includes('webhook:trigger');
 
-  const autonomyInfo = AUTONOMY_CONFIG[config.autonomy];
+  const autonomy = config.autonomy || 'config-required';
+  const autonomyInfo = AUTONOMY_CONFIG[autonomy];
   const AutonomyIcon = autonomyInfo.icon;
-  const canToggleUI = config.autonomy === 'agent-capable';
+  const canToggleUI = autonomy === 'agent-capable';
+  const adminUI = config.adminUI !== false; // default true
 
   return (
     <>
@@ -164,7 +166,7 @@ export function ModuleCard({
                   <Badge 
                     variant="outline" 
                     className={`text-[10px] px-1.5 py-0 gap-1 ${
-                      config.autonomy === 'agent-capable' 
+                      autonomy === 'agent-capable' 
                         ? 'border-primary/40 text-primary' 
                         : ''
                     }`}
@@ -223,7 +225,7 @@ export function ModuleCard({
                 <span>Admin interface</span>
               </div>
               <Switch
-                checked={config.adminUI}
+                checked={adminUI}
                 onCheckedChange={onAdminUIToggle}
                 disabled={isUpdating}
                 className="scale-75 data-[state=checked]:bg-primary"
@@ -248,8 +250,8 @@ export function ModuleCard({
         moduleDescription={config.description}
         stats={stats}
         isEnabled={isEnabled}
-        autonomy={config.autonomy}
-        adminUI={config.adminUI}
+        autonomy={autonomy}
+        adminUI={adminUI}
       />
     </>
   );
