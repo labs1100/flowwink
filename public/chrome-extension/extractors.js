@@ -232,6 +232,10 @@ const Extractors = (() => {
     let bestLen = 0;
 
     candidates.forEach(el => {
+      // Skip our own injected UI
+      if (el.id === "signal-capture-palette" || el.id === "signal-capture-fab" ||
+          el.closest("#signal-capture-palette")) return;
+
       // Skip nav, header, footer, sidebar
       const tag = el.tagName.toLowerCase();
       const role = el.getAttribute("role") || "";
