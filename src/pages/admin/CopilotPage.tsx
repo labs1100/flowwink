@@ -265,10 +265,29 @@ export default function CopilotPage() {
             </div>
           )}
 
-          <div className="border-t border-sidebar-border p-3">
+          <div className="border-t border-sidebar-border p-3 space-y-1.5">
             <div className="flex items-center gap-2 text-sidebar-foreground/50">
               <Zap className="h-3.5 w-3.5" />
               <span className="text-xs">{operate.skills.length} skills available</span>
+            </div>
+            <div className="flex items-center gap-2 text-sidebar-foreground/50">
+              <Globe className="h-3.5 w-3.5" />
+              <span className="text-xs">
+                Extension: {relay.extensionStatus.installed 
+                  ? `v${relay.extensionStatus.version || '?'}` 
+                  : 'not detected'}
+              </span>
+              {!relay.extensionStatus.installed && (
+                <button
+                  onClick={() => {
+                    const id = prompt('Enter Chrome Extension ID:');
+                    if (id) relay.setExtensionId(id.trim());
+                  }}
+                  className="text-[10px] text-primary hover:underline"
+                >
+                  Connect
+                </button>
+              )}
             </div>
           </div>
         </div>
