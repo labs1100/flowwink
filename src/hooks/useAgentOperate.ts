@@ -276,6 +276,7 @@ export function useAgentOperate() {
 
     let finalContent = '';
     let skillResults: any[] = [];
+    let relayFollowUp: string | null = null;
 
     try {
       const convId = await getOrCreateConversation();
@@ -352,6 +353,11 @@ export function useAgentOperate() {
                 // Replace the relay_required result with actual content
                 result.result = fetchResult;
                 result.status = 'success';
+
+                // Build follow-up content for the agent to continue reasoning
+                const title = relayResult.title || '';
+                const content = relayResult.content || fetchResult?.content || '';
+                relayFollowUp = `Here is the fetched content from ${relayUrl}:\n\n**${title}**\n\n${content}`;
               } else {
                 result.result = { error: relayResult?.error || 'Browser relay failed' };
                 result.status = 'failed';
@@ -390,6 +396,17 @@ export function useAgentOperate() {
         });
       }
       await loadActivity();
+
+      // If a relay fetched content, automatically send it as a follow-up
+      // so the agent can use it to continue reasoning
+      if (relayFollowUp) {
+        setIsLoading(false);
+        // Small delay to let UI settle, then send follow-up
+        setTimeout(() => {
+          sendMessage(relayFollowUp!);
+        }, 500);
+        return; // Skip finally's setIsLoading since we'll re-enter sendMessage
+      }
 
     } catch (err: any) {
       if (err.name === 'AbortError') return;
