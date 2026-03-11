@@ -19,6 +19,9 @@ import {
   Headphones,
   CalendarDays,
   BarChart3,
+  Video,
+  Target,
+  FileUser,
 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
