@@ -58,11 +58,18 @@ Deno.serve(async (req) => {
 
     // Also check custom token in site_settings
     if (!authorized) {
-      const { data: tokenSetting } = await supabase
+      const { data: tokenSetting, error: settingsErr } = await supabase
         .from("site_settings")
         .select("value")
         .eq("key", "signal_ingest_token")
         .maybeSingle();
+
+      console.log("[signal-ingest] Token check:", { 
+        tokenReceived: token.slice(0, 15),
+        settingsErr: settingsErr?.message,
+        storedToken: (tokenSetting?.value as any)?.token?.slice(0, 15),
+        match: (tokenSetting?.value as any)?.token === token
+      });
 
       const storedToken = (tokenSetting?.value as any)?.token;
       authorized = !!storedToken && storedToken === token;
