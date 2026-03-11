@@ -2051,6 +2051,33 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_intelligence_profiles: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           created_at: string
