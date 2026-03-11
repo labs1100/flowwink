@@ -8,7 +8,7 @@ import { z } from 'zod';
 // --- Sales Intelligence Schemas ---
 
 export const salesIntelligenceInputSchema = z.object({
-  action: z.enum(['research', 'fit-analysis', 'profile-setup']).default('research'),
+  action: z.enum(['research', 'fit-analysis', 'profile-setup', 'web-search', 'web-scrape', 'contact-finder']).default('research'),
   company_name: z.string().min(1).optional(),
   company_url: z.string().url().optional(),
   company_id: z.string().uuid().optional(),
