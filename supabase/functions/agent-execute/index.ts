@@ -160,7 +160,7 @@ const MODULE_HANDLER_TO_SETTING: Record<string, string> = {
 };
 
 async function autoActivateModule(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   moduleName: string,
 ): Promise<void> {
   const settingKey = MODULE_HANDLER_TO_SETTING[moduleName];
