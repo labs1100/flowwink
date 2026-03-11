@@ -37,6 +37,7 @@ import {
   BarChart3,
   Target,
   MessageSquare,
+  Search,
 } from "lucide-react";
 import { useUnsavedChanges, UnsavedChangesDialog } from "@/hooks/useUnsavedChanges";
 import {
@@ -63,6 +64,7 @@ const iconMap = {
   BarChart3,
   Target,
   MessageSquare,
+  Search,
 };
 
 type IntegrationStatus = 'active' | 'disabled' | 'not_configured';
@@ -493,6 +495,25 @@ function IntegrationConfigPanel({
     );
   }
 
+  if (integrationKey === 'jina') {
+    return (
+      <div className="space-y-3 pt-3 border-t">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Prefer free tier</p>
+            <p className="text-xs text-muted-foreground">
+              Use keyless Jina first, fall back to API key on rate limits. Disable to always use your API key.
+            </p>
+          </div>
+          <Switch
+            checked={config?.preferFreeTier ?? true}
+            onCheckedChange={(checked) => handleChange({ preferFreeTier: checked })}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (integrationKey === 'resend') {
     const emailConfig = config?.emailConfig || { fromEmail: 'onboarding@resend.dev', fromName: 'Newsletter' };
     const newsletterTracking = config?.newsletterTracking || { enableOpenTracking: false, enableClickTracking: false };
@@ -827,7 +848,7 @@ export default function IntegrationsStatusPage() {
                     const status: IntegrationStatus = !hasKey ? 'not_configured' : isEnabled ? 'active' : 'disabled';
                     const IconComponent = iconMap[integration.icon as keyof typeof iconMap] || Bot;
                     const currentConfig = getDisplayConfig(key) || integration.config;
-                    const hasConfigSection = ['openai', 'gemini', 'local_llm', 'n8n', 'resend', 'google_analytics', 'meta_pixel', 'slack'].includes(key);
+                    const hasConfigSection = ['openai', 'gemini', 'local_llm', 'n8n', 'resend', 'google_analytics', 'meta_pixel', 'slack', 'jina'].includes(key);
                     const isExpanded = expandedCards.has(key);
 
                     return (
