@@ -33,12 +33,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // 1. Validate token — accepts anon key or custom signal_ingest_token
+    // 1. Validate token — check x-signal-token header first, then Authorization Bearer
+    const signalToken = req.headers.get("x-signal-token");
     const authHeader = req.headers.get("Authorization");
-    const apiKeyHeader = req.headers.get("apikey");
-    const token = authHeader?.startsWith("Bearer ")
-      ? authHeader.replace("Bearer ", "").trim()
-      : apiKeyHeader?.trim() || "";
+    const token = signalToken?.trim()
+      || (authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "").trim() : "");
 
     if (!token) {
       return new Response(JSON.stringify({ ok: false, error: "Missing token" }), {
