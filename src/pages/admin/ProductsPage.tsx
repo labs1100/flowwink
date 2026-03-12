@@ -5,6 +5,7 @@ import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductCategoryManager } from '@/components/admin/ProductCategoryManager';
 import { StoreSettingsPanel } from '@/components/admin/StoreSettingsPanel';
+import { StorePoliciesManager } from '@/components/admin/StorePoliciesManager';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
