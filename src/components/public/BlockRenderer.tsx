@@ -107,6 +107,7 @@ import type { FeaturedProductBlockData } from './blocks/FeaturedProductBlock';
 import type { TrustBarBlockData } from './blocks/TrustBarBlock';
 import type { CategoryNavBlockData } from './blocks/CategoryNavBlock';
 import type { ShippingInfoBlockData } from './blocks/ShippingInfoBlock';
+import type { AiAssistantBlockData } from './blocks/AiAssistantBlock';
 
 interface BlockRendererProps {
   block: ContentBlock;
