@@ -31,6 +31,7 @@ interface FormData {
   type: ProductType;
   price: string;
   currency: string;
+  image_url: string;
 }
 
 export function ProductDialog({ open, onOpenChange, product }: ProductDialogProps) {
@@ -44,6 +45,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       type: 'one_time',
       price: '',
       currency: 'SEK',
+      image_url: '',
     },
   });
 
@@ -57,6 +59,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         type: product.type,
         price: (product.price_cents / 100).toString(),
         currency: product.currency,
+        image_url: product.image_url || '',
       });
     } else {
       reset({
@@ -65,6 +68,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         type: 'one_time',
         price: '',
         currency: 'SEK',
+        image_url: '',
       });
     }
   }, [product, reset]);
@@ -78,7 +82,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       currency: data.currency,
       is_active: true,
       sort_order: 0,
-      image_url: product?.image_url ?? null,
+      image_url: data.image_url?.trim() || null,
       stripe_price_id: product?.stripe_price_id ?? null,
     };
 
@@ -119,6 +123,24 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
               placeholder="Describe the product..."
               rows={2}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="image_url">Image URL</Label>
+            <Input
+              id="image_url"
+              {...register('image_url')}
+              placeholder="https://example.com/image.jpg"
+              type="url"
+            />
+            {watch('image_url') && (
+              <img
+                src={watch('image_url')}
+                alt="Preview"
+                className="h-16 w-16 rounded-lg object-cover border border-border"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            )}
           </div>
 
           <div className="space-y-2">
