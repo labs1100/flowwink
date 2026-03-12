@@ -38,7 +38,7 @@ export default function CartPage() {
 
   return (
     <>
-      <Helmet><title>Cart ({totalItems})</title></Helmet>
+      <Helmet><title>{`Cart (${totalItems})`}</title></Helmet>
       <PublicNavigation />
 
       <main className="min-h-screen bg-background">
