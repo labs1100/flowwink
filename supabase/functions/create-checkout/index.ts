@@ -18,6 +18,7 @@ interface CheckoutRequest {
   items: CartItem[];
   customerName: string;
   customerEmail: string;
+  userId?: string | null;
   currency: string;
   successUrl: string;
   cancelUrl: string;
