@@ -481,7 +481,7 @@ function StepEditor({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs text-emerald-600">On Success →</Label>
+              <Label className="text-xs text-primary">On Success →</Label>
               <Select value={step.on_success ?? 'next'} onValueChange={(v) => onChange({ on_success: v === 'next' ? undefined : v })}>
                 <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Next step" /></SelectTrigger>
                 <SelectContent>
