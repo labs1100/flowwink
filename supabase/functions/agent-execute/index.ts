@@ -1332,11 +1332,11 @@ async function executeDbAction(
 
       const views = data || [];
       const totalViews = views.length;
-      const uniqueSlugs = [...new Set(views.map(v => v.page_slug))];
+      const uniqueSlugs = [...new Set(views.map((v: any) => v.page_slug))];
       const topPages = uniqueSlugs.map(slug => ({
         slug,
-        title: views.find(v => v.page_slug === slug)?.page_title || slug,
-        views: views.filter(v => v.page_slug === slug).length,
+        title: views.find((v: any) => v.page_slug === slug)?.page_title || slug,
+        views: views.filter((v: any) => v.page_slug === slug).length,
       })).sort((a, b) => b.views - a.views).slice(0, 10);
 
       return { period, total_views: totalViews, unique_pages: uniqueSlugs.length, top_pages: topPages };
