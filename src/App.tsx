@@ -203,6 +203,7 @@ const App = () => (
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                <CartSidebar />
                 <RouterProvider router={router} />
               </TooltipProvider>
             </CartProvider>
