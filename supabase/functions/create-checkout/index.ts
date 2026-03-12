@@ -75,6 +75,7 @@ serve(async (req: Request) => {
       items,
       customerName,
       customerEmail,
+      userId,
       currency,
       successUrl,
       cancelUrl,
