@@ -4,6 +4,8 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductCategoryManager } from '@/components/admin/ProductCategoryManager';
+import { StoreSettingsPanel } from '@/components/admin/StoreSettingsPanel';
+import { StorePoliciesManager } from '@/components/admin/StorePoliciesManager';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -96,10 +98,16 @@ export default function ProductsPage() {
           <TabsList>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="categories" className="mt-6">
             <ProductCategoryManager />
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6 space-y-6">
+            <StoreSettingsPanel />
+            <StorePoliciesManager />
           </TabsContent>
 
           <TabsContent value="products" className="mt-6">
