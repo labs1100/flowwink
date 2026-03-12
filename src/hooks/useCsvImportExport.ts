@@ -243,9 +243,9 @@ export function useImportProducts() {
           description: row.description || null,
           price_cents: parsePriceToCents(row.price),
           currency: row.currency?.toUpperCase()?.trim() || 'SEK',
-          type: validateProductType(row.type?.toLowerCase()?.replace('-', '_')?.trim() ?? null)
+          type: (validateProductType(row.type?.toLowerCase()?.replace('-', '_')?.trim() ?? null)
             ? row.type!.toLowerCase().replace('-', '_').trim()
-            : 'one_time',
+            : 'one_time') as 'one_time' | 'recurring',
           image_url: row.image_url || null,
           is_active: true,
         }));
