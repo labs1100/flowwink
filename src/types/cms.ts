@@ -131,7 +131,8 @@ export type ContentBlockType =
   | 'trust-bar'
   | 'category-nav'
   | 'shipping-info'
-  | 'ai-assistant';
+  | 'ai-assistant'
+  | 'quick-links';
 
 // Form field types
 export type FormFieldType = 'text' | 'email' | 'phone' | 'textarea' | 'checkbox';
@@ -361,6 +362,18 @@ export interface HeroBlockData {
   // Design System 2026: Premium Animations
   subtitleAnimation?: 'none' | 'fade-in' | 'slide-up';
   buttonAnimation?: 'none' | 'fade-in' | 'scale-in';
+  // Design System 2026: eyebrow label above title
+  eyebrow?: string;           // Small uppercase label above title (e.g., "DIGITAL TRANSFORMATION")
+  eyebrowColor?: 'default' | 'primary' | 'muted';
+  // Design System 2026: Stats row inside the hero
+  heroStats?: { value: string; label: string }[];
+}
+
+export interface QuickLinksBlockData {
+  heading?: string;
+  links: { id: string; label: string; url: string; icon?: string }[];
+  variant?: 'dark' | 'primary' | 'muted';
+  layout?: 'centered' | 'split';
 }
 
 // =============================================================================

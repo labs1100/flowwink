@@ -71,6 +71,30 @@ export const consultAgencyTemplate: StarterTemplate = {
             showScrollIndicator: true,
             primaryButton: { text: 'Find a Consultant', url: '/consultants' },
             secondaryButton: { text: 'Join Our Network', url: '/join' },
+            eyebrow: 'Digital konsultbyrå',
+            heroStats: [
+              { value: '200+', label: 'Konsulter' },
+              { value: '15+', label: 'Års erfarenhet' },
+              { value: '500+', label: 'Projekt' },
+              { value: '98%', label: 'Nöjda kunder' },
+            ],
+          },
+        },
+
+        // QUICK LINKS — immediate navigation strip
+        {
+          id: 'quick-links-1',
+          type: 'quick-links',
+          data: {
+            heading: 'Hur kan vi hjälpa dig?',
+            variant: 'dark',
+            layout: 'split',
+            links: [
+              { id: 'ql1', label: 'Kontakta oss', url: '/kontakt' },
+              { id: 'ql2', label: 'Våra tjänster', url: '/tjanster' },
+              { id: 'ql3', label: 'Kundcase', url: '/case' },
+              { id: 'ql4', label: 'Lediga tjänster', url: '/karriar' },
+            ],
           },
         },
 

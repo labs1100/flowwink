@@ -325,7 +325,12 @@ export function HeroBlock({ data }: HeroBlockProps) {
             !imageOnLeft && "md:[direction:ltr]"
           )}>
             <div className="max-w-xl">
-              <h1 
+              {data.eyebrow && (
+                <p className="text-sm font-semibold uppercase tracking-widest mb-4 text-primary opacity-80">
+                  {data.eyebrow}
+                </p>
+              )}
+              <h1
                 className={cn(
                   "font-serif font-bold mb-6 text-foreground",
                   titleSizeClasses[data.titleSize || 'default'],
@@ -423,7 +428,17 @@ export function HeroBlock({ data }: HeroBlockProps) {
         textAlignmentClasses[textAlignment],
         heightMode === 'auto' && "py-0"
       )}>
-        <h1 
+        {data.eyebrow && (
+          <p className={cn(
+            "text-sm font-semibold uppercase tracking-widest mb-4 opacity-80",
+            data.eyebrowColor === 'primary' && "text-primary",
+            data.eyebrowColor === 'muted' && "opacity-50",
+            (!data.eyebrowColor || data.eyebrowColor === 'default') && "opacity-70"
+          )}>
+            {data.eyebrow}
+          </p>
+        )}
+        <h1
           className={cn(
             "font-serif font-bold mb-6",
             titleSizeClasses[data.titleSize || 'default'],
@@ -450,7 +465,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
           textAlignment === 'right' && "justify-end"
         )}>
           {data.primaryButton?.text && data.primaryButton?.url && (
-            <a 
+            <a
               href={data.primaryButton.url}
               onClick={(e) => isAnchorLink(data.primaryButton?.url) && handleAnchorClick(e, data.primaryButton!.url)}
               className="bg-background text-foreground px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
@@ -459,7 +474,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
             </a>
           )}
           {data.secondaryButton?.text && data.secondaryButton?.url && (
-            <a 
+            <a
               href={data.secondaryButton.url}
               onClick={(e) => isAnchorLink(data.secondaryButton?.url) && handleAnchorClick(e, data.secondaryButton!.url)}
               className="border border-current px-6 py-3 rounded-lg font-medium hover:bg-white/10 transition-colors"
@@ -468,6 +483,20 @@ export function HeroBlock({ data }: HeroBlockProps) {
             </a>
           )}
         </div>
+        {data.heroStats && data.heroStats.length > 0 && (
+          <div className={cn(
+            "flex flex-wrap gap-8 mt-10 pt-8 border-t border-current/20",
+            textAlignment === 'center' && "justify-center",
+            textAlignment === 'left' && "justify-start"
+          )}>
+            {data.heroStats.map((stat, i) => (
+              <div key={i} className="flex flex-col">
+                <span className="text-3xl md:text-4xl font-bold leading-none">{stat.value}</span>
+                <span className="text-sm opacity-60 mt-1">{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       
       {/* Scroll indicator - fades out on scroll (Webflow-style) */}
