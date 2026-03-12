@@ -130,7 +130,8 @@ export type ContentBlockType =
   | 'featured-product'
   | 'trust-bar'
   | 'category-nav'
-  | 'shipping-info';
+  | 'shipping-info'
+  | 'ai-assistant';
 
 // Form field types
 export type FormFieldType = 'text' | 'email' | 'phone' | 'textarea' | 'checkbox';

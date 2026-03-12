@@ -59,6 +59,7 @@ import {
   TrustBarBlock,
   CategoryNavBlock,
   ShippingInfoBlock,
+  AiAssistantBlock,
 } from './blocks';
 import type { ChatLauncherBlockData } from './blocks/ChatLauncherBlock';
 import type { KbHubBlockData } from './blocks/KbHubBlock';
@@ -106,6 +107,7 @@ import type { FeaturedProductBlockData } from './blocks/FeaturedProductBlock';
 import type { TrustBarBlockData } from './blocks/TrustBarBlock';
 import type { CategoryNavBlockData } from './blocks/CategoryNavBlock';
 import type { ShippingInfoBlockData } from './blocks/ShippingInfoBlock';
+import type { AiAssistantBlockData } from './blocks/AiAssistantBlock';
 
 interface BlockRendererProps {
   block: ContentBlock;
@@ -274,6 +276,8 @@ export function BlockRenderer({ block, pageId, index = 0 }: BlockRendererProps) 
         return <CategoryNavBlock data={block.data as unknown as CategoryNavBlockData} />;
       case 'shipping-info':
         return <ShippingInfoBlock data={block.data as unknown as ShippingInfoBlockData} />;
+      case 'ai-assistant':
+        return <AiAssistantBlock data={block.data as unknown as AiAssistantBlockData} />;
       default:
         return null;
     }
