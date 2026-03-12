@@ -614,6 +614,31 @@ export function useUpdateSystemAiSettings() {
   return useUpdateSiteSettings<SystemAiSettings>('system_ai', 'System AI settings have been updated.');
 }
 
+// Store / Commerce settings
+export interface StoreSettings {
+  currency: string;
+  taxRate: number;
+  taxDisplay: 'inclusive' | 'exclusive' | 'hidden';
+  taxLabel: string;
+  storeName: string;
+}
+
+export const defaultStoreSettings: StoreSettings = {
+  currency: 'USD',
+  taxRate: 0,
+  taxDisplay: 'hidden',
+  taxLabel: 'VAT',
+  storeName: '',
+};
+
+export function useStoreSettings() {
+  return useSiteSettings<StoreSettings>('store', defaultStoreSettings);
+}
+
+export function useUpdateStoreSettings() {
+  return useUpdateSiteSettings<StoreSettings>('store', 'Store settings have been updated.');
+}
+
 // Re-export modules hooks for convenience
 export { useModules, useUpdateModules, useIsModuleEnabled, useEnabledModules } from './useModules';
 export type { ModulesSettings, ModuleConfig } from './useModules';
