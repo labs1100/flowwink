@@ -97,7 +97,7 @@ serve(async (req) => {
         }
       } catch (err) {
         status = "failed";
-        lastError = err.message || "Execution error";
+        lastError = (err as Error).message || "Execution error";
       }
 
       // 3. Calculate next_run_at from cron expression
