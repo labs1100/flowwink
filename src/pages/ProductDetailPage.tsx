@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ShoppingCart, ArrowLeft, Check } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Check, Heart } from 'lucide-react';
 import { PublicNavigation } from '@/components/public/PublicNavigation';
 import { PublicFooter } from '@/components/public/PublicFooter';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useProduct, formatPrice } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist, useToggleWishlist } from '@/hooks/useCustomerData';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
