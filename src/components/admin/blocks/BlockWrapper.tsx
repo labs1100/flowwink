@@ -70,6 +70,7 @@ const BLOCK_LABELS: Record<ContentBlockType, string> = {
   'trust-bar': 'Trust Bar',
   'category-nav': 'Category Navigation',
   'shipping-info': 'Shipping Info',
+  'ai-assistant': 'AI Shopping Assistant',
 };
 
 interface BlockWrapperProps {
