@@ -447,6 +447,7 @@ export const BLOCK_REFERENCE: BlockInfo[] = [
     ],
   },
   {
+    type: 'article-grid',
     name: 'Article Grid',
     description: 'Blog post or article grid.',
     category: 'content',
