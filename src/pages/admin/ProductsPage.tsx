@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { AdminPageContainer } from '@/components/admin/AdminPageContainer';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ProductCategoryManager } from '@/components/admin/ProductCategoryManager';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +92,18 @@ export default function ProductsPage() {
           <IntegrationWarning integration="stripe" />
         )}
 
+        <Tabs defaultValue="products">
+          <TabsList>
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="categories" className="mt-6">
+            <ProductCategoryManager />
+          </TabsContent>
+
+          <TabsContent value="products" className="mt-6">
+
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -172,6 +186,9 @@ export default function ProductsPage() {
           ))}
         </div>
       )}
+
+          </TabsContent>
+        </Tabs>
 
       <ProductDialog
         open={dialogOpen}

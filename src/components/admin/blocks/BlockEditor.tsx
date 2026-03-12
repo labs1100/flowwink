@@ -74,6 +74,8 @@ import { SectionDividerBlockEditor } from './SectionDividerBlockEditor';
 import { FeaturedCarouselBlockEditor } from './FeaturedCarouselBlockEditor';
 import { FeaturedProductBlockEditor } from './FeaturedProductBlockEditor';
 import { TrustBarBlockEditor } from './TrustBarBlockEditor';
+import { CategoryNavBlockEditor } from './CategoryNavBlockEditor';
+import { ShippingInfoBlockEditor } from './ShippingInfoBlockEditor';
 import type { ProductsBlockData } from '@/components/public/blocks/ProductsBlock';
 import type { CartBlockData } from '@/components/public/blocks/CartBlock';
 import type { KbFeaturedBlockData } from '@/components/public/blocks/KbFeaturedBlock';
@@ -98,6 +100,8 @@ import type { SectionDividerBlockData } from '@/components/public/blocks/Section
 import type { FeaturedCarouselBlockData } from '@/components/public/blocks/FeaturedCarouselBlock';
 import type { FeaturedProductBlockData } from '@/components/public/blocks/FeaturedProductBlock';
 import type { TrustBarBlockData } from '@/components/public/blocks/TrustBarBlock';
+import type { CategoryNavBlockData } from '@/components/public/blocks/CategoryNavBlock';
+import type { ShippingInfoBlockData } from '@/components/public/blocks/ShippingInfoBlock';
 
 interface NewsletterBlockData {
   title?: string;
@@ -1108,6 +1112,22 @@ export function BlockEditor({ blocks, onChange, canEdit }: BlockEditorProps) {
         return (
           <TrustBarBlockEditor
             data={block.data as unknown as TrustBarBlockData}
+            onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
+            isEditing={isEditing}
+          />
+        );
+      case 'category-nav':
+        return (
+          <CategoryNavBlockEditor
+            data={block.data as unknown as CategoryNavBlockData}
+            onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
+            isEditing={isEditing}
+          />
+        );
+      case 'shipping-info':
+        return (
+          <ShippingInfoBlockEditor
+            data={block.data as unknown as ShippingInfoBlockData}
             onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
             isEditing={isEditing}
           />

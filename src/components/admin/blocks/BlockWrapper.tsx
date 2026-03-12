@@ -68,6 +68,8 @@ const BLOCK_LABELS: Record<ContentBlockType, string> = {
   'resume-matcher': 'Resume Matcher',
   'featured-product': 'Featured Product',
   'trust-bar': 'Trust Bar',
+  'category-nav': 'Category Navigation',
+  'shipping-info': 'Shipping Info',
 };
 
 interface BlockWrapperProps {

@@ -128,7 +128,9 @@ export type ContentBlockType =
   | 'featured-carousel'
   | 'resume-matcher'
   | 'featured-product'
-  | 'trust-bar';
+  | 'trust-bar'
+  | 'category-nav'
+  | 'shipping-info';
 
 // Form field types
 export type FormFieldType = 'text' | 'email' | 'phone' | 'textarea' | 'checkbox';
