@@ -223,7 +223,7 @@ function StepsPipeline({ steps }: { steps: WorkflowStep[] }) {
             </div>
             <div className="flex flex-wrap gap-1 mt-0.5">
               {step.condition && (
-                <span className="text-[9px] text-amber-600 dark:text-amber-400">
+                <span className="text-[9px] text-accent-foreground">
                   if: {step.condition}
                 </span>
               )}
