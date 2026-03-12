@@ -70,6 +70,8 @@ import {
   AlertTriangle,
   FileUser,
   ShieldCheck,
+  LayoutGrid,
+  Truck,
 } from 'lucide-react';
 import { ContentBlockType } from '@/types/cms';
 import { useAllBlockModuleStatus } from '@/hooks/useBlockModuleStatus';

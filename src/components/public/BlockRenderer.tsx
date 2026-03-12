@@ -270,6 +270,10 @@ export function BlockRenderer({ block, pageId, index = 0 }: BlockRendererProps) 
         return <FeaturedProductBlock data={block.data as unknown as FeaturedProductBlockData} />;
       case 'trust-bar':
         return <TrustBarBlock data={block.data as unknown as TrustBarBlockData} />;
+      case 'category-nav':
+        return <CategoryNavBlock data={block.data as unknown as CategoryNavBlockData} />;
+      case 'shipping-info':
+        return <ShippingInfoBlock data={block.data as unknown as ShippingInfoBlockData} />;
       default:
         return null;
     }

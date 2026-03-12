@@ -55,3 +55,5 @@ export { FeaturedCarouselBlock } from './FeaturedCarouselBlock';
 export { ResumeMatcherBlock } from './ResumeMatcherBlock';
 export { FeaturedProductBlock } from './FeaturedProductBlock';
 export { TrustBarBlock } from './TrustBarBlock';
+export { CategoryNavBlock } from './CategoryNavBlock';
+export { ShippingInfoBlock } from './ShippingInfoBlock';

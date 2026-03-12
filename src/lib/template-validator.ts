@@ -46,7 +46,7 @@ const VALID_BLOCK_TYPES: ContentBlockType[] = [
   // Module-specific blocks
   'webinar',
   // E-commerce blocks
-  'featured-product', 'trust-bar',
+  'featured-product', 'trust-bar', 'category-nav', 'shipping-info',
   // Module-specific
   'resume-matcher'
 ];
