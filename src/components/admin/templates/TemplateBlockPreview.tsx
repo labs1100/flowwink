@@ -392,6 +392,8 @@ export function TemplateBlockPreview({ block, compact, primaryColor = '#6366f1' 
         return <FeaturedCarouselBlock data={block.data as unknown as FeaturedCarouselBlockData} />;
       case 'chat-launcher':
         return <ChatLauncherBlock data={block.data as unknown as ChatLauncherBlockData} />;
+      case 'ai-assistant':
+        return <AiAssistantBlock data={block.data as unknown as AiAssistantBlockData} />;
 
       // Blocks that require database context - show enhanced placeholders
       case 'chat':
