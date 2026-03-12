@@ -44,7 +44,40 @@ serve(async (req) => {
       );
     }
 
-    // 2. Build profile summaries for AI matching
+    // 2. Resolve AI config from site settings (same pattern as generate-text)
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+
+    const { data: systemAiRow } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'system_ai')
+      .maybeSingle();
+
+    const systemAi = systemAiRow?.value as any || {};
+    const configuredProvider = systemAi.provider;
+
+    let useGemini = false;
+    if (configuredProvider === 'gemini' && GEMINI_API_KEY) {
+      useGemini = true;
+    } else if (configuredProvider === 'openai' && OPENAI_API_KEY) {
+      useGemini = false;
+    } else {
+      useGemini = !OPENAI_API_KEY && !!GEMINI_API_KEY;
+    }
+
+    const openaiModel = systemAi.openaiModel || 'gpt-4o-mini';
+    const geminiModel = systemAi.geminiModel || 'gemini-2.0-flash-exp';
+
+    if (!OPENAI_API_KEY && !GEMINI_API_KEY) {
+      // No AI available — use keyword fallback
+      return new Response(
+        JSON.stringify(keywordMatch(profiles, job_description, max_results)),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 3. Build profile summaries for AI matching
     const profileSummaries = profiles.map(p => ({
       id: p.id,
       name: p.name,
@@ -57,16 +90,6 @@ serve(async (req) => {
       experience: JSON.stringify(p.experience_json || []),
       education: JSON.stringify(p.education || []),
     }));
-
-    // 3. Call AI for matching + scoring + cover letter
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      // Fallback: keyword-based matching without AI
-      return new Response(
-        JSON.stringify(keywordMatch(profiles, job_description, max_results)),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     const systemPrompt = `You are an expert recruitment consultant. Analyze a job description against consultant profiles and produce a ranked match result.
 
@@ -109,40 +132,42 @@ ${profileSummaries.map((p, i) => `### Consultant ${i + 1} (ID: ${p.id})
 - Work History: ${p.experience}
 - Education: ${p.education}`).join('\n\n')}`;
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.3,
-      }),
-    });
+    // 4. Call AI
+    let aiResponse: Response;
+
+    if (useGemini) {
+      aiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 4096 },
+          }),
+        }
+      );
+    } else {
+      aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: openaiModel,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.3,
+        }),
+      });
+    }
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
-      console.error('AI gateway error:', aiResponse.status, errText);
-
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ success: false, error: 'Rate limit exceeded. Please try again shortly.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ success: false, error: 'AI credits exhausted.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Fallback to keyword matching
+      console.error('AI error:', aiResponse.status, errText);
       return new Response(
         JSON.stringify(keywordMatch(profiles, job_description, max_results)),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -150,7 +175,13 @@ ${profileSummaries.map((p, i) => `### Consultant ${i + 1} (ID: ${p.id})
     }
 
     const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || '';
+    let content: string;
+
+    if (useGemini) {
+      content = aiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    } else {
+      content = aiData.choices?.[0]?.message?.content || '';
+    }
 
     // Parse JSON from response (handle markdown code blocks)
     let parsed: any;
@@ -190,28 +221,45 @@ ${profileSummaries.map((p, i) => `### Consultant ${i + 1} (ID: ${p.id})
   }
 });
 
-// Keyword-based fallback matching
+// Keyword-based fallback matching — searches title, summary, bio and skills
 function keywordMatch(profiles: any[], jobDescription: string, maxResults: number) {
   const jobWords = new Set(
-    jobDescription.toLowerCase().split(/[\s,;.!?]+/).filter(w => w.length > 3)
+    jobDescription.toLowerCase().split(/[\s,;.!?]+/).filter(w => w.length >= 2)
   );
 
   const scored = profiles.map(p => {
     const skills = (p.skills || []) as string[];
-    const matching = skills.filter(s => 
-      s.toLowerCase().split(/\s+/).some(w => jobWords.has(w))
+    const titleWords = (p.title || '').toLowerCase().split(/\s+/);
+    const summaryWords = (p.summary || p.bio || '').toLowerCase().split(/\s+/);
+
+    const allProfileWords = new Set([
+      ...skills.map(s => s.toLowerCase()),
+      ...titleWords,
+      ...summaryWords,
+    ]);
+
+    const matchingSkills = skills.filter(s =>
+      s.toLowerCase().split(/\s+/).some(w => jobWords.has(w)) ||
+      jobWords.has(s.toLowerCase())
     );
-    const score = Math.min(100, Math.round((matching.length / Math.max(skills.length, 1)) * 100));
+
+    // Count how many job words appear in any profile field
+    const wordHits = [...jobWords].filter(w => allProfileWords.has(w) ||
+      [...allProfileWords].some(pw => pw.includes(w) || w.includes(pw))
+    ).length;
+
+    const score = Math.min(100, Math.round((wordHits / Math.max(jobWords.size, 1)) * 100));
+
     return {
       consultant_id: p.id,
       name: p.name,
       title: p.title || '',
       score,
-      reasoning: `Matched ${matching.length} of ${skills.length} skills based on keywords`,
+      reasoning: `Matched ${wordHits} keyword${wordHits !== 1 ? 's' : ''} from the job description`,
       tailored_summary: p.summary || p.bio || '',
       cover_letter: '',
-      matching_skills: matching,
-      missing_skills: skills.filter(s => !matching.includes(s)),
+      matching_skills: matchingSkills,
+      missing_skills: skills.filter(s => !matchingSkills.includes(s)),
     };
   }).filter(m => m.score > 0).sort((a, b) => b.score - a.score).slice(0, maxResults);
 
