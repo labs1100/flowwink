@@ -100,6 +100,8 @@ import type { ParallaxSectionBlockData } from './blocks/ParallaxSectionBlock';
 import type { BentoGridBlockData } from './blocks/BentoGridBlock';
 import type { SectionDividerBlockData } from './blocks/SectionDividerBlock';
 import type { FeaturedCarouselBlockData } from './blocks/FeaturedCarouselBlock';
+import type { FeaturedProductBlockData } from './blocks/FeaturedProductBlock';
+import type { TrustBarBlockData } from './blocks/TrustBarBlock';
 
 interface BlockRendererProps {
   block: ContentBlock;
