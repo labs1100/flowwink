@@ -1096,6 +1096,22 @@ export function BlockEditor({ blocks, onChange, canEdit }: BlockEditorProps) {
             </div>
           </div>
         );
+      case 'featured-product':
+        return (
+          <FeaturedProductBlockEditor
+            data={block.data as unknown as FeaturedProductBlockData}
+            onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
+            isEditing={isEditing}
+          />
+        );
+      case 'trust-bar':
+        return (
+          <TrustBarBlockEditor
+            data={block.data as unknown as TrustBarBlockData}
+            onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
+            isEditing={isEditing}
+          />
+        );
       default:
         return <div className="p-4 text-muted-foreground">Unknown block type</div>;
     }
