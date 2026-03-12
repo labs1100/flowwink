@@ -215,6 +215,7 @@ serve(async (req: Request) => {
         total_cents: totalCents,
         currency: currency.toUpperCase(),
         status: "pending",
+        user_id: userId || null,
         metadata: { mode, hasRecurring, hasOneTime },
       })
       .select()
