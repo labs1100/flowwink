@@ -72,6 +72,8 @@ import { ParallaxSectionBlockEditor } from './ParallaxSectionBlockEditor';
 import { BentoGridBlockEditor } from './BentoGridBlockEditor';
 import { SectionDividerBlockEditor } from './SectionDividerBlockEditor';
 import { FeaturedCarouselBlockEditor } from './FeaturedCarouselBlockEditor';
+import { FeaturedProductBlockEditor } from './FeaturedProductBlockEditor';
+import { TrustBarBlockEditor } from './TrustBarBlockEditor';
 import type { ProductsBlockData } from '@/components/public/blocks/ProductsBlock';
 import type { CartBlockData } from '@/components/public/blocks/CartBlock';
 import type { KbFeaturedBlockData } from '@/components/public/blocks/KbFeaturedBlock';
@@ -94,6 +96,8 @@ import type { ParallaxSectionBlockData } from '@/components/public/blocks/Parall
 import type { BentoGridBlockData } from '@/components/public/blocks/BentoGridBlock';
 import type { SectionDividerBlockData } from '@/components/public/blocks/SectionDividerBlock';
 import type { FeaturedCarouselBlockData } from '@/components/public/blocks/FeaturedCarouselBlock';
+import type { FeaturedProductBlockData } from '@/components/public/blocks/FeaturedProductBlock';
+import type { TrustBarBlockData } from '@/components/public/blocks/TrustBarBlock';
 
 interface NewsletterBlockData {
   title?: string;
