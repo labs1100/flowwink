@@ -1116,6 +1116,22 @@ export function BlockEditor({ blocks, onChange, canEdit }: BlockEditorProps) {
             isEditing={isEditing}
           />
         );
+      case 'category-nav':
+        return (
+          <CategoryNavBlockEditor
+            data={block.data as unknown as CategoryNavBlockData}
+            onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
+            isEditing={isEditing}
+          />
+        );
+      case 'shipping-info':
+        return (
+          <ShippingInfoBlockEditor
+            data={block.data as unknown as ShippingInfoBlockData}
+            onChange={(data) => handleUpdateBlock(block.id, data as unknown as Record<string, unknown>)}
+            isEditing={isEditing}
+          />
+        );
       default:
         return <div className="p-4 text-muted-foreground">Unknown block type</div>;
     }
