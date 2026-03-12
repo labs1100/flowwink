@@ -105,8 +105,9 @@ export default function ProductsPage() {
             <ProductCategoryManager />
           </TabsContent>
 
-          <TabsContent value="settings" className="mt-6">
+          <TabsContent value="settings" className="mt-6 space-y-6">
             <StoreSettingsPanel />
+            <StorePoliciesManager />
           </TabsContent>
 
           <TabsContent value="products" className="mt-6">
