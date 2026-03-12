@@ -1332,11 +1332,11 @@ async function executeDbAction(
 
       const views = data || [];
       const totalViews = views.length;
-      const uniqueSlugs = [...new Set(views.map(v => v.page_slug))];
+      const uniqueSlugs = [...new Set(views.map((v: any) => v.page_slug))];
       const topPages = uniqueSlugs.map(slug => ({
         slug,
-        title: views.find(v => v.page_slug === slug)?.page_title || slug,
-        views: views.filter(v => v.page_slug === slug).length,
+        title: views.find((v: any) => v.page_slug === slug)?.page_title || slug,
+        views: views.filter((v: any) => v.page_slug === slug).length,
       })).sort((a, b) => b.views - a.views).slice(0, 10);
 
       return { period, total_views: totalViews, unique_pages: uniqueSlugs.length, top_pages: topPages };
@@ -1532,25 +1532,25 @@ async function executeAnalyticsAction(
         .gte('created_at', since.toISOString())
         .limit(100);
 
-      const articleTitles = (articles || []).map(a => a.title.toLowerCase());
-      const articleQuestions = (articles || []).map(a => a.question.toLowerCase());
+      const articleTitles = (articles || []).map((a: any) => a.title.toLowerCase());
+      const articleQuestions = (articles || []).map((a: any) => a.question.toLowerCase());
 
       // 4. Extract unique user questions / topics
       const userQuestions = (messages || [])
-        .map(m => m.content.trim())
-        .filter(q => q.length > 10 && q.length < 500 && q.endsWith('?'));
+        .map((m: any) => m.content.trim())
+        .filter((q: any) => q.length > 10 && q.length < 500 && q.endsWith('?'));
 
       // 5. Find questions NOT covered by existing KB
       const uncoveredQuestions: string[] = [];
       for (const q of userQuestions) {
         const qLower = q.toLowerCase();
-        const covered = articleTitles.some(t => {
-          const words = t.split(/\s+/).filter(w => w.length > 3);
-          const matching = words.filter(w => qLower.includes(w));
+        const covered = articleTitles.some((t: string) => {
+          const words = t.split(/\s+/).filter((w: string) => w.length > 3);
+          const matching = words.filter((w: string) => qLower.includes(w));
           return matching.length >= Math.ceil(words.length * 0.5);
-        }) || articleQuestions.some(aq => {
-          const words = aq.split(/\s+/).filter(w => w.length > 3);
-          const matching = words.filter(w => qLower.includes(w));
+        }) || articleQuestions.some((aq: string) => {
+          const words = aq.split(/\s+/).filter((w: string) => w.length > 3);
+          const matching = words.filter((w: string) => qLower.includes(w));
           return matching.length >= Math.ceil(words.length * 0.5);
         });
 
@@ -1561,8 +1561,8 @@ async function executeAnalyticsAction(
 
       // 6. Identify underperforming articles
       const underperforming = (articles || [])
-        .filter(a => (a.not_helpful_count || 0) > (a.helpful_count || 0) || a.needs_improvement)
-        .map(a => ({
+        .filter((a: any) => (a.not_helpful_count || 0) > (a.helpful_count || 0) || a.needs_improvement)
+        .map((a: any) => ({
           id: a.id,
           title: a.title,
           slug: a.slug,
@@ -1572,7 +1572,7 @@ async function executeAnalyticsAction(
         }));
 
       // 7. Negative feedback themes
-      const negativeThemes = (negativeFeedback || []).map(f => ({
+      const negativeThemes = (negativeFeedback || []).map((f: any) => ({
         question: f.user_question,
         had_kb_context: (f.context_kb_articles || []).length > 0,
       }));
@@ -1585,11 +1585,11 @@ async function executeAnalyticsAction(
         uncovered_count: uncoveredQuestions.length,
         underperforming_articles: underperforming,
         negative_feedback_count: negativeThemes.length,
-        negative_without_kb: negativeThemes.filter(n => !n.had_kb_context).length,
+        negative_without_kb: negativeThemes.filter((n: any) => !n.had_kb_context).length,
         suggestions: [
           uncoveredQuestions.length > 5 ? `${uncoveredQuestions.length} user questions have no matching KB article — consider creating articles for the most common ones.` : null,
           underperforming.length > 0 ? `${underperforming.length} articles have more negative than positive feedback — review and improve them.` : null,
-          negativeThemes.filter(n => !n.had_kb_context).length > 0 ? `${negativeThemes.filter(n => !n.had_kb_context).length} negative feedbacks had no KB context — the chat couldn't find relevant articles.` : null,
+          negativeThemes.filter((n: any) => !n.had_kb_context).length > 0 ? `${negativeThemes.filter((n: any) => !n.had_kb_context).length} negative feedbacks had no KB context — the chat couldn't find relevant articles.` : null,
         ].filter(Boolean),
       };
     }

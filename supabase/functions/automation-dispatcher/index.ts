@@ -97,7 +97,7 @@ serve(async (req) => {
         }
       } catch (err) {
         status = "failed";
-        lastError = err.message || "Execution error";
+        lastError = (err as Error).message || "Execution error";
       }
 
       // 3. Calculate next_run_at from cron expression
@@ -128,7 +128,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("automation-dispatcher error:", err);
     return new Response(
-      JSON.stringify({ error: err.message || "Internal error" }),
+      JSON.stringify({ error: (err as Error).message || "Internal error" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
