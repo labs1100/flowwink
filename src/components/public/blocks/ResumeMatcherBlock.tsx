@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, FileUser, Star, ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useChatSettings } from '@/hooks/useSiteSettings';
 
 interface ConsultantMatch {
   consultant_id: string;
@@ -30,12 +31,17 @@ interface ResumeMatcherBlockProps {
   data: ResumeMatcherBlockData;
 }
 
+// System prompt that instructs FlowPilot to call match_consultant and return raw JSON only.
+// The block is the renderer — FlowPilot is the intelligence.
+const MATCH_SYSTEM_PROMPT = `You are a consultant matching assistant. When given a job description or assignment brief, ALWAYS call the match_consultant tool to find the best matching consultants from this organization's roster. After calling the tool, respond with ONLY the raw JSON object returned by the tool — no prose, no explanation, no markdown. Output only valid JSON.`;
+
 export function ResumeMatcherBlock({ data }: ResumeMatcherBlockProps) {
   const [jobDescription, setJobDescription] = useState('');
   const [matches, setMatches] = useState<ConsultantMatch[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<ConsultantMatch | null>(null);
   const { toast } = useToast();
+  const { data: chatSettings } = useChatSettings();
 
   const title = data.title || 'Find the Perfect Consultant';
   const subtitle = data.subtitle || 'Paste a job description or assignment brief and our AI will match you with the best consultant, complete with a tailored CV and cover letter.';
@@ -52,22 +58,56 @@ export function ResumeMatcherBlock({ data }: ResumeMatcherBlockProps) {
     setSelectedMatch(null);
 
     try {
-      // Use publishable key directly — same pattern as chat-completion.
-      // supabase.functions.invoke() sends the user JWT which fails for anonymous visitors.
+      // Route through FlowPilot (chat-completion) — FlowPilot calls the match_consultant skill,
+      // which routes through agent-execute → module:resume → resume-match edge function.
+      // The block only captures intent and renders the structured response.
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/resume-match`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-completion`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ job_description: jobDescription.trim(), max_results: 3 }),
+          body: JSON.stringify({
+            messages: [{ role: 'user', content: jobDescription.trim() }],
+            settings: {
+              aiProvider: chatSettings?.aiProvider || 'openai',
+              systemPrompt: MATCH_SYSTEM_PROMPT,
+              toolCallingEnabled: true,
+              allowGeneralKnowledge: false,
+              includeContentAsContext: false,
+            },
+          }),
         }
       );
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const result = await response.json();
+
+      // Accumulate the SSE stream into full response text
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) fullContent += delta;
+          } catch { /* ignore parse errors on SSE frames */ }
+        }
+      }
+
+      // FlowPilot returns raw JSON from the match_consultant tool result
+      const jsonStr = fullContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const result = JSON.parse(jsonStr);
 
       if (result?.success && result.matches?.length > 0) {
         setMatches(result.matches);
