@@ -349,9 +349,9 @@ export default function FederationPage() {
                       <div key={item.id} className="flex items-center gap-4 px-4 py-3">
                         <div className="shrink-0">
                           {item.direction === 'inbound' ? (
-                            <ArrowDownLeft className="h-4 w-4 text-blue-500" />
+                            <ArrowDownLeft className="h-4 w-4 text-primary" />
                           ) : (
-                            <ArrowUpRight className="h-4 w-4 text-green-500" />
+                            <ArrowUpRight className="h-4 w-4 text-accent-foreground" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
