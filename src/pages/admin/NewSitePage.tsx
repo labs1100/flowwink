@@ -74,7 +74,7 @@ export default function NewSitePage() {
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [overwriteOptions, setOverwriteOptions] = useState<TemplateOverwriteOptions | null>(null);
   
-  const navigate = useNavigate();
+  // navigate already declared above
   const { data: existingPages } = usePages();
   const { data: deletedPages } = useDeletedPages();
   const { data: existingBlogPostsData } = useBlogPosts();
