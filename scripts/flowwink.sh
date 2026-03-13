@@ -289,104 +289,105 @@ cmd_set_keys() {
     print_section "Configure Secrets"
     require_link || return 1
 
-    echo -e "  ${DIM}Press Enter to skip. Set any of these later in:${NC}"
-    echo -e "  ${DIM}Supabase Dashboard → Project → Settings → Edge Functions → Secrets${NC}"
-    echo ""
+    # name | primary_key_to_check | label for prompt(s) | url
+    local -a INT_DEF=(
+        "Email — Resend|RESEND_API_KEY|newsletter & transactional emails|https://resend.com/api-keys"
+        "Payments — Stripe|STRIPE_SECRET_KEY|e-commerce & subscriptions|https://dashboard.stripe.com/apikeys"
+        "AI — OpenAI|OPENAI_API_KEY|chat, text generation, content tools|https://platform.openai.com/api-keys"
+        "AI — Gemini|GEMINI_API_KEY|alternative to OpenAI|https://aistudio.google.com/app/apikey"
+        "AI — Anthropic|ANTHROPIC_API_KEY|Claude AI models|https://console.anthropic.com/settings/keys"
+        "Local LLM|LOCAL_LLM_API_KEY|Ollama / vLLM — only if auth required|"
+        "Firecrawl|FIRECRAWL_API_KEY|content migration & company enrichment|https://firecrawl.dev"
+        "Jina AI|JINA_API_KEY|alternative web search & scraping|https://jina.ai/api-key"
+        "Unsplash|UNSPLASH_ACCESS_KEY|stock photo search in media library|https://unsplash.com/oauth/applications"
+        "Gmail — Google OAuth|GOOGLE_CLIENT_ID|inbox scanning & email signals|https://console.cloud.google.com/apis/credentials"
+        "Hunter.io|HUNTER_API_KEY|prospect research & email finder|https://hunter.io/api"
+        "N8N|N8N_API_KEY|webhook auth key (if required)|"
+        "Site URL|SITE_URL|base URL for OAuth redirects|"
+    )
 
-    # ── Email ──
-    print_divider
-    echo -e "  ${BOLD}Email${NC}  ${DIM}Resend — newsletter & transactional emails${NC}"
-    echo -e "  ${DIM}https://resend.com/api-keys${NC}"
-    read -e -p "  RESEND_API_KEY: " val; set_secret "RESEND_API_KEY" "$val"
-    echo ""
+    local val
+    while true; do
+        # Re-fetch secrets each loop so status stays current
+        local secrets
+        secrets=$(supabase secrets list 2>/dev/null || echo "")
 
-    # ── Payments ──
-    print_divider
-    echo -e "  ${BOLD}Payments${NC}  ${DIM}Stripe — e-commerce & subscriptions${NC}"
-    echo -e "  ${DIM}https://dashboard.stripe.com/apikeys${NC}"
-    read -e -p "  STRIPE_SECRET_KEY: " val; set_secret "STRIPE_SECRET_KEY" "$val"
-    read -e -p "  STRIPE_WEBHOOK_SECRET: " val; set_secret "STRIPE_WEBHOOK_SECRET" "$val"
-    echo ""
+        # Build menu with live ✓/○ status
+        local -a menu=()
+        for entry in "${INT_DEF[@]}"; do
+            local mname mkey
+            mname=$(cut -d'|' -f1 <<< "$entry")
+            mkey=$(cut -d'|' -f2 <<< "$entry")
+            if echo "$secrets" | grep -q "$mkey"; then
+                menu+=("${GREEN}✓${NC}  $mname")
+            else
+                menu+=("${DIM}○${NC}  $mname")
+            fi
+        done
+        menu+=("── Done")
 
-    # ── AI: OpenAI ──
-    print_divider
-    echo -e "  ${BOLD}AI — OpenAI${NC}  ${DIM}chat, text generation, content tools${NC}"
-    echo -e "  ${DIM}https://platform.openai.com/api-keys${NC}"
-    read -e -p "  OPENAI_API_KEY: " val; set_secret "OPENAI_API_KEY" "$val"
-    echo ""
+        # Strip color codes for _fw_select (printf handles them in draw)
+        local -a plain_menu=()
+        for item in "${menu[@]}"; do
+            plain_menu+=("$(echo -e "$item")")
+        done
 
-    # ── AI: Gemini ──
-    print_divider
-    echo -e "  ${BOLD}AI — Google Gemini${NC}  ${DIM}alternative to OpenAI${NC}"
-    echo -e "  ${DIM}https://aistudio.google.com/app/apikey${NC}"
-    read -e -p "  GEMINI_API_KEY: " val; set_secret "GEMINI_API_KEY" "$val"
-    echo ""
+        echo -e "  ${DIM}↑↓ navigate  Enter select  Esc quit${NC}"
+        echo ""
+        _fw_select "${plain_menu[@]}"
+        local idx=$_FW_IDX
 
-    # ── AI: Anthropic ──
-    print_divider
-    echo -e "  ${BOLD}AI — Anthropic / Claude${NC}  ${DIM}alternative to OpenAI${NC}"
-    echo -e "  ${DIM}https://console.anthropic.com/settings/keys${NC}"
-    read -e -p "  ANTHROPIC_API_KEY: " val; set_secret "ANTHROPIC_API_KEY" "$val"
-    echo ""
+        # Cancelled (Esc/Ctrl-C) or Done
+        [ "$idx" -eq -1 ] && break
+        [ "$idx" -eq "${#INT_DEF[@]}" ] && break
 
-    # ── Local LLM ──
-    print_divider
-    echo -e "  ${BOLD}Local LLM${NC}  ${DIM}Ollama, vLLM, LM Studio — only if auth is required${NC}"
-    echo -e "  ${DIM}Endpoint & model are set in Admin → Integrations${NC}"
-    read -e -p "  LOCAL_LLM_API_KEY: " val; set_secret "LOCAL_LLM_API_KEY" "$val"
-    echo ""
+        local entry="${INT_DEF[$idx]}"
+        local iname idesc iurl
+        iname=$(cut -d'|' -f1 <<< "$entry")
+        idesc=$(cut -d'|' -f3 <<< "$entry")
+        iurl=$(cut -d'|' -f4 <<< "$entry")
 
-    # ── Web scraping ──
-    print_divider
-    echo -e "  ${BOLD}Web Scraping${NC}  ${DIM}Firecrawl — content migration, company enrichment${NC}"
-    echo -e "  ${DIM}https://firecrawl.dev${NC}"
-    read -e -p "  FIRECRAWL_API_KEY: " val; set_secret "FIRECRAWL_API_KEY" "$val"
-    echo ""
+        echo ""
+        echo -e "  ${BOLD}${iname}${NC}  ${DIM}— ${idesc}${NC}"
+        [ -n "$iurl" ] && echo -e "  ${DIM}${iurl}${NC}"
+        echo ""
 
-    print_divider
-    echo -e "  ${BOLD}Web Search${NC}  ${DIM}Jina AI — alternative web search & scraping${NC}"
-    echo -e "  ${DIM}https://jina.ai/api-key${NC}"
-    read -e -p "  JINA_API_KEY: " val; set_secret "JINA_API_KEY" "$val"
-    echo ""
+        case "$idx" in
+            0)  read -e -p "  RESEND_API_KEY: " val
+                set_secret "RESEND_API_KEY" "$val" ;;
+            1)  read -e -p "  STRIPE_SECRET_KEY: " val
+                set_secret "STRIPE_SECRET_KEY" "$val"
+                read -e -p "  STRIPE_WEBHOOK_SECRET: " val
+                set_secret "STRIPE_WEBHOOK_SECRET" "$val" ;;
+            2)  read -e -p "  OPENAI_API_KEY: " val
+                set_secret "OPENAI_API_KEY" "$val" ;;
+            3)  read -e -p "  GEMINI_API_KEY: " val
+                set_secret "GEMINI_API_KEY" "$val" ;;
+            4)  read -e -p "  ANTHROPIC_API_KEY: " val
+                set_secret "ANTHROPIC_API_KEY" "$val" ;;
+            5)  read -e -p "  LOCAL_LLM_API_KEY: " val
+                set_secret "LOCAL_LLM_API_KEY" "$val" ;;
+            6)  read -e -p "  FIRECRAWL_API_KEY: " val
+                set_secret "FIRECRAWL_API_KEY" "$val" ;;
+            7)  read -e -p "  JINA_API_KEY: " val
+                set_secret "JINA_API_KEY" "$val" ;;
+            8)  read -e -p "  UNSPLASH_ACCESS_KEY: " val
+                set_secret "UNSPLASH_ACCESS_KEY" "$val" ;;
+            9)  read -e -p "  GOOGLE_CLIENT_ID: " val
+                set_secret "GOOGLE_CLIENT_ID" "$val"
+                read -e -p "  GOOGLE_CLIENT_SECRET: " val
+                set_secret "GOOGLE_CLIENT_SECRET" "$val" ;;
+            10) read -e -p "  HUNTER_API_KEY: " val
+                set_secret "HUNTER_API_KEY" "$val" ;;
+            11) read -e -p "  N8N_API_KEY: " val
+                set_secret "N8N_API_KEY" "$val" ;;
+            12) read -e -p "  SITE_URL (e.g. https://yoursite.com): " val
+                set_secret "SITE_URL" "$val" ;;
+        esac
+        echo ""
+    done
 
-    # ── Stock photos ──
-    print_divider
-    echo -e "  ${BOLD}Stock Photos${NC}  ${DIM}Unsplash — image search in media library${NC}"
-    echo -e "  ${DIM}https://unsplash.com/oauth/applications${NC}"
-    read -e -p "  UNSPLASH_ACCESS_KEY: " val; set_secret "UNSPLASH_ACCESS_KEY" "$val"
-    echo ""
-
-    # ── Gmail ──
-    print_divider
-    echo -e "  ${BOLD}Gmail Integration${NC}  ${DIM}inbox scanning, email signals${NC}"
-    echo -e "  ${DIM}https://console.cloud.google.com/apis/credentials${NC}"
-    read -e -p "  GOOGLE_CLIENT_ID: " val; set_secret "GOOGLE_CLIENT_ID" "$val"
-    read -e -p "  GOOGLE_CLIENT_SECRET: " val; set_secret "GOOGLE_CLIENT_SECRET" "$val"
-    echo ""
-
-    # ── Sales intelligence ──
-    print_divider
-    echo -e "  ${BOLD}Sales Intelligence${NC}  ${DIM}Hunter.io — prospect research & email finder${NC}"
-    echo -e "  ${DIM}https://hunter.io/api${NC}"
-    read -e -p "  HUNTER_API_KEY: " val; set_secret "HUNTER_API_KEY" "$val"
-    echo ""
-
-    # ── N8N ──
-    print_divider
-    echo -e "  ${BOLD}N8N Automation${NC}  ${DIM}only if your N8N webhook requires auth${NC}"
-    echo -e "  ${DIM}Webhook URL is set in Admin → Integrations${NC}"
-    read -e -p "  N8N_API_KEY: " val; set_secret "N8N_API_KEY" "$val"
-    echo ""
-
-    # ── Site URL ──
-    print_divider
-    echo -e "  ${BOLD}Site URL${NC}  ${DIM}required for OAuth redirects (e.g. Gmail)${NC}"
-    read -e -p "  SITE_URL (e.g. https://yoursite.com): " val; set_secret "SITE_URL" "$val"
-    echo ""
-
-    print_divider
-    echo -e "  ${GREEN}✓ Done.${NC} View or update at any time:"
-    echo -e "  ${DIM}Supabase Dashboard → Project → Settings → Edge Functions → Secrets${NC}"
+    echo -e "  ${DIM}Manage anytime: Supabase Dashboard → Settings → Edge Functions → Secrets${NC}"
     echo ""
 }
 
@@ -562,6 +563,54 @@ cmd_install() {
 
     read -e -p "  Configure API keys now? [y/N]: " keys
     [[ "$keys" =~ ^[Yy]$ ]] && cmd_set_keys
+}
+
+# ─── Generic interactive select (outside readline context) ───
+# Result index in _FW_IDX; -1 = cancelled
+_FW_IDX=-1
+
+_fw_select_draw() {
+    local sel="$1"; shift
+    local items=("$@")
+    for i in "${!items[@]}"; do
+        if [ "$i" -eq "$sel" ]; then
+            printf "  \033[0;36m▶ %s\033[0m\n" "${items[$i]}"
+        else
+            printf "  \033[2m  %s\033[0m\n" "${items[$i]}"
+        fi
+    done
+}
+
+_fw_select() {
+    local items=("$@")
+    local count=${#items[@]}
+    local sel=0
+    _FW_IDX=-1
+
+    printf '\033[?25l'
+    _fw_select_draw "$sel" "${items[@]}"
+
+    local key seq
+    while true; do
+        IFS= read -rsn1 key
+        case "$key" in
+            $'\033')
+                IFS= read -rsn2 -t 0.1 seq
+                case "$seq" in
+                    '[A') sel=$(( (sel - 1 + count) % count )) ;;
+                    '[B') sel=$(( (sel + 1) % count )) ;;
+                esac
+                ;;
+            $'\t') sel=$(( (sel + 1) % count )) ;;
+            ''|$'\r') _FW_IDX=$sel; break ;;
+            $'\x03'|$'\x1b') break ;;
+        esac
+        printf "\033[${count}A"
+        _fw_select_draw "$sel" "${items[@]}"
+    done
+
+    printf "\033[${count}A\033[J"
+    printf '\033[?25h'
 }
 
 # ─── Tab completion (requires bash 4+) ───
