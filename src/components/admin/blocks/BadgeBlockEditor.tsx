@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { ImagePickerField } from '../ImagePickerField';
+import { BadgeBlock } from '@/components/public/blocks/BadgeBlock';
 import type { BadgeBlockData, BadgeItem } from '@/components/public/blocks/BadgeBlock';
 
 interface BadgeBlockEditorProps {
@@ -45,12 +46,7 @@ export function BadgeBlockEditor({ data, onChange, isEditing }: BadgeBlockEditor
   };
 
   if (!isEditing) {
-    return (
-      <div className="py-8 text-center text-muted-foreground">
-        <div className="text-lg font-medium mb-2">{title || 'Badge Block'}</div>
-        <div className="text-sm">{badges.length} badges • {variant} variant</div>
-      </div>
-    );
+    return <BadgeBlock data={data} />;
   }
 
   return (
