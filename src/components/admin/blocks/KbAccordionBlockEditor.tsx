@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { HelpCircle } from 'lucide-react';
+import { KbAccordionBlock } from '@/components/public/blocks/KbAccordionBlock';
 import type { KbAccordionBlockData } from '@/components/public/blocks/KbAccordionBlock';
 
 interface KbAccordionBlockEditorProps {
