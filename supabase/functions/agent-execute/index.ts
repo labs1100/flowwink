@@ -113,6 +113,11 @@ serve(async (req) => {
       // External webhook (N8N etc)
       result = await executeWebhook(supabase, args);
 
+    } else if (handler.startsWith('a2a:')) {
+      // A2A Federation — route to peer agent
+      const peerName = handler.replace('a2a:', '');
+      result = await executeA2ARequest(supabase, peerName, args);
+
     } else {
       result = { error: `Unknown handler type: ${handler}` };
     }
