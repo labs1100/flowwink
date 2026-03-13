@@ -2,8 +2,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search } from 'lucide-react';
 import { KbPageSlugField } from './KbPageSlugField';
+import { KbSearchBlock } from '@/components/public/blocks/KbSearchBlock';
 
 interface KbSearchBlockData {
   title?: string;
