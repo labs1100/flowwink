@@ -55,15 +55,19 @@ export default function FederationPage() {
     const result = await createPeer.mutateAsync({
       name: newPeerName,
       url: newPeerUrl,
-      inbound_token_hash: newPeerToken || undefined,
+      outbound_token: newPeerOutboundToken || undefined,
+      inbound_token: newPeerInboundToken || undefined,
     });
 
     if (result) {
-      setShowToken(result.outbound_token);
+      if (!newPeerOutboundToken) {
+        setShowToken(result.outbound_token);
+      }
       setDialogOpen(false);
       setNewPeerName('');
       setNewPeerUrl('');
-      setNewPeerToken('');
+      setNewPeerOutboundToken('');
+      setNewPeerInboundToken('');
     }
   };
 
