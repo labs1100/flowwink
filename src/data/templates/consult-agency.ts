@@ -928,7 +928,7 @@ export const consultAgencyTemplate: StarterTemplate = {
   },
 
   footerSettings: {
-    variant: 'columns',
+    variant: 'full',
     email: 'hello@consultagency.se',
     phone: '+46 8 123 456 78',
     address: 'Stureplan 4, Stockholm',
