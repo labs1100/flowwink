@@ -675,7 +675,7 @@ const flowwinkAgencyPages: TemplatePage[] = [
           title: 'Start Free Today',
           subtitle: 'Clone the repo and deploy your first client site in 5 minutes.',
           buttonText: 'View on GitHub',
-          buttonUrl: 'https://github.com/flowwink/flowwink',
+          buttonUrl: 'https://github.com/magnusfroste/flowwink',
           secondaryButtonText: 'Contact Sales',
           secondaryButtonUrl: '/contact',
           gradient: true,
