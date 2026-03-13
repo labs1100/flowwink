@@ -197,6 +197,12 @@ export function BlockWrapper({
               onChange={onAnchorChange}
             />
           )}
+          {onBackgroundChange && (
+            <BlockBackgroundControl
+              value={block.sectionBackground}
+              onChange={onBackgroundChange}
+            />
+          )}
           {onToggleHidden && (
             <Tooltip>
               <TooltipTrigger asChild>
