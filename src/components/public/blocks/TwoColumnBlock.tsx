@@ -23,6 +23,7 @@ const typographyScale = {
 
 export function TwoColumnBlock({ data }: TwoColumnBlockProps) {
   const { branding } = useBranding();
+  const isTextTextLayout = !!(data.leftColumn || data.rightColumn);
   const imageFirst = data.imagePosition === 'left';
   const stickyColumn = data.stickyColumn || 'none';
   const titleSize = data.titleSize || 'default';
@@ -71,6 +72,8 @@ export function TwoColumnBlock({ data }: TwoColumnBlockProps) {
   
   // Use the shared tiptap-utils for consistent rendering
   const htmlContent = renderToHtml(data.content);
+  const leftHtml = isTextTextLayout ? renderToHtml(data.leftColumn) : '';
+  const rightHtml = isTextTextLayout ? renderToHtml(data.rightColumn) : '';
 
   // Build title with optional accent text
   const renderTitle = () => {
