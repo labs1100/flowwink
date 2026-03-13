@@ -282,7 +282,7 @@ const trustcorpPages: StarterTemplate['pages'] = [
     slug: 'case-studies',
     menu_order: 3,
     showInMenu: true,
-    meta: { description: 'Real results from real clients', showTitle: true, titleAlignment: 'center' },
+    meta: { description: 'Real results from real clients', showTitle: false, titleAlignment: 'center' },
     blocks: [
       { id: 'hero-1', type: 'hero', data: { title: 'Client Success Stories', subtitle: 'Real results from industry leaders', backgroundType: 'color', heightMode: 'auto', contentAlignment: 'center', overlayOpacity: 0 } },
       {
