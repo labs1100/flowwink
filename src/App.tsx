@@ -56,6 +56,7 @@ import IntegrationsStatusPage from "./pages/admin/IntegrationsStatusPage";
 import CopilotPage from "./pages/admin/CopilotPage";
 import LiveSupportPage from "./pages/admin/LiveSupportPage";
 import TemplateExportPage from "./pages/admin/TemplateExportPage";
+import TemplateLivePreviewPage from "./pages/admin/TemplateLivePreviewPage";
 import TrashPage from "./pages/admin/TrashPage";
 import PreviewPage from "./pages/PreviewPage";
 import PublicPage from "./pages/PublicPage";
@@ -193,6 +194,7 @@ const router = createBrowserRouter([
       { path: "/admin/live-support", element: <LiveSupportPage /> },
       { path: "/admin/template-export", element: <TemplateExportPage /> },
       { path: "/admin/developer-tools", element: <DeveloperToolsPage /> },
+      { path: "/admin/template-live-preview", element: <TemplateLivePreviewPage /> },
       { path: "/admin/webinars", element: <WebinarsPage /> },
       { path: "/admin/sales-intelligence", element: <SalesIntelligencePage /> },
       { path: "/admin/resume", element: <ConsultantProfilesPage /> },

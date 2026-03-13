@@ -31,9 +31,7 @@ import {
   X,
   Home
 } from "lucide-react";
-import { TemplateBlockPreview } from "./TemplateBlockPreview";
-import { ContentBlock } from "@/types/cms";
-import { TemplateBrandingProvider } from "./TemplateBrandingProvider";
+
 
 interface TemplatePreviewProps {
   template: StarterTemplate | null;
@@ -85,61 +83,6 @@ export function TemplatePreview({ template, open, onOpenChange, onSelect }: Temp
   const accentColor = template.branding?.accentColor || '180 100% 50%';
   const thumbnail = getTemplateThumbnail(template);
   const isDarkTheme = template.branding?.defaultTheme === 'dark';
-  
-  // Convert HSL string to CSS color value
-  const hslToCssColor = (hsl: string) => {
-    // If already in format "hsl(...)" or "#..." return as-is
-    if (hsl.startsWith('hsl') || hsl.startsWith('#') || hsl.startsWith('rgb')) {
-      return hsl;
-    }
-    // Otherwise assume it's HSL values like "250 91% 64%"
-    return `hsl(${hsl})`;
-  };
-  
-  // Generate scoped CSS for template branding isolation
-  const scopedStyles = `
-    .template-preview-content {
-      --primary: ${primaryColor};
-      --primary-foreground: ${isDarkTheme ? '0 0% 100%' : '0 0% 100%'};
-      --background: ${isDarkTheme ? '222 47% 11%' : '0 0% 100%'};
-      --foreground: ${isDarkTheme ? '0 0% 100%' : '222 47% 11%'};
-      --muted: ${isDarkTheme ? '217 33% 17%' : '210 40% 96%'};
-      --muted-foreground: ${isDarkTheme ? '215 20% 65%' : '215 16% 47%'};
-      --accent: ${accentColor};
-      --accent-foreground: ${isDarkTheme ? '0 0% 100%' : '222 47% 11%'};
-      --card: ${isDarkTheme ? '222 47% 13%' : '0 0% 100%'};
-      --card-foreground: ${isDarkTheme ? '0 0% 100%' : '222 47% 11%'};
-      --border: ${isDarkTheme ? '217 33% 20%' : '214 32% 91%'};
-      --input: ${isDarkTheme ? '217 33% 20%' : '214 32% 91%'};
-      --ring: ${primaryColor};
-      --secondary: ${isDarkTheme ? '217 33% 17%' : '210 40% 96%'};
-      --secondary-foreground: ${isDarkTheme ? '0 0% 100%' : '222 47% 11%'};
-      --destructive: 0 84% 60%;
-      --destructive-foreground: 0 0% 100%;
-      --popover: ${isDarkTheme ? '222 47% 13%' : '0 0% 100%'};
-      --popover-foreground: ${isDarkTheme ? '0 0% 100%' : '222 47% 11%'};
-      
-      background-color: hsl(${isDarkTheme ? '222 47% 11%' : '0 0% 100%'});
-      color: hsl(${isDarkTheme ? '0 0% 100%' : '222 47% 11%'});
-      isolation: isolate;
-      contain: content;
-      overflow: hidden;
-      ${template.branding?.headingFont ? `--heading-font: '${template.branding.headingFont}', serif;` : ''}
-      ${template.branding?.bodyFont ? `--body-font: '${template.branding.bodyFont}', sans-serif;` : ''}
-      ${template.branding?.headingFont ? `font-family: '${template.branding.bodyFont || 'Inter'}', sans-serif;` : ''}
-    }
-    .template-preview-content h1,
-    .template-preview-content h2,
-    .template-preview-content h3,
-    .template-preview-content h4 {
-      ${template.branding?.headingFont ? `font-family: '${template.branding.headingFont}', serif;` : ''}
-    }
-    ${isDarkTheme ? `
-    .template-preview-content .dark\\:text-white { color: white; }
-    .template-preview-content .dark\\:bg-slate-900 { background-color: rgb(15 23 42); }
-    .template-preview-content [class*="dark:"] { color-scheme: dark; }
-    ` : ''}
-  `;
 
 
   const currentPage = template.pages?.[selectedPage];
@@ -383,31 +326,16 @@ export function TemplatePreview({ template, open, onOpenChange, onSelect }: Temp
                 </div>
               </div>
 
-              {/* Page content preview - with template branding injected */}
-              <ScrollArea className={cn(
-                isFullscreen ? "h-[calc(100vh-120px)]" : "h-[calc(90vh-180px)]"
-              )}>
-                <style dangerouslySetInnerHTML={{ __html: scopedStyles }} />
-                <TemplateBrandingProvider branding={template.branding || {}}>
-                  <div className="template-preview-content">
-                    {currentPage?.blocks?.map((block, index) => (
-                      <TemplateBlockPreview 
-                        key={block.id || index}
-                        block={block as ContentBlock}
-                        compact={deviceMode === 'mobile'}
-                        primaryColor={hslToCssColor(primaryColor)}
-                      />
-                    ))}
-                    
-                    {(!currentPage?.blocks || currentPage.blocks.length === 0) && (
-                      <div className="p-12 text-center text-muted-foreground">
-                        <LayoutGrid className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>This page has no blocks</p>
-                      </div>
-                    )}
-                  </div>
-                </TemplateBrandingProvider>
-              </ScrollArea>
+              {/* Page content preview - live iframe */}
+              <iframe
+                key={`${template.id}-${selectedPage}`}
+                src={`/admin/template-live-preview?id=${template.id}&page=${selectedPage}`}
+                className={cn(
+                  "w-full border-0",
+                  isFullscreen ? "h-[calc(100vh-120px)]" : "h-[calc(90vh-180px)]"
+                )}
+                title={`Preview: ${currentPage?.title || template.name}`}
+              />
             </div>
           </div>
         </div>
