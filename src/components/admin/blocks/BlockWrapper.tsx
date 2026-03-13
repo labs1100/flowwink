@@ -2,11 +2,12 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2, Settings, Copy, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ContentBlock, ContentBlockType, BlockSpacing, BlockAnimation } from '@/types/cms';
+import { ContentBlock, ContentBlockType, BlockSpacing, BlockAnimation, SectionBackground } from '@/types/cms';
 import { cn } from '@/lib/utils';
 import { BlockSpacingControl, getSpacingClasses } from './BlockSpacingControl';
 import { BlockAnimationControl } from './BlockAnimationControl';
 import { BlockAnchorControl } from './BlockAnchorControl';
+import { BlockBackgroundControl } from './BlockBackgroundControl';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const BLOCK_LABELS: Record<ContentBlockType, string> = {
