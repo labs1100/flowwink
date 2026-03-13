@@ -558,6 +558,63 @@ FW_COMMANDS=(
     "/env" "/status" "/about" "/help" "/quit"
 )
 
+_fw_draw_menu() {
+    local selected="$1"
+    shift
+    local items=("$@")
+    for i in "${!items[@]}"; do
+        if [ "$i" -eq "$selected" ]; then
+            printf "  \033[0;36m▶ %-22s\033[0m\n" "${items[$i]}"
+        else
+            printf "  \033[2m  %-22s\033[0m\n" "${items[$i]}"
+        fi
+    done
+}
+
+_fw_menu() {
+    local cur="$1"
+    shift
+    local items=("$@")
+    local count=${#items[@]}
+    local selected=0
+
+    printf '\n'
+    printf '\033[?25l'          # hide cursor
+    _fw_draw_menu "$selected" "${items[@]}"
+
+    local key seq
+    while true; do
+        IFS= read -rsn1 key
+        case "$key" in
+            $'\033')
+                IFS= read -rsn2 -t 0.1 seq
+                case "$seq" in
+                    '[A') selected=$(( (selected - 1 + count) % count )) ;;  # up
+                    '[B') selected=$(( (selected + 1) % count )) ;;          # down
+                esac
+                ;;
+            $'\t')
+                selected=$(( (selected + 1) % count ))  # tab cycles forward
+                ;;
+            ''|$'\r')
+                # Enter — confirm selection
+                printf "\033[${count}A\033[J"
+                printf '\033[?25h'
+                echo "${items[$selected]}"
+                return 0
+                ;;
+            $'\x03'|$'\x1b')
+                # Ctrl-C or plain Escape — cancel
+                printf "\033[${count}A\033[J"
+                printf '\033[?25h'
+                return 1
+                ;;
+        esac
+        printf "\033[${count}A"
+        _fw_draw_menu "$selected" "${items[@]}"
+    done
+}
+
 _fw_complete() {
     local cur="$READLINE_LINE"
     local matches=()
@@ -567,47 +624,34 @@ _fw_complete() {
     done
 
     local count=${#matches[@]}
+    [ "$count" -eq 0 ] && return
 
-    if [ "$count" -eq 0 ]; then
-        return
-    elif [ "$count" -eq 1 ]; then
-        # Complete the single match
+    if [ "$count" -eq 1 ]; then
         READLINE_LINE="${matches[0]}"
         READLINE_POINT=${#READLINE_LINE}
-    else
-        # Advance to the longest common prefix first
-        local prefix="${matches[0]}"
-        for m in "${matches[@]:1}"; do
-            while [[ "$m" != "$prefix"* ]]; do
-                prefix="${prefix%?}"
-            done
-        done
-        if [ "${#prefix}" -gt "${#cur}" ]; then
-            READLINE_LINE="$prefix"
-            READLINE_POINT=${#prefix}
-        fi
-        # Print matches below the current line
-        echo
-        for cmd in "${matches[@]}"; do
-            printf "  \033[0;36m%-20s\033[0m" "$cmd"
-        done
-        echo; echo
+        return
+    fi
+
+    local chosen
+    chosen=$(_fw_menu "$cur" "${matches[@]}")
+    if [ $? -eq 0 ] && [ -n "$chosen" ]; then
+        READLINE_LINE="$chosen"
+        READLINE_POINT=${#READLINE_LINE}
     fi
 }
 
 _fw_slash_hint() {
-    # Insert the / character at cursor position
+    # Insert / at cursor
     READLINE_LINE="${READLINE_LINE:0:$READLINE_POINT}/${READLINE_LINE:$READLINE_POINT}"
     READLINE_POINT=$((READLINE_POINT + 1))
-    # If / is the first character typed, show the full command list as a hint
+    # On first character, open the full command menu
     if [ "$READLINE_POINT" -eq 1 ]; then
-        echo
-        printf "  \033[2m"
-        for cmd in "${FW_COMMANDS[@]}"; do
-            printf "%-20s" "$cmd"
-        done
-        printf "\033[0m"
-        echo; echo
+        local chosen
+        chosen=$(_fw_menu "/" "${FW_COMMANDS[@]}")
+        if [ $? -eq 0 ] && [ -n "$chosen" ]; then
+            READLINE_LINE="$chosen"
+            READLINE_POINT=${#READLINE_LINE}
+        fi
     fi
 }
 
