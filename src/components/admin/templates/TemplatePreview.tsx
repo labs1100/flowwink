@@ -383,31 +383,16 @@ export function TemplatePreview({ template, open, onOpenChange, onSelect }: Temp
                 </div>
               </div>
 
-              {/* Page content preview - with template branding injected */}
-              <ScrollArea className={cn(
-                isFullscreen ? "h-[calc(100vh-120px)]" : "h-[calc(90vh-180px)]"
-              )}>
-                <style dangerouslySetInnerHTML={{ __html: scopedStyles }} />
-                <TemplateBrandingProvider branding={template.branding || {}}>
-                  <div className="template-preview-content">
-                    {currentPage?.blocks?.map((block, index) => (
-                      <TemplateBlockPreview 
-                        key={block.id || index}
-                        block={block as ContentBlock}
-                        compact={deviceMode === 'mobile'}
-                        primaryColor={hslToCssColor(primaryColor)}
-                      />
-                    ))}
-                    
-                    {(!currentPage?.blocks || currentPage.blocks.length === 0) && (
-                      <div className="p-12 text-center text-muted-foreground">
-                        <LayoutGrid className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>This page has no blocks</p>
-                      </div>
-                    )}
-                  </div>
-                </TemplateBrandingProvider>
-              </ScrollArea>
+              {/* Page content preview - live iframe */}
+              <iframe
+                key={`${template.id}-${selectedPage}`}
+                src={`/admin/template-live-preview?id=${template.id}&page=${selectedPage}`}
+                className={cn(
+                  "w-full border-0",
+                  isFullscreen ? "h-[calc(100vh-120px)]" : "h-[calc(90vh-180px)]"
+                )}
+                title={`Preview: ${currentPage?.title || template.name}`}
+              />
             </div>
           </div>
         </div>
