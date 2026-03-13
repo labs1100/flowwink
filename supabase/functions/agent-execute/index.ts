@@ -1604,10 +1604,6 @@ async function executeAnalyticsAction(
   }
 }
 
-    default:
-      return { error: `Unknown table handler: ${table}` };
-  }
-}
 
 async function executeWebhook(
   supabase: any,
