@@ -908,7 +908,7 @@ export const consultAgencyTemplate: StarterTemplate = {
     enabled: true,
     widgetEnabled: true,
     widgetPosition: 'bottom-right',
-    initialMessage: 'Hi! I\'m FlowPilot, your always-on consultant. Tell me about your assignment — tech stack, duration, timeline — and I\'ll find the right match from our network.',
+    welcomeMessage: 'Hi! I\'m FlowPilot, your always-on consultant. Tell me about your assignment — tech stack, duration, timeline — and I\'ll find the right match from our network.',
     suggestedQuestions: [
       'Do you have senior React developers available this month?',
       'What cloud architects do you have with AWS expertise?',
