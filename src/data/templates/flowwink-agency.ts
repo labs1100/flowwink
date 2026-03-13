@@ -690,7 +690,7 @@ const flowwinkAgencyPages: TemplatePage[] = [
     showInMenu: true,
     meta: {
       description: 'Contact the FlowWink team - demos, partnerships, and support for agencies.',
-      showTitle: true,
+      showTitle: false,
       titleAlignment: 'center',
     },
     blocks: [

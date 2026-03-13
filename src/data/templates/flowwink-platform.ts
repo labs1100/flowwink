@@ -1253,7 +1253,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
       showInMenu: true,
       meta: {
         description: 'FlowWink pricing - Self-hosted free forever with full FlowPilot agent, or managed cloud starting at €49/month.',
-        showTitle: true,
+        showTitle: false,
         titleAlignment: 'center',
       },
       blocks: [

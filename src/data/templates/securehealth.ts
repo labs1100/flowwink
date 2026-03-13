@@ -185,7 +185,7 @@ const securehealthPages: StarterTemplate['pages'] = [
     slug: 'faq',
     menu_order: 7,
     showInMenu: true,
-    meta: { description: 'Frequently asked questions about our healthcare services, appointments, and patient care', showTitle: true, titleAlignment: 'center' },
+    meta: { description: 'Frequently asked questions about our healthcare services, appointments, and patient care', showTitle: false, titleAlignment: 'center' },
     blocks: [
       { id: 'hero-faq', type: 'hero', data: { title: 'Patient FAQ', subtitle: 'Find answers to common questions about our services, appointments, and patient care', backgroundType: 'color', heightMode: 'auto', contentAlignment: 'center', overlayOpacity: 0 } },
       { id: 'accordion-appointments', type: 'accordion', data: { title: 'Appointments & Scheduling', items: [
