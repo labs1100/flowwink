@@ -571,7 +571,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             heightMode: 'auto',
             contentAlignment: 'center',
             overlayOpacity: 0,
-            primaryButton: { text: 'Self-Host Free', url: 'https://github.com/flowwink/flowwink' },
+            primaryButton: { text: 'Self-Host Free', url: 'https://github.com/magnusfroste/flowwink' },
             secondaryButton: { text: 'Start Trial', url: '/contact' },
           },
         },
