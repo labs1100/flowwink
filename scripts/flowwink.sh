@@ -599,11 +599,12 @@ _fw_select() {
                 case "$seq" in
                     '[A') sel=$(( (sel - 1 + count) % count )) ;;
                     '[B') sel=$(( (sel + 1) % count )) ;;
+                    '')   break ;;   # plain Escape (no following bytes)
                 esac
                 ;;
             $'\t') sel=$(( (sel + 1) % count )) ;;
             ''|$'\r') _FW_IDX=$sel; break ;;
-            $'\x03'|$'\x1b') break ;;
+            $'\x03') break ;;        # Ctrl-C
         esac
         printf "\033[${count}A"
         _fw_select_draw "$sel" "${items[@]}"
@@ -652,6 +653,7 @@ _fw_menu() {
                 case "$seq" in
                     '[A') selected=$(( (selected - 1 + count) % count )) ;;
                     '[B') selected=$(( (selected + 1) % count )) ;;
+                    '')   cancelled=1; break ;;   # plain Escape
                 esac
                 ;;
             $'\t')
@@ -660,7 +662,7 @@ _fw_menu() {
             ''|$'\r')
                 break
                 ;;
-            $'\x03'|$'\x1b')
+            $'\x03')
                 cancelled=1; break
                 ;;
         esac
