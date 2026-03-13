@@ -86,6 +86,7 @@ interface BlockWrapperProps {
   onAnimationChange?: (animation: BlockAnimation) => void;
   onAnchorChange?: (anchorId: string | undefined) => void;
   onToggleHidden?: (hidden: boolean) => void;
+  onBackgroundChange?: (bg: SectionBackground) => void;
   canEdit: boolean;
 }
 
