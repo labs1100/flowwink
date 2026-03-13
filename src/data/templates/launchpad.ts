@@ -276,7 +276,7 @@ const launchpadPages: StarterTemplate['pages'] = [
     showInMenu: true,
     meta: {
       description: 'Explore our powerful features designed for modern teams',
-      showTitle: true,
+      showTitle: false,
       titleAlignment: 'center',
     },
     blocks: [
