@@ -909,7 +909,7 @@ export const consultAgencyTemplate: StarterTemplate = {
     widgetEnabled: true,
     widgetPosition: 'bottom-right',
     welcomeMessage: 'Hi! I\'m FlowPilot, your always-on consultant. Tell me about your assignment — tech stack, duration, timeline — and I\'ll find the right match from our network.',
-    suggestedQuestions: [
+    suggestedPrompts: [
       'Do you have senior React developers available this month?',
       'What cloud architects do you have with AWS expertise?',
       'How does the matching process work?',
