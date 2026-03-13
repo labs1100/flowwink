@@ -45,6 +45,7 @@ export interface ModulesSettings {
   salesIntelligence: ModuleConfig;
   resume: ModuleConfig;
   browserControl: ModuleConfig;
+  federation: ModuleConfig;
 }
 
 export const defaultModulesSettings: ModulesSettings = {
