@@ -758,15 +758,10 @@ export default function NewSitePage() {
                   <p className="text-sm text-muted-foreground mb-6">
                     Browse our professionally designed templates to get started.
                   </p>
-                  <StarterTemplateSelector 
-                    onSelectTemplate={handleTemplateSelect}
-                    trigger={
-                      <Button className="gap-2">
-                        <Sparkles className="h-4 w-4" />
-                        Browse Templates
-                      </Button>
-                    }
-                  />
+                  <Button className="gap-2" onClick={() => navigate('/admin/templates')}>
+                    <Sparkles className="h-4 w-4" />
+                    Browse Templates
+                  </Button>
                 </CardContent>
               </Card>
             ) : (
