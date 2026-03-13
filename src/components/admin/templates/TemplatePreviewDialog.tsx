@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { StarterTemplate } from '@/data/templates';
@@ -360,7 +360,7 @@ export function TemplatePreviewDialog({
           )}
         </div>
 
-        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
+        <div className="flex-1 min-h-0 overflow-y-auto -mx-6 px-6">
           <div className="space-y-2">
             {/* Content Settings Section */}
             <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide pb-1">
@@ -571,7 +571,7 @@ export function TemplatePreviewDialog({
               />
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         <Separator />
 
