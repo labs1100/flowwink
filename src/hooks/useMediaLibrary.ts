@@ -73,16 +73,18 @@ export function useClearMediaLibrary() {
   return useMutation({
     mutationFn: async (onProgress?: (current: number, total: number, step: string) => void) => {
       // Get all files from all folders
-      const [pagesResult, importsResult, templatesResult] = await Promise.all([
-        supabase.storage.from('cms-images').list('pages'),
-        supabase.storage.from('cms-images').list('imports'),
-        supabase.storage.from('cms-images').list('templates'),
-      ]);
+      const folders = ['pages', 'imports', 'templates', 'uploads'];
+      const results = await Promise.all(
+        folders.map(folder => supabase.storage.from('cms-images').list(folder))
+      );
 
-      const pagesFiles = (pagesResult.data || []).map(f => `pages/${f.name}`);
-      const importsFiles = (importsResult.data || []).map(f => `imports/${f.name}`);
-      const templatesFiles = (templatesResult.data || []).map(f => `templates/${f.name}`);
-      const allFiles = [...pagesFiles, ...importsFiles, ...templatesFiles];
+      const allFiles: string[] = [];
+      results.forEach((result, i) => {
+        const files = (result.data || [])
+          .filter(f => f.name !== '.emptyFolderPlaceholder')
+          .map(f => `${folders[i]}/${f.name}`);
+        allFiles.push(...files);
+      });
 
       if (allFiles.length === 0) {
         return { deleted: 0 };
