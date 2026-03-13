@@ -559,7 +559,7 @@ const serviceProPages: TemplatePage[] = [
     showInMenu: true,
     meta: {
       description: 'Get in touch with our team',
-      showTitle: true,
+      showTitle: false,
       titleAlignment: 'center',
     },
     blocks: [

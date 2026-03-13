@@ -515,7 +515,7 @@ const trustcorpPages: StarterTemplate['pages'] = [
     slug: 'support',
     menu_order: 6,
     showInMenu: true,
-    meta: { description: 'Enterprise support center - Get help with our solutions and services', showTitle: true, titleAlignment: 'center' },
+    meta: { description: 'Enterprise support center - Get help with our solutions and services', showTitle: false, titleAlignment: 'center' },
     blocks: [
       { id: 'hero-support', type: 'hero', data: { title: 'Enterprise Support Center', subtitle: 'Get the help you need from our dedicated enterprise team', backgroundType: 'color', heightMode: 'auto', contentAlignment: 'center', overlayOpacity: 0 } },
       {

@@ -712,7 +712,7 @@ const launchpadPages: StarterTemplate['pages'] = [
     showInMenu: false,
     meta: {
       description: 'Get answers to frequently asked questions about LaunchPad',
-      showTitle: true,
+      showTitle: false,
       titleAlignment: 'center',
     },
     blocks: [
