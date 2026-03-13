@@ -331,7 +331,7 @@ export function PublicNavigation() {
           <Link to="/" className="flex items-center gap-3">
             {(() => {
               const showLogo = headerSettings.showLogo !== false;
-              const showName = headerSettings.showNameWithLogo === true;
+              const showName = headerSettings.showNameWithLogo === true || branding?.showNameWithLogo === true;
               const logoSize = headerSettings.logoSize || 'md';
               const hasLogo = !!branding?.logo;
               const hasDarkLogo = !!branding?.logoDark;
