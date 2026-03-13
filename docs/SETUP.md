@@ -25,24 +25,16 @@ The setup script handles everything automatically:
 1. Go to [supabase.com](https://supabase.com/) and create a new project
 2. Note your **project ref** (e.g., `abcdefghijklmnop`) from the URL or Settings
 
-### 2. Run the Setup Script
+### 2. Run the Setup CLI
 
 ```bash
-# Clone the repository
-git clone https://github.com/magnusfroste/flowwink.git
-cd flowwink
-
-# Run the setup script
-./scripts/setup-supabase.sh
+npm run cli
 ```
 
-The script will:
-1. Prompt you to login to Supabase CLI (if not logged in)
-2. Ask for your project ref
-3. **Deploy all edge functions** (~60 seconds)
-4. **Run initial database migrations** (creates tables, RLS policies)
-5. **Create your admin user** (prompts for email/password)
-6. **Output environment variables** ready to copy-paste
+Then use the interactive menu:
+1. `/login` — log in to Supabase CLI
+2. `/link` — select and link your project
+3. `/install` — deploys edge functions, runs migrations, creates admin user, outputs env variables
 
 **✨ Auto-Migrations:** After initial setup, future migrations run automatically when you:
 - Start dev server: `npm run dev`
@@ -112,7 +104,8 @@ See [AI_DEPENDENCIES.md](./AI_DEPENDENCIES.md) for detailed AI configuration.
 After setup, you can configure optional integrations (AI, email, payments):
 
 ```bash
-./scripts/configure-secrets.sh
+npm run cli
+# /set-keys
 ```
 
 This configures:
@@ -175,7 +168,7 @@ From Supabase Dashboard → Settings → API, copy:
 
 ## Edge Function Secrets
 
-Edge Functions use secrets for API keys. Use `./scripts/configure-secrets.sh` to set them interactively, or manually:
+Edge Functions use secrets for API keys. Use `npm run cli` → `/set-keys` to set them interactively, or manually:
 
 ```bash
 supabase secrets set SECRET_NAME=value
@@ -205,7 +198,7 @@ These are automatically available to all Edge Functions:
 | `LOCAL_LLM_API_KEY` | Self-hosted AI | Your LLM provider |
 | `N8N_API_KEY` | Workflow automation | Your N8N instance |
 
-Use `./scripts/configure-secrets.sh` to set these interactively.
+Use `npm run cli` → `/set-keys` to set these interactively.
 
 ---
 

@@ -74,17 +74,15 @@ To use Site Migration, you need a Firecrawl API key:
    - Go to **Settings** → **Integrations**
    - Find **Firecrawl** section
    - Enter your API key
-   - Or use the setup script: `./scripts/setup-supabase.sh` → Option 5
+   - Or run `npm run cli` → `/set-keys`
 
 ### Checking Configuration
 
-Run the setup script to verify your configuration:
+Run the CLI and check secrets:
 ```bash
-./scripts/setup-supabase.sh
+npm run cli
+# /set-keys  — shows live ✓/○ status for all integrations
 ```
-
-Look for:
-- **5) Configure Secrets (AI, etc.)** — Should show "✓ Configured" or "◐ Partially configured"
 
 ## Usage
 

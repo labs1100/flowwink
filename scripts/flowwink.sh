@@ -702,10 +702,6 @@ _fw_complete() {
 _fw_slash_hint() {
     READLINE_LINE="${READLINE_LINE:0:$READLINE_POINT}/${READLINE_LINE:$READLINE_POINT}"
     READLINE_POINT=$((READLINE_POINT + 1))
-    # On first /, open the full command menu
-    if [ "$READLINE_POINT" -eq 1 ]; then
-        _fw_menu "${FW_COMMANDS[@]}"
-    fi
 }
 
 # Only bind if bash 4+ (bind -x not supported on macOS default bash 3.2)
@@ -747,7 +743,7 @@ fi
 
 echo ""
 if [ "${BASH_VERSINFO[0]}" -ge 4 ]; then
-    echo -e "  Type ${CYAN}/${NC} or press ${CYAN}Tab${NC} for suggestions  ·  ${CYAN}/quit${NC} to exit"
+    echo -e "  Type ${CYAN}/${NC} + Enter for command menu  ·  ${CYAN}Tab${NC} to complete  ·  ${CYAN}/quit${NC} to exit"
 else
     echo -e "  Type ${CYAN}/help${NC} for commands  ·  ${CYAN}/quit${NC} to exit"
     echo -e "  ${DIM}(Tab completion requires bash 4+: brew install bash)${NC}"
@@ -765,6 +761,17 @@ while true; do
 
     read -e -p "$prompt" input
     [ -z "$input" ] && continue
+
+    # Bare "/" → show navigable menu and execute the selected command immediately
+    if [ "$input" = "/" ]; then
+        echo ""
+        _fw_select "${FW_COMMANDS[@]}"
+        [ "$_FW_IDX" -eq -1 ] && continue
+        input="${FW_COMMANDS[$_FW_IDX]}"
+        echo -e "  ${DIM}→ ${input}${NC}"
+        echo ""
+    fi
+
     history -s "$input"
 
     cmd=$(echo "$input" | awk '{print $1}' | tr '[:upper:]' '[:lower:]')

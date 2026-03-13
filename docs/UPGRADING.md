@@ -36,90 +36,40 @@ Look for the ⚠️ **BREAKING** label in the changelog. These require manual ac
 
 ## Upgrade Process
 
-There are **three different workflows** depending on what you're upgrading:
+### Option 1: Update your local installation
 
-### Option 1: Full Code Update (upgrade.sh)
-
-**Use when:** You want to update your local FlowWink codebase from GitHub
+Pull the latest code, install dependencies, then update Supabase:
 
 ```bash
-./scripts/upgrade.sh
+git pull origin main
+npm install
 ```
 
-**What it does:**
-1. ✓ Pulls latest code from GitHub (`git pull`)
-2. ✓ Installs new dependencies (`npm install`)
-3. ✓ Runs database migrations (`supabase db push`)
-4. ✓ Deploys edge functions
-5. ✓ Rebuilds the application
-
-**Perfect for:** Keeping your development environment up to date
-
----
-
-### Option 2: Client Database Update (Manual)
-
-**Use when:** You only need to update a client's Supabase instance (no code changes)
+Then push migrations and deploy functions via the CLI:
 
 ```bash
-# 1. Link to the client's project
-supabase link
-# → Select the client's project from the list
-
-# 2. Run migrations
-supabase db push
-
-# 3. Deploy edge functions (if needed)
-./scripts/deploy-functions.sh
+npm run cli
+# /update-db     → push migrations
+# /update-funcs  → deploy edge functions
 ```
 
-**What it does:**
-- ✓ Updates the client's database schema
-- ✓ Deploys latest edge functions
-- ✗ Does NOT update your local code
-
-**Perfect for:** Updating client Supabase instances without touching your local codebase
-
----
-
-### Option 3: Multi-Client Update (migrate-all-clients.sh)
-
-**Use when:** You manage multiple clients and want to update all their databases at once
+### Option 2: Update a client's Supabase instance
 
 ```bash
-# 1. Edit scripts/migrate-all-clients.sh with your client project refs
-CLIENTS=(
-  "Client1:abcdefghijklmnop"
-  "Client2:qrstuvwxyzabcdef"
-  ...
-)
-
-# 2. Run migrations for all clients
-./scripts/migrate-all-clients.sh
-```
-
-**What it does:**
-- ✓ Runs migrations on all clients in the list
-- ✗ Does NOT deploy edge functions (must be done separately per client)
-- ✗ Does NOT update your local code
-
-**Perfect for:** Agencies managing 5+ client installations
-
-**Note:** Edge functions must still be deployed manually per client:
-```bash
-supabase link --project-ref <client-ref>
-./scripts/deploy-functions.sh
+npm run cli
+# /link          → select the client's project
+# /update-db     → push migrations
+# /update-funcs  → deploy edge functions
 ```
 
 ---
 
 ### Quick Reference
 
-| Scenario | Command | Updates Code | Updates DB | Updates Functions |
-|----------|---------|--------------|------------|-------------------|
-| **Update my dev environment** | `./scripts/upgrade.sh` | ✓ | ✓ | ✓ |
-| **Update one client** | `supabase link` + `supabase db push` + `./scripts/deploy-functions.sh` | ✗ | ✓ | ✓ |
-| **Update many clients** | `./scripts/migrate-all-clients.sh` | ✗ | ✓ | ✗ |
+| Scenario | Steps | Updates Code | Updates DB | Updates Functions |
+|----------|-------|--------------|------------|-------------------|
+| **Update local install** | `git pull` + `npm install` + CLI `/update-db` + `/update-funcs` | ✓ | ✓ | ✓ |
+| **Update a client** | CLI `/link` + `/update-db` + `/update-funcs` | ✗ | ✓ | ✓ |
 
 ---
 
@@ -127,42 +77,31 @@ supabase link --project-ref <client-ref>
 
 ### Scenario 1: Regular Update (No Local Changes)
 
-You're running a clean installation and want the latest features.
-
 ```bash
-./scripts/upgrade.sh
+git pull origin main
+npm install
+npm run cli
+# /update-db
+# /update-funcs
 ```
-
-That's it! The script handles everything.
 
 ### Scenario 2: Update with Local Modifications
 
-You've customized some components or styles.
-
 ```bash
-# Option A: Let the script stash your changes
-./scripts/upgrade.sh
-# When prompted, choose 'y' to stash changes
-# After upgrade completes:
-git stash pop
-# Resolve any conflicts if needed
-
-# Option B: Manual approach
 git stash
 git pull origin main
 npm install
-supabase db push
 git stash pop
-# Fix conflicts, then rebuild
+# Resolve any conflicts, then:
+npm run cli
+# /update-db
+# /update-funcs
 npm run build
 ```
 
 ### Scenario 3: Skip Database Migrations
 
-You're not using Supabase CLI or want to run migrations separately.
-
 ```bash
-# Pull code only
 git pull origin main
 npm install
 
@@ -171,8 +110,6 @@ npm install
 ```
 
 ### Scenario 4: Upgrade After Long Time (Multiple Versions)
-
-You haven't updated in a while and are several versions behind.
 
 ```bash
 # 1. Check the changelog for ALL versions you're skipping
@@ -184,18 +121,22 @@ cat CHANGELOG.md
 supabase db dump -f backup-full-$(date +%Y%m%d).sql
 cp .env .env.backup
 
-# 4. Run the upgrade
-./scripts/upgrade.sh
+# 4. Pull and install
+git pull origin main
+npm install
 
-# 5. Apply any breaking change migrations manually if needed
+# 5. Update Supabase
+npm run cli
+# /update-db
+# /update-funcs
 
-# 6. Test thoroughly before going to production
+# 6. Apply any breaking change migrations manually if needed
+
+# 7. Test thoroughly before going to production
 npm run dev
 ```
 
 ### Scenario 5: Rollback After Failed Upgrade
-
-Something went wrong and you need to go back.
 
 ```bash
 # 1. Find the last working commit
@@ -216,76 +157,34 @@ npm run build
 
 ### Scenario 6: Preview Changes Before Upgrading
 
-You want to test the new version before committing.
-
 ```bash
-# 1. Create a new branch
+# 1. Create a test branch
 git fetch origin
 git checkout -b test-upgrade origin/main
 
 # 2. Install dependencies
 npm install
 
-# 3. Run locally (don't push migrations yet!)
+# 3. Run locally (don't push migrations yet)
 npm run dev
 
 # 4. If everything looks good, switch back and do the real upgrade
 git checkout main
-./scripts/upgrade.sh
+git pull origin main
+npm install
+npm run cli
+# /update-db
+# /update-funcs
 ```
 
-### Scenario 7: Multi-Client Migrations (Agencies)
-
-You're managing FlowWink for multiple clients (5+ Supabase instances).
-
-**✨ One-Command Solution:**
+### Scenario 7: Update a Client
 
 ```bash
-# 1. Edit scripts/migrate-all-clients.sh with your client project refs
-CLIENTS=(
-  "Client1:abcdefghijklmnop"
-  "Client2:qrstuvwxyzabcdef"
-  "Client3:ghijklmnopqrstuv"
-  "Client4:wxyzabcdefghijkl"
-  "Client5:mnopqrstuvwxyzab"
-)
-
-# 2. Login to Supabase (once)
-supabase login
-
-# 3. Run migrations for all clients
-./scripts/migrate-all-clients.sh
+npm run cli
+# /link          → select the client's project
+# /update-db     → push migrations
+# /update-funcs  → deploy edge functions
 ```
-
-**Output:**
-```
-🚀 FlowWink Multi-Client Migration Tool
-========================================
-
-This will run migrations on 5 client projects:
-  - Client1 (abcdefghijklmnop)
-  - Client2 (qrstuvwxyzabcdef)
-  ...
-
-Continue? (y/N) y
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 Migrating: Client1
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ Migrations completed for Client1
-
-... (repeat for all clients)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Migration Summary
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ Successful: 5
-❌ Failed: 0
-
-🎉 All migrations completed successfully!
-```
-
-**Important:** You only need to run migrations, **not** `npm install` or `npm run build`. Frontend deployments (Vercel/Netlify) are separate from database migrations.
 
 ---
 
@@ -304,8 +203,8 @@ FlowWink uses Supabase migrations. Each migration is designed to be:
 # Push all pending migrations
 supabase db push
 
-# Or run specific migration
-supabase migration up
+# Or check status first
+supabase migration list --linked
 ```
 
 ### Migration Troubleshooting
@@ -341,18 +240,6 @@ psql $DATABASE_URL < backup-YYYYMMDD.sql
 ```
 
 **Warning**: This will overwrite current data. Only use if necessary.
-
----
-
-## Version-Specific Upgrade Notes
-
-### Upgrading to 1.0.0-beta.2 (Future)
-
-*No breaking changes expected*
-
-### Upgrading to 1.0.0 (Future)
-
-*Breaking changes will be documented here*
 
 ---
 
@@ -417,9 +304,9 @@ Use this checklist for each upgrade:
 - [ ] Backup database
 - [ ] Backup .env file
 - [ ] Check for breaking changes
-- [ ] Pull latest code
-- [ ] Install dependencies
-- [ ] Run migrations
-- [ ] Deploy edge functions
+- [ ] Pull latest code (`git pull origin main`)
+- [ ] Install dependencies (`npm install`)
+- [ ] Run migrations (`npm run cli` → `/update-db`)
+- [ ] Deploy edge functions (`npm run cli` → `/update-funcs`)
 - [ ] Test critical functionality
 - [ ] Clear browser cache

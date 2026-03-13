@@ -4,24 +4,27 @@
  * Premium template for IT consulting firms that place specialist consultants
  * at client companies. Think Consid, Sigma, HiQ, Knowit, Cybercom.
  *
- * Value proposition: Your website IS the consultant.
- * FlowPilot answers availability queries, presents matched profiles,
- * and qualifies inbound briefs — 24/7, without a human in the loop.
+ * Value proposition: Your website IS the consultant — an agentic web that
+ * answers questions, surfaces availability, and qualifies briefs 24/7.
+ * FlowPilot maintains live consultant profiles updated at every check-in,
+ * giving visitors access to information that was never available before.
  *
- * Key sections: consultant roster (Resume block), client logos,
- * testimonials from both sides, transparent process, and FlowPilot chat
- * as the always-on matching engine.
+ * A2A-ready: enterprise clients can connect their own systems directly to
+ * FlowPilot via Agent-to-Agent protocol — no manual integration required.
+ *
+ * Key sections: consultant search (Resume block immediately below hero),
+ * client logos, testimonials, agentic chat launcher, A2A integration CTA.
  */
 import type { StarterTemplate } from './types';
 
 export const consultAgencyTemplate: StarterTemplate = {
   id: 'consult-agency',
   name: 'ConsultAgency',
-  description: 'Premium IT consulting agency template. Showcase your consultant roster, attract enterprise clients, and let FlowPilot match the right person to every assignment.',
+  description: 'Agentic consulting platform template. Your website becomes a 24/7 consultant — FlowPilot maintains live profiles, answers briefs instantly, and connects enterprise systems via A2A.',
   category: 'enterprise',
   icon: 'UserCheck',
-  tagline: 'The right consultant. Every time.',
-  aiChatPosition: 'Embedded consultant — answers briefs, presents matched profiles, qualifies leads',
+  tagline: 'Your website is a consultant. Always on. Always current.',
+  aiChatPosition: 'Agentic consultant — live roster data, answers any brief, qualifies leads, A2A-ready for enterprise integrations',
   requiredModules: ['blog', 'chat', 'leads', 'deals', 'companies', 'forms', 'bookings', 'newsletter', 'resume'],
 
   pages: [
@@ -45,9 +48,9 @@ export const consultAgencyTemplate: StarterTemplate = {
           id: 'announcement-openings',
           type: 'announcement-bar',
           data: {
-            message: '🚀 12 open assignments right now — React, Cloud Architecture, and Data Engineering',
-            linkText: 'View All',
-            linkUrl: '/consultants',
+            message: '⚡ FlowPilot has live availability for every consultant in our network — ask it anything, right now',
+            linkText: 'Try it',
+            linkUrl: '#chat-flowpilot',
             variant: 'gradient',
             dismissable: true,
             sticky: false,
@@ -59,8 +62,8 @@ export const consultAgencyTemplate: StarterTemplate = {
           id: 'hero-main',
           type: 'hero',
           data: {
-            title: 'Your Next Consultant is Already Here.',
-            subtitle: 'We match exceptional technology consultants with ambitious companies. The right person, the right assignment — in 48 hours.',
+            title: 'The Consulting Firm That Never Sleeps.',
+            subtitle: 'Our website is a live consultant. FlowPilot knows every profile, every assignment, every availability — updated in real time as our consultants check in. Ask it anything.',
             backgroundType: 'image',
             backgroundImage: 'https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?w=1920',
             heightMode: 'viewport',
@@ -69,13 +72,13 @@ export const consultAgencyTemplate: StarterTemplate = {
             overlayColor: 'dark',
             titleAnimation: 'slide-up',
             showScrollIndicator: true,
-            primaryButton: { text: 'Find a Consultant', url: '#resume-matcher-consultants' },
+            primaryButton: { text: 'Search Consultants', url: '#resume-matcher-consultants' },
             secondaryButton: { text: 'Join Our Network', url: '/join' },
-            eyebrow: 'Digital Consulting Agency',
+            eyebrow: 'Agentic Consulting Platform',
             heroStats: [
-              { value: '200+', label: 'Consultants' },
-              { value: '15+', label: 'Years experience' },
-              { value: '500+', label: 'Projects' },
+              { value: '300+', label: 'Consultants' },
+              { value: '24/7', label: 'Always available' },
+              { value: '48h', label: 'Match guarantee' },
               { value: '98%', label: 'Happy clients' },
             ],
           },
@@ -86,8 +89,8 @@ export const consultAgencyTemplate: StarterTemplate = {
           id: 'resume-matcher-consultants',
           type: 'resume-matcher',
           data: {
-            title: 'Paste Your Assignment Brief',
-            subtitle: 'Describe the role, tech stack, and context. FlowPilot reads it and presents the consultants from our network who match best — with a score, reasoning, and gap analysis.',
+            title: 'Find the Right Consultant — Right Now',
+            subtitle: 'Describe the role, tech stack, and context. FlowPilot searches our live roster — profiles updated as consultants check in — and returns the best matches with availability, scoring, and gap analysis. Information that was never accessible this fast before.',
             placeholder: 'E.g. "We need a senior backend developer with Java and Spring Boot experience for a 6-month fintech project in Stockholm. Team of 8, agile, some on-site required..."',
             buttonText: 'Find My Match',
           },
@@ -157,8 +160,8 @@ export const consultAgencyTemplate: StarterTemplate = {
           type: 'bento-grid',
           data: {
             eyebrow: 'THE DIFFERENCE',
-            title: 'Not CVs. Conversations.',
-            subtitle: 'We don\'t email you a stack of resumes. We listen, match, and put exactly the right person in front of you — fast.',
+            title: 'Not a Website. A Consultant.',
+            subtitle: 'Your first interaction isn\'t with a form or a brochure — it\'s with FlowPilot, an agentic AI that knows our entire network in real time and can answer questions no website could answer before.',
             columns: 3,
             variant: 'glass',
             gap: 'md',
@@ -166,8 +169,8 @@ export const consultAgencyTemplate: StarterTemplate = {
             items: [
               {
                 id: 'bw1',
-                title: 'Expert Match',
-                description: 'Every brief is reviewed by a senior consultant before we touch the network. We ask the questions that actually matter — team culture, tech debt reality, growth trajectory. Then we match.',
+                title: 'Live Roster, Always Current',
+                description: 'Every consultant in our network checks in through FlowWink — updating their latest assignment, availability, and competencies. FlowPilot reads this in real time. When you ask about availability, the answer reflects today, not last month\'s spreadsheet.',
                 icon: 'UserCheck',
                 span: 'wide',
                 accentColor: '#6366F1',
@@ -195,15 +198,15 @@ export const consultAgencyTemplate: StarterTemplate = {
               },
               {
                 id: 'bw5',
-                title: 'Continuity Guarantee',
-                description: 'If a placement doesn\'t work in the first 2 weeks, we rematch at no charge. Because the right fit matters more than the fast close.',
-                icon: 'RefreshCw',
+                title: 'A2A — Connect Your Systems',
+                description: 'Running a resource-intensive enterprise with your own consultant database or HR systems? Connect directly to FlowPilot via Agent-to-Agent protocol. Your systems talk to ours — no manual integration, no middleware, no CSV exports.',
+                icon: 'Network',
                 accentColor: '#EC4899',
               },
               {
                 id: 'bw6',
-                title: 'Your Website Consults',
-                description: 'FlowPilot answers availability queries, presents matched profiles, and qualifies new briefs — 24/7. Your digital presence never sleeps. Your website is now a consultant.',
+                title: 'An Agentic Web That Answers Everything',
+                description: 'Our website doesn\'t just list consultants — it acts. FlowPilot has access to live profiles, current assignments, competencies, and availability. It answers questions that no static website ever could, 24/7, without waiting for business hours.',
                 icon: 'Bot',
                 span: 'wide',
                 accentColor: '#8B5CF6',
@@ -218,8 +221,8 @@ export const consultAgencyTemplate: StarterTemplate = {
           type: 'parallax-section',
           data: {
             backgroundImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920',
-            title: 'People Who Actually Deliver.',
-            subtitle: 'Not a staffing agency. Not a body shop. A network of senior specialists who take ownership.',
+            title: 'The Information Was Always There. Now You Can Access It.',
+            subtitle: 'Live profiles. Real-time availability. Current assignments. FlowPilot makes the entire network queryable — for the first time.',
             height: 'md',
             textColor: 'light',
             overlayOpacity: 65,
@@ -337,7 +340,7 @@ export const consultAgencyTemplate: StarterTemplate = {
               },
               {
                 id: 'tc3',
-                content: 'I asked their website AI "do you have React architects with healthcare experience?" Within seconds I had three profiles. I was matched the next morning. This is what a website should do.',
+                content: 'I asked their website "do you have React architects with healthcare experience available in Q3?" Within seconds I had three live profiles with current availability. No form, no callback, no waiting. This is information that simply wasn\'t accessible before.',
                 author: 'Dr. Anders Nilsson',
                 role: 'Digital Director',
                 company: 'Karolinska Digital',
@@ -367,9 +370,9 @@ export const consultAgencyTemplate: StarterTemplate = {
           id: 'chat-flowpilot',
           type: 'chat-launcher',
           data: {
-            title: 'Your Website is Now a Consultant.',
-            subtitle: 'Ask FlowPilot about availability, competencies, rates, or the matching process. It knows the full roster and is available 24/7. No waiting for business hours.',
-            placeholder: 'Do you have senior React developers available this month?',
+            title: 'Meet Your Online Consultant.',
+            subtitle: 'FlowPilot isn\'t a chatbot — it\'s an agentic AI with live access to every consultant profile, their latest assignments, and real-time availability. Ask it what you\'d ask a senior recruiter. It answers instantly, 24/7, with information that was never accessible this way before.',
+            placeholder: 'Do you have senior React developers available this month with fintech experience?',
             showQuickActions: true,
             quickActionCount: 4,
             variant: 'hero-integrated',
@@ -421,12 +424,12 @@ export const consultAgencyTemplate: StarterTemplate = {
           id: 'cta-final',
           type: 'cta',
           data: {
-            title: 'Ready to Find Your Match?',
-            subtitle: 'Share your brief. We\'ll come back with the right person in 48 hours.',
-            buttonText: 'Submit a Brief',
-            buttonUrl: '/clients',
-            secondaryButtonText: 'Browse Consultants',
-            secondaryButtonUrl: '/consultants',
+            title: 'Your Website is Already Answering Questions.',
+            subtitle: 'Ask FlowPilot anything — or submit a brief and we\'ll match you in 48 hours. Either way, you get access to our full live network instantly.',
+            buttonText: 'Ask FlowPilot',
+            buttonUrl: '#chat-flowpilot',
+            secondaryButtonText: 'Submit a Brief',
+            secondaryButtonUrl: '/clients',
             gradient: true,
           },
         },
@@ -436,8 +439,8 @@ export const consultAgencyTemplate: StarterTemplate = {
           id: 'floating-cta',
           type: 'floating-cta',
           data: {
-            title: 'Need a Consultant?',
-            subtitle: '48-hour match guarantee',
+            title: 'Ask FlowPilot',
+            subtitle: 'Live roster · 24/7 · No waiting',
             buttonText: 'Submit Brief',
             buttonUrl: '/clients',
             showAfterScroll: 30,

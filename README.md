@@ -191,7 +191,7 @@ npm run dev   # migrations run automatically
 
 1. Create a project at [supabase.com](https://supabase.com/)
 2. Copy **Project URL**, **Anon key**, and **Project ref** into `.env`
-3. Run `./scripts/setup-supabase.sh` to deploy edge functions
+3. Run `npm run cli` and use `/install` to deploy functions, run migrations and create admin
 4. Start the server — migrations apply automatically on `npm run dev`
 
 ### Deploy to production
