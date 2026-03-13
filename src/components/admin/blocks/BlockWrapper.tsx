@@ -101,6 +101,7 @@ export function BlockWrapper({
   onAnimationChange,
   onAnchorChange,
   onToggleHidden,
+  onBackgroundChange,
   canEdit,
 }: BlockWrapperProps) {
   const {
