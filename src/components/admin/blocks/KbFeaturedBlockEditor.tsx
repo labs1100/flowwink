@@ -15,20 +15,7 @@ interface KbFeaturedBlockEditorProps {
 export function KbFeaturedBlockEditor({ data, onChange, isEditing }: KbFeaturedBlockEditorProps) {
   // Preview mode
   if (!isEditing) {
-    return (
-      <div className="p-6 text-center border-2 border-dashed rounded-lg bg-muted/30">
-        <Star className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-        <h3 className="font-medium text-lg">{data.title || "Featured Articles"}</h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          {data.maxItems || 6} articles • {data.columns || 3} columns • {data.layout || 'grid'}
-        </p>
-        <div className="mt-4 grid grid-cols-3 gap-2 max-w-xs mx-auto">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-12 rounded bg-background border" />
-          ))}
-        </div>
-      </div>
-    );
+    return <KbFeaturedBlock data={data} />;
   }
 
   const handleChange = (field: keyof KbFeaturedBlockData, value: unknown) => {
