@@ -11,6 +11,7 @@ import { CartIndicator } from './CartIndicator';
 import { AccountIndicator } from './AccountIndicator';
 import { useHeaderBlock, defaultHeaderData } from '@/hooks/useGlobalBlocks';
 import { useBlogSettings } from '@/hooks/useSiteSettings';
+import { useIsModuleEnabled } from '@/hooks/useModules';
 import type { HeaderNavItem } from '@/types/cms';
 
 interface NavPage {
@@ -28,6 +29,7 @@ export function PublicNavigation() {
   const currentSlug = location.pathname === '/' ? 'hem' : location.pathname.slice(1);
   const { branding } = useBranding();
   const { resolvedTheme } = useTheme();
+  const productsEnabled = useIsModuleEnabled('products');
   
   // Use header global block settings
   const { data: headerBlock } = useHeaderBlock();
@@ -410,15 +412,15 @@ export function PublicNavigation() {
             {/* Custom nav items - with mega menu support */}
             {customNavItems.map((item) => renderNavItem(item))}
             {headerSettings.showThemeToggle !== false && <ThemeToggle />}
-            <AccountIndicator />
-            <CartIndicator />
+            {productsEnabled && <AccountIndicator />}
+            {productsEnabled && <CartIndicator />}
           </nav>
 
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 md:hidden">
             {headerSettings.showThemeToggle !== false && <ThemeToggle />}
-            <AccountIndicator />
-            <CartIndicator />
+            {productsEnabled && <AccountIndicator />}
+            {productsEnabled && <CartIndicator />}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-md hover:bg-muted transition-colors"
