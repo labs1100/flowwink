@@ -17,7 +17,7 @@ const AGENTIC_SCHEMA = `
 -- Enums
 DO $$ BEGIN CREATE TYPE public.agent_type AS ENUM ('flowpilot', 'chat'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE public.agent_scope AS ENUM ('internal', 'external', 'both'); EXCEPTION WHEN duplicate_object THEN null; END $$;
-DO $$ BEGIN CREATE TYPE public.agent_skill_category AS ENUM ('content', 'crm', 'communication', 'automation', 'search', 'analytics'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE public.agent_skill_category AS ENUM ('content', 'crm', 'communication', 'automation', 'search', 'analytics', 'system', 'commerce'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE public.agent_memory_category AS ENUM ('preference', 'context', 'fact'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE public.agent_objective_status AS ENUM ('active', 'completed', 'paused', 'failed'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE public.agent_activity_status AS ENUM ('success', 'failed', 'pending_approval'); EXCEPTION WHEN duplicate_object THEN null; END $$;
@@ -1060,10 +1060,12 @@ This skill is primarily triggered by automations, not directly by users.
           properties: {
             action: { type: 'string', enum: ['list', 'create', 'update', 'move_stage'] },
             deal_id: { type: 'string' },
-            title: { type: 'string' },
             value_cents: { type: 'number' },
             stage: { type: 'string' },
             lead_id: { type: 'string' },
+            product_id: { type: 'string' },
+            expected_close: { type: 'string', description: 'Date YYYY-MM-DD' },
+            notes: { type: 'string' },
           },
           required: ['action'],
         },
@@ -1090,6 +1092,11 @@ This skill is primarily triggered by automations, not directly by users.
             name: { type: 'string' },
             domain: { type: 'string' },
             industry: { type: 'string' },
+            size: { type: 'string' },
+            address: { type: 'string' },
+            phone: { type: 'string' },
+            website: { type: 'string' },
+            notes: { type: 'string' },
           },
           required: ['action'],
         },
@@ -1404,7 +1411,7 @@ This skill is primarily triggered by automations, not directly by users.
         parameters: {
           type: 'object',
           properties: {
-            action: { type: 'string', enum: ['list', 'get', 'delete'] },
+            action: { type: 'string', enum: ['list', 'get', 'delete', 'stats'] },
             submission_id: { type: 'string' },
             form_name: { type: 'string' },
             limit: { type: 'number' },

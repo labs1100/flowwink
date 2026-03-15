@@ -1021,7 +1021,7 @@ async function executeDealsAction(
   if (action === 'list') {
     const { stage, lead_id } = args as any;
     let query = supabase.from('deals')
-      .select('id, title, value_cents, currency, stage, lead_id, company_id, expected_close_date, created_at, updated_at')
+      .select('id, value_cents, currency, stage, lead_id, product_id, expected_close, notes, created_at, updated_at')
       .order('updated_at', { ascending: false }).limit(50);
     if (stage) query = query.eq('stage', stage);
     if (lead_id) query = query.eq('lead_id', lead_id);
@@ -1031,13 +1031,13 @@ async function executeDealsAction(
   }
 
   if (action === 'create') {
-    const { title, value_cents, currency = 'SEK', stage = 'proposal', lead_id, company_id, expected_close_date } = args as any;
-    if (!title) throw new Error('title is required');
+    const { value_cents = 0, currency = 'SEK', stage = 'proposal', lead_id, product_id, expected_close, notes } = args as any;
+    if (!lead_id) throw new Error('lead_id is required');
     const { data, error } = await supabase.from('deals').insert({
-      title, value_cents, currency, stage, lead_id, company_id, expected_close_date,
-    }).select('id, title, stage, value_cents').single();
+      value_cents, currency, stage, lead_id, product_id, expected_close, notes,
+    }).select('id, stage, value_cents').single();
     if (error) throw new Error(`Create deal failed: ${error.message}`);
-    return { deal_id: data.id, title: data.title, stage: data.stage, value_cents: data.value_cents };
+    return { deal_id: data.id, stage: data.stage, value_cents: data.value_cents };
   }
 
   if (action === 'update') {
@@ -1046,20 +1046,20 @@ async function executeDealsAction(
     delete updateData.action;
     const { data, error } = await supabase.from('deals')
       .update({ ...updateData, updated_at: new Date().toISOString() })
-      .eq('id', deal_id).select('id, title, stage').single();
+      .eq('id', deal_id).select('id, stage').single();
     if (error) throw new Error(`Update deal failed: ${error.message}`);
-    return { deal_id: data.id, title: data.title, stage: data.stage, status: 'updated' };
+    return { deal_id: data.id, stage: data.stage, status: 'updated' };
   }
 
   if (action === 'move_stage') {
     const { deal_id, stage } = args as any;
     if (!deal_id || !stage) throw new Error('deal_id and stage required');
-    const completed_at = ['closed_won', 'closed_lost'].includes(stage) ? new Date().toISOString() : null;
+    const closed_at = ['closed_won', 'closed_lost'].includes(stage) ? new Date().toISOString() : null;
     const { data, error } = await supabase.from('deals')
-      .update({ stage, completed_at, updated_at: new Date().toISOString() })
-      .eq('id', deal_id).select('id, title, stage').single();
+      .update({ stage, closed_at, updated_at: new Date().toISOString() })
+      .eq('id', deal_id).select('id, stage').single();
     if (error) throw new Error(`Move stage failed: ${error.message}`);
-    return { deal_id: data.id, title: data.title, new_stage: data.stage };
+    return { deal_id: data.id, new_stage: data.stage };
   }
 
   return { error: `Unknown deals action: ${action}` };
@@ -1192,17 +1192,17 @@ async function executeCompaniesAction(
 
   if (action === 'list') {
     const { data, error } = await supabase.from('companies')
-      .select('id, name, domain, industry, size, city, country, created_at')
+      .select('id, name, domain, industry, size, address, phone, website, notes, created_at')
       .order('created_at', { ascending: false }).limit(50);
     if (error) throw new Error(`List companies failed: ${error.message}`);
     return { companies: data || [] };
   }
 
   if (action === 'create') {
-    const { name, domain, industry, size, city, country, website, description } = args as any;
+    const { name, domain, industry, size, address, phone, website, notes } = args as any;
     if (!name) throw new Error('name is required');
     const { data, error } = await supabase.from('companies').insert({
-      name, domain, industry, size, city, country, website, description,
+      name, domain, industry, size, address, phone, website, notes,
     }).select('id, name, domain').single();
     if (error) throw new Error(`Create company failed: ${error.message}`);
     return { company_id: data.id, name: data.name, domain: data.domain };
@@ -1217,6 +1217,14 @@ async function executeCompaniesAction(
       .eq('id', company_id).select('id, name').single();
     if (error) throw new Error(`Update company failed: ${error.message}`);
     return { company_id: data.id, name: data.name, status: 'updated' };
+  }
+
+  if (action === 'delete') {
+    const { company_id } = args as any;
+    if (!company_id) throw new Error('company_id is required');
+    const { error } = await supabase.from('companies').delete().eq('id', company_id);
+    if (error) throw new Error(`Delete company failed: ${error.message}`);
+    return { company_id, status: 'deleted' };
   }
 
   return { error: `Unknown companies action: ${action}` };
@@ -1234,9 +1242,12 @@ async function executeFormsAction(
   const { action = 'list' } = args as any;
 
   if (action === 'list') {
-    const { data, error } = await supabase.from('form_submissions')
-      .select('id, form_name, data, page_slug, status, created_at')
-      .order('created_at', { ascending: false }).limit(50);
+    const { form_name, limit = 50 } = args as any;
+    let query = supabase.from('form_submissions')
+      .select('id, form_name, block_id, data, metadata, page_id, created_at')
+      .order('created_at', { ascending: false }).limit(limit);
+    if (form_name) query = query.eq('form_name', form_name);
+    const { data, error } = await query;
     if (error) throw new Error(`List submissions failed: ${error.message}`);
     return { submissions: data || [] };
   }
@@ -1250,20 +1261,19 @@ async function executeFormsAction(
     return data;
   }
 
-  if (action === 'update_status') {
-    const { submission_id, status } = args as any;
-    if (!submission_id || !status) throw new Error('submission_id and status required');
-    const { data, error } = await supabase.from('form_submissions')
-      .update({ status }).eq('id', submission_id).select('id, status').single();
-    if (error) throw new Error(`Update status failed: ${error.message}`);
-    return { submission_id: data.id, status: data.status };
+  if (action === 'delete') {
+    const { submission_id } = args as any;
+    if (!submission_id) throw new Error('submission_id is required');
+    const { error } = await supabase.from('form_submissions').delete().eq('id', submission_id);
+    if (error) throw new Error(`Delete failed: ${error.message}`);
+    return { submission_id, status: 'deleted' };
   }
 
   if (action === 'stats') {
     const since = new Date();
     since.setDate(since.getDate() - 30);
     const { data, error } = await supabase.from('form_submissions')
-      .select('form_name, status, created_at')
+      .select('form_name, created_at')
       .gte('created_at', since.toISOString());
     if (error) throw new Error(`Form stats failed: ${error.message}`);
     const submissions = data || [];
