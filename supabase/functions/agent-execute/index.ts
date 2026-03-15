@@ -1192,17 +1192,17 @@ async function executeCompaniesAction(
 
   if (action === 'list') {
     const { data, error } = await supabase.from('companies')
-      .select('id, name, domain, industry, size, city, country, created_at')
+      .select('id, name, domain, industry, size, address, phone, website, notes, created_at')
       .order('created_at', { ascending: false }).limit(50);
     if (error) throw new Error(`List companies failed: ${error.message}`);
     return { companies: data || [] };
   }
 
   if (action === 'create') {
-    const { name, domain, industry, size, city, country, website, description } = args as any;
+    const { name, domain, industry, size, address, phone, website, notes } = args as any;
     if (!name) throw new Error('name is required');
     const { data, error } = await supabase.from('companies').insert({
-      name, domain, industry, size, city, country, website, description,
+      name, domain, industry, size, address, phone, website, notes,
     }).select('id, name, domain').single();
     if (error) throw new Error(`Create company failed: ${error.message}`);
     return { company_id: data.id, name: data.name, domain: data.domain };
@@ -1217,6 +1217,14 @@ async function executeCompaniesAction(
       .eq('id', company_id).select('id, name').single();
     if (error) throw new Error(`Update company failed: ${error.message}`);
     return { company_id: data.id, name: data.name, status: 'updated' };
+  }
+
+  if (action === 'delete') {
+    const { company_id } = args as any;
+    if (!company_id) throw new Error('company_id is required');
+    const { error } = await supabase.from('companies').delete().eq('id', company_id);
+    if (error) throw new Error(`Delete company failed: ${error.message}`);
+    return { company_id, status: 'deleted' };
   }
 
   return { error: `Unknown companies action: ${action}` };
