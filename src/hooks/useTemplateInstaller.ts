@@ -267,68 +267,71 @@ export function useTemplateInstaller() {
         await updateModules.mutateAsync(updatedModules);
       }
 
-      // Delete existing pages
-      if (opts.pages && existingPages && existingPages.length > 0) {
-        setProgress({ currentPage: 0, totalPages: existingPages.length, currentStep: 'Clearing existing pages...' });
-        for (let i = 0; i < existingPages.length; i++) {
-          setProgress({ currentPage: i + 1, totalPages: existingPages.length, currentStep: `Removing page "${existingPages[i].title}"...` });
-          await permanentDeletePage.mutateAsync(existingPages[i].id);
-        }
-      }
+      // Auto-cleanup previous template using manifest
+      if (installedTemplate?.manifest) {
+        const m = installedTemplate.manifest;
+        const totalCleanup = (m.pageIds?.length || 0) + (m.blogPostIds?.length || 0) + (m.kbCategoryIds?.length || 0) + (m.productIds?.length || 0) + (m.consultantIds?.length || 0);
+        if (totalCleanup > 0) {
+          setProgress({ currentPage: 0, totalPages: totalCleanup, currentStep: `Uninstalling "${installedTemplate.template_name}"...` });
+          let cleaned = 0;
 
-      // Clean up trashed pages with conflicting slugs
-      if (opts.pages && deletedPages && deletedPages.length > 0) {
-        const templateSlugs = new Set(template.pages.map(p => p.slug));
-        const conflicting = deletedPages.filter(p => templateSlugs.has(p.slug));
-        for (const page of conflicting) {
-          setProgress({ currentPage: 0, totalPages: conflicting.length, currentStep: `Cleaning up trashed page "${page.title}"...` });
-          await permanentDeletePage.mutateAsync(page.id);
-        }
-      }
+          // Remove pages created by previous template
+          for (const pageId of (m.pageIds || [])) {
+            setProgress({ currentPage: ++cleaned, totalPages: totalCleanup, currentStep: 'Removing previous template pages...' });
+            try { await permanentDeletePage.mutateAsync(pageId); } catch { /* already deleted */ }
+          }
 
-      // Create pages
-      if (opts.pages) {
-        setProgress({ currentPage: 0, totalPages: templatePages.length, currentStep: 'Creating pages...' });
-        for (let i = 0; i < templatePages.length; i++) {
-          const templatePage = templatePages[i];
-          setProgress({ currentPage: i + 1, totalPages: templatePages.length, currentStep: `Creating "${templatePage.title}"...` });
-          const page = await createPage.mutateAsync({
-            title: templatePage.title,
-            slug: templatePage.slug,
-            content: templatePage.blocks,
-            meta: templatePage.meta,
-            menu_order: templatePage.menu_order,
-            show_in_menu: templatePage.showInMenu,
-            status: opts.publishPages ? 'published' : 'draft',
-          });
-          pageIds.push(page.id);
-        }
-      }
+          // Remove blog posts
+          for (const postId of (m.blogPostIds || [])) {
+            setProgress({ currentPage: ++cleaned, totalPages: totalCleanup, currentStep: 'Removing previous template blog posts...' });
+            try { await deleteBlogPost.mutateAsync(postId); } catch { /* already deleted */ }
+          }
 
-      // Delete existing blog posts
-      if (opts.blogPosts && existingBlogPosts && existingBlogPosts.length > 0) {
-        setProgress({ currentPage: 0, totalPages: existingBlogPosts.length, currentStep: 'Clearing existing blog posts...' });
-        for (let i = 0; i < existingBlogPosts.length; i++) {
-          setProgress({ currentPage: i + 1, totalPages: existingBlogPosts.length, currentStep: `Removing blog post "${existingBlogPosts[i].title}"...` });
-          await deleteBlogPost.mutateAsync(existingBlogPosts[i].id);
-        }
-      }
+          // Remove KB categories
+          for (const catId of (m.kbCategoryIds || [])) {
+            setProgress({ currentPage: ++cleaned, totalPages: totalCleanup, currentStep: 'Removing previous template KB content...' });
+            try { await deleteKbCategory.mutateAsync(catId); } catch { /* already deleted */ }
+          }
 
-      // Delete existing KB categories
-      if (opts.kbContent && existingKbCategories && existingKbCategories.length > 0) {
-        setProgress({ currentPage: 0, totalPages: existingKbCategories.length, currentStep: 'Clearing existing KB content...' });
-        for (let i = 0; i < existingKbCategories.length; i++) {
-          setProgress({ currentPage: i + 1, totalPages: existingKbCategories.length, currentStep: `Removing KB category "${existingKbCategories[i].name}"...` });
-          await deleteKbCategory.mutateAsync(existingKbCategories[i].id);
-        }
-      }
+          // Remove products
+          for (const prodId of (m.productIds || [])) {
+            setProgress({ currentPage: ++cleaned, totalPages: totalCleanup, currentStep: 'Removing previous template products...' });
+            try { await deleteProduct.mutateAsync(prodId); } catch { /* already deleted */ }
+          }
 
-      // Delete existing products
-      if (opts.products && existingProducts && existingProducts.length > 0) {
-        setProgress({ currentPage: 0, totalPages: existingProducts.length, currentStep: 'Clearing existing products...' });
-        for (let i = 0; i < existingProducts.length; i++) {
-          setProgress({ currentPage: i + 1, totalPages: existingProducts.length, currentStep: `Removing product "${existingProducts[i].name}"...` });
-          await deleteProduct.mutateAsync(existingProducts[i].id);
+          // Remove consultants
+          for (const conId of (m.consultantIds || [])) {
+            setProgress({ currentPage: ++cleaned, totalPages: totalCleanup, currentStep: 'Removing previous template consultants...' });
+            try { await supabase.from('consultant_profiles').delete().eq('id', conId); } catch { /* already deleted */ }
+          }
+
+          // Remove old manifest record
+          await supabase.from('installed_template').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          logger.log(`[TemplateInstaller] Uninstalled previous template "${installedTemplate.template_name}" (${totalCleanup} resources)`);
+        }
+      } else {
+        // No manifest — fall back to clearing all existing content (first install or legacy)
+        if (opts.pages && existingPages && existingPages.length > 0) {
+          setProgress({ currentPage: 0, totalPages: existingPages.length, currentStep: 'Clearing existing pages...' });
+          for (let i = 0; i < existingPages.length; i++) {
+            setProgress({ currentPage: i + 1, totalPages: existingPages.length, currentStep: `Removing page "${existingPages[i].title}"...` });
+            await permanentDeletePage.mutateAsync(existingPages[i].id);
+          }
+        }
+        if (opts.blogPosts && existingBlogPosts && existingBlogPosts.length > 0) {
+          for (let i = 0; i < existingBlogPosts.length; i++) {
+            await deleteBlogPost.mutateAsync(existingBlogPosts[i].id);
+          }
+        }
+        if (opts.kbContent && existingKbCategories && existingKbCategories.length > 0) {
+          for (let i = 0; i < existingKbCategories.length; i++) {
+            await deleteKbCategory.mutateAsync(existingKbCategories[i].id);
+          }
+        }
+        if (opts.products && existingProducts && existingProducts.length > 0) {
+          for (let i = 0; i < existingProducts.length; i++) {
+            await deleteProduct.mutateAsync(existingProducts[i].id);
+          }
         }
       }
 
