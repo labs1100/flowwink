@@ -265,6 +265,16 @@ export interface ChatSettings {
   // FlowPilot integration
   showEscalationsInCopilot: boolean;
   showPublicChatsInCopilot: boolean;
+  
+  // Speech — STT & TTS
+  sttProvider: ChatSttProvider;
+  sttLocalEndpoint: string;  // OpenAI-compatible Whisper endpoint
+  sttLocalModel: string;
+  ttsProvider: ChatTtsProvider;
+  ttsLocalEndpoint: string;  // OpenAI-compatible TTS endpoint
+  ttsLocalModel: string;
+  ttsVoice: string;          // Voice ID (e.g. 'alloy', 'shimmer')
+  ttsAutoPlay: boolean;      // Auto-play TTS in check-in mode
 }
 
 export const defaultChatSettings: ChatSettings = {
