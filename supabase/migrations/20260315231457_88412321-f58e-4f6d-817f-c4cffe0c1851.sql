@@ -1,0 +1,1 @@
+UPDATE public.agent_skills SET enabled = false WHERE name = 'remove_duplicate_resumes' AND (tool_definition IS NULL OR tool_definition = '{}'::jsonb OR (tool_definition->>'type') IS NULL);
