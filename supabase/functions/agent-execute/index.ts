@@ -1940,6 +1940,47 @@ async function executeAnalyticsAction(
       };
     }
 
+    case 'analyze_chat_feedback': {
+      const { action = 'summary', period = 'month', limit = 50 } = args as any;
+      const since = new Date();
+      if (period === 'week') since.setDate(since.getDate() - 7);
+      else if (period === 'month') since.setMonth(since.getMonth() - 1);
+      else if (period === 'quarter') since.setMonth(since.getMonth() - 3);
+
+      const { data: feedback } = await supabase.from('chat_feedback')
+        .select('id, rating, user_question, ai_response, context_kb_articles, created_at')
+        .gte('created_at', since.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(action === 'negative_only' ? limit : 500);
+
+      const allFeedback = feedback || [];
+      const positive = allFeedback.filter((f: any) => f.rating === 'positive');
+      const negative = allFeedback.filter((f: any) => f.rating === 'negative');
+
+      if (action === 'negative_only') {
+        return {
+          negative_feedback: negative.slice(0, limit).map((f: any) => ({
+            question: f.user_question,
+            response_preview: (f.ai_response || '').substring(0, 200),
+            had_kb_context: (f.context_kb_articles || []).length > 0,
+            date: f.created_at,
+          })),
+          count: negative.length,
+        };
+      }
+
+      return {
+        period,
+        total: allFeedback.length,
+        positive: positive.length,
+        negative: negative.length,
+        satisfaction_rate: allFeedback.length > 0
+          ? Math.round((positive.length / allFeedback.length) * 100) : null,
+        negative_without_kb: negative.filter((f: any) => !(f.context_kb_articles || []).length).length,
+        top_negative_questions: negative.slice(0, 10).map((f: any) => f.user_question).filter(Boolean),
+      };
+    }
+
     default:
       return { error: `Unknown analytics skill: ${skillName}` };
   }
