@@ -387,12 +387,13 @@ export function useTemplateInstaller() {
       }
 
       // Create products
+      const createdProductIds: string[] = [];
       if (opts.products) {
         const productsToCreate = templateProducts || [];
         for (let i = 0; i < productsToCreate.length; i++) {
           const product = productsToCreate[i];
           setProgress({ currentPage: i + 1, totalPages: productsToCreate.length, currentStep: `Creating product "${product.name}"...` });
-          await createProduct.mutateAsync({
+          const created = await createProduct.mutateAsync({
             name: product.name,
             description: product.description,
             price_cents: product.price_cents,
@@ -403,42 +404,48 @@ export function useTemplateInstaller() {
             sort_order: i,
             stripe_price_id: null,
           });
+          if (created?.id) createdProductIds.push(created.id);
         }
       }
 
       // Seed consultant profiles
+      const createdConsultantIds: string[] = [];
       if (template.consultants?.length) {
         const consultants = template.consultants;
         setProgress({ currentPage: 0, totalPages: consultants.length, currentStep: 'Seeding consultant profiles...' });
         for (let i = 0; i < consultants.length; i++) {
           const c = consultants[i];
           setProgress({ currentPage: i + 1, totalPages: consultants.length, currentStep: `Adding consultant "${c.name}"...` });
-          await supabase.from('consultant_profiles').insert({
+          const { data } = await supabase.from('consultant_profiles').insert({
             name: c.name, title: c.title, summary: c.summary, bio: c.bio || null,
             skills: c.skills, experience_years: c.experience_years,
             certifications: c.certifications || [], languages: c.languages || ['English'],
             availability: c.availability, hourly_rate_cents: c.hourly_rate_cents || null,
             currency: c.currency || 'USD', avatar_url: c.avatar_url || null,
             linkedin_url: c.linkedin_url || null, is_active: c.is_active ?? true,
-          });
+          }).select('id').single();
+          if (data?.id) createdConsultantIds.push(data.id);
         }
       }
 
       // Create blog posts
+      const createdBlogPostIds: string[] = [];
       if (opts.blogPosts) {
         const postsToCreate = templateBlogPosts || [];
         for (let i = 0; i < postsToCreate.length; i++) {
           const post = postsToCreate[i];
           setProgress({ currentPage: i + 1, totalPages: postsToCreate.length, currentStep: `Creating blog post "${post.title}"...` });
-          await createBlogPost.mutateAsync({
+          const created = await createBlogPost.mutateAsync({
             title: post.title, slug: post.slug, excerpt: post.excerpt,
             featured_image: post.featured_image, content: post.content,
             meta: post.meta, status: opts.publishBlogPosts ? 'published' : 'draft',
           });
+          if (created?.id) createdBlogPostIds.push(created.id);
         }
       }
 
       // Create KB categories and articles
+      const createdKbCategoryIds: string[] = [];
       let totalKbArticles = 0;
       if (opts.kbContent) {
         const kbCategories = template.kbCategories || [];
@@ -449,6 +456,7 @@ export function useTemplateInstaller() {
             name: category.name, slug: category.slug, description: category.description,
             icon: category.icon, is_active: true,
           });
+          createdKbCategoryIds.push(createdCategory.id);
           for (const article of category.articles) {
             const answerJson = createDocumentFromText(article.answer_text);
             await createKbArticle.mutateAsync({
@@ -480,6 +488,23 @@ export function useTemplateInstaller() {
         logger.warn('[TemplateInstaller] FlowPilot bootstrap failed (non-fatal):', fpError);
       }
 
+      // Save installation manifest for future cleanup
+      const manifest: TemplateManifest = {
+        pageIds,
+        blogPostIds: createdBlogPostIds,
+        kbCategoryIds: createdKbCategoryIds,
+        productIds: createdProductIds,
+        consultantIds: createdConsultantIds,
+      };
+      await supabase.from('installed_template').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('installed_template').insert({
+        template_id: template.id,
+        template_name: template.name,
+        manifest: manifest as any,
+      });
+      setInstalledTemplate({ template_id: template.id, template_name: template.name, manifest });
+      logger.log('[TemplateInstaller] Saved manifest:', manifest);
+
       setCreatedPageIds(pageIds);
       setStep('done');
 
@@ -507,7 +532,7 @@ export function useTemplateInstaller() {
       toast({ title: 'Error', description: 'Failed to apply template. Some changes may have been applied.', variant: 'destructive' });
       setStep('idle');
     }
-  }, [existingPages, deletedPages, existingBlogPosts, existingKbCategories, existingProducts, mediaCount, currentModules]);
+  }, [existingPages, deletedPages, existingBlogPosts, existingKbCategories, existingProducts, mediaCount, currentModules, installedTemplate]);
 
   const reset = useCallback(() => {
     setStep('idle');
