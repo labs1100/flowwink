@@ -157,22 +157,13 @@ export const defaultModulesSettings: ModulesSettings = {
     autonomy: 'view-required',
     adminUI: true,
   },
-  products: {
-    enabled: true,
-    name: 'Products',
-    description: 'Product catalog for deals and services',
-    icon: 'Package',
+  ecommerce: {
+    enabled: false,
+    name: 'E-commerce',
+    description: 'Products, orders, cart, and customer portal',
+    icon: 'ShoppingBag',
     category: 'data',
     autonomy: 'config-required',
-    adminUI: true,
-  },
-  orders: {
-    enabled: true,
-    name: 'Orders',
-    description: 'Order management and e-commerce transactions',
-    icon: 'ShoppingCart',
-    category: 'data',
-    autonomy: 'view-required',
     adminUI: true,
   },
   contentApi: {
