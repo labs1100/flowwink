@@ -13,6 +13,7 @@ import {
   getBuiltInTools,
   executeBuiltInTool,
   isBuiltInTool,
+  loadCMSSchema,
 } from "../_shared/agent-reason.ts";
 
 /**
