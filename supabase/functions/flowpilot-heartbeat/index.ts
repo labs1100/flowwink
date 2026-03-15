@@ -143,7 +143,7 @@ serve(async (req) => {
       maxIterations: MAX_ITERATIONS,
     });
 
-    // 5. Run the reasoning loop with context pruning
+    // 6. Run the reasoning loop with context pruning + token tracking
     const rawMessages: any[] = [
       { role: "system", content: systemPrompt },
       { role: "user", content: `Heartbeat triggered at ${new Date().toISOString()}. Review objectives, advance plans, execute due automations, and report system health.` },
@@ -153,6 +153,7 @@ serve(async (req) => {
 
     let finalResponse = "";
     const actionsExecuted: string[] = [];
+    let totalTokenUsage: TokenUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
       const aiResponse = await fetch(apiUrl, {
