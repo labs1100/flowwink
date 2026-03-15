@@ -29,10 +29,10 @@ const BLOCK_MODULE_MAP: Record<string, keyof ModulesSettings> = {
   'newsletter': 'newsletter',
   
   // E-commerce
-  'products': 'products',
-  'cart': 'orders',
-  'pricing': 'products',
-  'comparison': 'products',
+  'products': 'ecommerce',
+  'cart': 'ecommerce',
+  'pricing': 'ecommerce',
+  'comparison': 'ecommerce',
   
   // Forms
   'form': 'forms',
