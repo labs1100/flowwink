@@ -221,6 +221,11 @@ export function buildSystemPrompt(input: PromptCompilerInput): string {
   // Layer 2: Soul & Identity
   parts.push(soulPrompt);
 
+  // Layer 2.5: CMS Schema Awareness
+  if (input.cmsSchemaContext) {
+    parts.push(input.cmsSchemaContext);
+  }
+
   // Layer 3: Core instructions (shared)
   parts.push(CORE_INSTRUCTIONS);
 
@@ -233,6 +238,10 @@ export function buildSystemPrompt(input: PromptCompilerInput): string {
     if (input.activityContext) parts.push(input.activityContext);
     if (input.statsContext) parts.push(input.statsContext);
     if (input.healingReport) parts.push(input.healingReport);
+    if (input.heartbeatState) parts.push(input.heartbeatState);
+    if (input.tokenBudget) {
+      parts.push(`\nTOKEN BUDGET: ${input.tokenBudget} tokens max. Be efficient — stop early if approaching the limit.`);
+    }
     parts.push('');
     parts.push(HEARTBEAT_PROTOCOL);
     parts.push(`\n- Max ${input.maxIterations || 8} tool iterations per heartbeat`);
