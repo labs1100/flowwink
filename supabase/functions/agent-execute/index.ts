@@ -1006,15 +1006,81 @@ async function executeDealsAction(
 
 async function executeProductsAction(
   supabase: SupabaseClient,
-  _skillName: string,
+  skillName: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
+  // browse_products — visitor-facing
+  if (skillName === 'browse_products') {
+    const { search, type } = args as any;
+    let query = supabase.from('products')
+      .select('id, name, slug, description, price_cents, currency, type, image_url, stock_quantity, track_inventory')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false }).limit(20);
+    if (type) query = query.eq('type', type);
+    if (search) query = query.ilike('name', `%${search}%`);
+    const { data, error } = await query;
+    if (error) throw new Error(`Browse products failed: ${error.message}`);
+    return { products: (data || []).map((p: any) => ({
+      ...p,
+      in_stock: !p.track_inventory || (p.stock_quantity !== null && p.stock_quantity > 0),
+    })) };
+  }
+
+  // manage_inventory
+  if (skillName === 'manage_inventory') {
+    const { action = 'list_stock', product_id, quantity, threshold } = args as any;
+
+    if (action === 'list_stock') {
+      const { data, error } = await supabase.from('products')
+        .select('id, name, stock_quantity, track_inventory, low_stock_threshold, allow_backorder, is_active')
+        .eq('track_inventory', true)
+        .order('stock_quantity', { ascending: true });
+      if (error) throw new Error(`List stock failed: ${error.message}`);
+      return { products: data || [] };
+    }
+
+    if (action === 'update_stock' && product_id) {
+      const updateData: any = { updated_at: new Date().toISOString() };
+      if (quantity !== undefined) updateData.stock_quantity = quantity;
+      if (threshold !== undefined) updateData.low_stock_threshold = threshold;
+      const { data, error } = await supabase.from('products')
+        .update(updateData).eq('id', product_id)
+        .select('id, name, stock_quantity, low_stock_threshold').single();
+      if (error) throw new Error(`Update stock failed: ${error.message}`);
+      return { product_id: data.id, name: data.name, stock_quantity: data.stock_quantity, status: 'updated' };
+    }
+
+    if (action === 'low_stock_alerts') {
+      const { data, error } = await supabase.from('products')
+        .select('id, name, stock_quantity, low_stock_threshold')
+        .eq('track_inventory', true)
+        .eq('is_active', true);
+      if (error) throw new Error(`Low stock query failed: ${error.message}`);
+      const lowStock = (data || []).filter((p: any) =>
+        p.stock_quantity !== null && p.stock_quantity <= (p.low_stock_threshold || 5)
+      );
+      return { low_stock_products: lowStock, count: lowStock.length };
+    }
+
+    if (action === 'back_in_stock_requests') {
+      const { data, error } = await supabase.from('back_in_stock_requests')
+        .select('id, email, product_id, created_at, notified_at')
+        .is('notified_at', null)
+        .order('created_at', { ascending: false }).limit(50);
+      if (error) throw new Error(`Back in stock query failed: ${error.message}`);
+      return { requests: data || [] };
+    }
+
+    return { error: `Unknown inventory action: ${action}` };
+  }
+
+  // manage_product — original CRUD
   const { action = 'list' } = args as any;
 
   if (action === 'list') {
     const { is_active } = args as any;
     let query = supabase.from('products')
-      .select('id, name, slug, description, price_cents, currency, type, is_active, created_at')
+      .select('id, name, slug, description, price_cents, currency, type, is_active, stock_quantity, track_inventory, created_at')
       .order('created_at', { ascending: false }).limit(50);
     if (is_active !== undefined) query = query.eq('is_active', is_active);
     const { data, error } = await query;
