@@ -411,30 +411,7 @@ async function executeModuleAction(
     }
 
     case 'booking': {
-      const { service_id, customer_name, customer_email, date, time } = args as any;
-      // Find service or use first active service
-      let svcId = service_id;
-      if (!svcId) {
-        const { data: services } = await supabase
-          .from('booking_services').select('id, duration_minutes')
-          .eq('is_active', true).order('sort_order').limit(1);
-        if (services?.length) svcId = services[0].id;
-      }
-
-      const startTime = new Date(`${date}T${time}:00`);
-      const { data: svc } = await supabase.from('booking_services')
-        .select('duration_minutes').eq('id', svcId).single();
-      const duration = svc?.duration_minutes || 60;
-      const endTime = new Date(startTime.getTime() + duration * 60000);
-
-      const { data, error } = await supabase.from('bookings').insert({
-        service_id: svcId, customer_name, customer_email,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
-        status: 'pending',
-      }).select().single();
-      if (error) throw new Error(`Booking failed: ${error.message}`);
-      return { booking_id: data.id, start_time: data.start_time, status: 'pending' };
+      return await executeBookingAction(supabase, skillName, args);
     }
 
     case 'newsletter': {
