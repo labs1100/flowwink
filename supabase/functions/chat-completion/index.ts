@@ -513,21 +513,31 @@ async function executeToolCall(
       }
     }
 
-    case 'save_kb_article': {
+    case 'save_consultant_profile': {
       if (!checkinId || !args.summary) return 'Missing checkin context or summary.';
       try {
         const supabaseClient = createClient(supabaseUrl, supabaseKey);
+        const updateData: Record<string, unknown> = {
+          summary: args.summary,
+          updated_at: new Date().toISOString(),
+        };
+        if (args.skills && Array.isArray(args.skills) && args.skills.length > 0) {
+          updateData.skills = args.skills;
+        }
+        if (args.availability) {
+          updateData.availability = args.availability;
+        }
+        if (args.title) {
+          updateData.title = args.title;
+        }
         const { error } = await supabaseClient
-          .from('kb_articles')
-          .update({
-            answer_text: args.summary,
-            updated_at: new Date().toISOString(),
-          })
+          .from('consultant_profiles')
+          .update(updateData)
           .eq('id', checkinId);
         if (error) throw error;
-        return 'Profile updated successfully in the knowledge base.';
+        return 'Consultant profile updated successfully.';
       } catch (err) {
-        console.error('save_kb_article error:', err);
+        console.error('save_consultant_profile error:', err);
         return `Failed to save profile: ${err instanceof Error ? err.message : 'Unknown error'}`;
       }
     }
