@@ -856,6 +856,12 @@ async function handleAdvancePlan(supabase: any, supabaseUrl: string, serviceKey:
   const maxSteps = chain ? MAX_CHAIN_DEPTH : 1;
   const chainResults: any[] = [];
 
+  // Atomic checkout — prevent concurrent heartbeat instances from advancing the same objective
+  const locked = await checkoutObjective(supabase, objective_id);
+  if (!locked) {
+    return { status: 'locked', message: 'Objective is currently being worked on by another process.' };
+  }
+
   for (let depth = 0; depth < maxSteps; depth++) {
     const { data: obj, error } = await supabase.from('agent_objectives')
       .select('id, goal, progress')
