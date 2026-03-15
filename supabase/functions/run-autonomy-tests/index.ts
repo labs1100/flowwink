@@ -1,0 +1,358 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  buildSystemPrompt,
+  buildSoulPrompt,
+  extractTokenUsage,
+  accumulateTokens,
+  isOverBudget,
+  checkoutObjective,
+  releaseObjective,
+  loadCMSSchema,
+  loadHeartbeatState,
+  saveHeartbeatState,
+  loadMemories,
+} from "../_shared/agent-reason.ts";
+import type { PromptCompilerInput, TokenUsage, HeartbeatState } from "../_shared/agent-reason.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
+
+// ─── Test Runner Framework ────────────────────────────────────────────────────
+
+interface TestResult {
+  name: string;
+  layer: 1 | 2 | 3;
+  status: 'pass' | 'fail' | 'skip';
+  duration_ms: number;
+  error?: string;
+}
+
+function assertEqual(actual: any, expected: any, msg?: string) {
+  const a = JSON.stringify(actual);
+  const e = JSON.stringify(expected);
+  if (a !== e) throw new Error(msg || `Expected ${e}, got ${a}`);
+}
+
+function assertExists(value: any, msg?: string) {
+  if (value === null || value === undefined) throw new Error(msg || `Value is ${value}`);
+}
+
+function assertContains(str: string, substr: string, msg?: string) {
+  if (!str.includes(substr)) throw new Error(msg || `"${str.slice(0, 100)}..." does not contain "${substr}"`);
+}
+
+async function runTest(name: string, layer: 1 | 2 | 3, fn: () => Promise<void>): Promise<TestResult> {
+  const start = Date.now();
+  try {
+    await fn();
+    return { name, layer, status: 'pass', duration_ms: Date.now() - start };
+  } catch (err: any) {
+    return { name, layer, status: 'fail', duration_ms: Date.now() - start, error: err.message };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LAYER 1: Unit Tests (Pure Functions)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function layer1Tests(): Promise<TestResult[]> {
+  const results: TestResult[] = [];
+
+  // Token Tracking
+  results.push(await runTest("extractTokenUsage: extracts from AI response", 1, async () => {
+    const r = extractTokenUsage({ usage: { prompt_tokens: 100, completion_tokens: 50 } });
+    assertEqual(r, { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 });
+  }));
+
+  results.push(await runTest("extractTokenUsage: handles missing usage", 1, async () => {
+    const r = extractTokenUsage({});
+    assertEqual(r, { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 });
+  }));
+
+  results.push(await runTest("accumulateTokens: sums correctly", 1, async () => {
+    const a: TokenUsage = { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 };
+    const b: TokenUsage = { prompt_tokens: 200, completion_tokens: 80, total_tokens: 280 };
+    const r = accumulateTokens(a, b);
+    assertEqual(r, { prompt_tokens: 300, completion_tokens: 130, total_tokens: 430 });
+  }));
+
+  results.push(await runTest("isOverBudget: detects exceeded", 1, async () => {
+    assertEqual(isOverBudget({ prompt_tokens: 40000, completion_tokens: 10000, total_tokens: 50000 }, 50000), true);
+  }));
+
+  results.push(await runTest("isOverBudget: allows within budget", 1, async () => {
+    assertEqual(isOverBudget({ prompt_tokens: 30000, completion_tokens: 10000, total_tokens: 40000 }, 50000), false);
+  }));
+
+  // Soul Prompt Builder
+  results.push(await runTest("buildSoulPrompt: full soul + identity", 1, async () => {
+    const prompt = buildSoulPrompt(
+      { purpose: "Help grow", values: ["Honesty"], tone: "professional" },
+      { name: "Aria", role: "Consultant", capabilities: ["SEO"], boundaries: ["No spam"] }
+    );
+    assertContains(prompt, "Name: Aria");
+    assertContains(prompt, "Role: Consultant");
+    assertContains(prompt, "Purpose: Help grow");
+  }));
+
+  results.push(await runTest("buildSoulPrompt: empty returns empty", 1, async () => {
+    const prompt = buildSoulPrompt({}, {});
+    assertEqual(prompt, '');
+  }));
+
+  // Prompt Compiler
+  const baseInput: PromptCompilerInput = {
+    mode: 'operate',
+    soulPrompt: 'SOUL: Test',
+    memoryContext: 'MEM: likes blue',
+    objectiveContext: 'OBJ: Grow 20%',
+  };
+
+  results.push(await runTest("buildSystemPrompt: operate mode", 1, async () => {
+    const p = buildSystemPrompt(baseInput);
+    assertContains(p, "autonomous, self-improving AI agent");
+    assertContains(p, "OBJECTIVES:");
+  }));
+
+  results.push(await runTest("buildSystemPrompt: heartbeat mode includes protocol", 1, async () => {
+    const p = buildSystemPrompt({ ...baseInput, mode: 'heartbeat', maxIterations: 5 });
+    assertContains(p, "AUTONOMOUS HEARTBEAT mode");
+    assertContains(p, "Max 5 tool iterations");
+  }));
+
+  results.push(await runTest("buildSystemPrompt: CMS schema injected", 1, async () => {
+    const p = buildSystemPrompt({ ...baseInput, cmsSchemaContext: 'CMS: 10 pages' });
+    assertContains(p, "CMS: 10 pages");
+  }));
+
+  results.push(await runTest("buildSystemPrompt: token budget in heartbeat", 1, async () => {
+    const p = buildSystemPrompt({ ...baseInput, mode: 'heartbeat', tokenBudget: 50000 });
+    assertContains(p, "TOKEN BUDGET: 50000");
+  }));
+
+  results.push(await runTest("buildSystemPrompt: heartbeat state not in operate", 1, async () => {
+    const p = buildSystemPrompt({ ...baseInput, mode: 'operate', heartbeatState: 'LEAK' });
+    if (p.includes('LEAK')) throw new Error("Heartbeat state leaked into operate mode");
+  }));
+
+  results.push(await runTest("buildSystemPrompt: chat uses override", 1, async () => {
+    const p = buildSystemPrompt({ ...baseInput, mode: 'chat', chatSystemPrompt: 'Custom.' });
+    assertEqual(p, 'Custom.');
+  }));
+
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LAYER 2: Integration Tests (Edge Function API)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function layer2Tests(supabaseUrl: string, serviceKey: string): Promise<TestResult[]> {
+  const results: TestResult[] = [];
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${serviceKey}`,
+  };
+
+  results.push(await runTest("agent-execute: rejects missing skill", 2, async () => {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+      method: "POST", headers,
+      body: JSON.stringify({ arguments: {}, agent_type: "flowpilot" }),
+    });
+    const data = await resp.json();
+    assertEqual(resp.status, 400);
+    assertEqual(data.error, "skill_id or skill_name required");
+  }));
+
+  results.push(await runTest("agent-execute: 404 for nonexistent skill", 2, async () => {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+      method: "POST", headers,
+      body: JSON.stringify({ skill_name: "nonexistent_xyz_99", arguments: {}, agent_type: "flowpilot" }),
+    });
+    const data = await resp.json();
+    assertEqual(resp.status, 404);
+    assertExists(data.error);
+  }));
+
+  results.push(await runTest("agent-execute: objective_context accepted", 2, async () => {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
+      method: "POST", headers,
+      body: JSON.stringify({
+        skill_name: "nonexistent_xyz_99",
+        arguments: {},
+        agent_type: "flowpilot",
+        objective_context: { goal: "Test", step: "Step 1", why: "Testing" },
+      }),
+    });
+    await resp.text();
+    // Should be 404, not 500 (no crash from objective_context)
+    assertEqual(resp.status, 404);
+  }));
+
+  results.push(await runTest("heartbeat: CORS preflight works", 2, async () => {
+    const resp = await fetch(`${supabaseUrl}/functions/v1/flowpilot-heartbeat`, {
+      method: "OPTIONS",
+      headers: { "Origin": "https://test.example.com" },
+    });
+    await resp.text();
+    assertEqual(resp.status, 200);
+    assertExists(resp.headers.get("access-control-allow-origin"));
+  }));
+
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LAYER 3: Scenario Eval Suite (Database State)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function layer3Tests(supabase: any): Promise<TestResult[]> {
+  const results: TestResult[] = [];
+
+  // Heartbeat State Persistence
+  results.push(await runTest("Heartbeat state round-trips correctly", 3, async () => {
+    const testState: HeartbeatState = {
+      last_run: new Date().toISOString(),
+      objectives_advanced: ["obj-a", "obj-b"],
+      next_priorities: ["p1"],
+      pending_actions: [],
+      token_usage: { prompt_tokens: 1000, completion_tokens: 500, total_tokens: 1500 },
+      iteration_count: 5,
+    };
+    await saveHeartbeatState(supabase, testState);
+    const loaded = await loadHeartbeatState(supabase);
+    assertContains(loaded, "Previous token usage: 1500 tokens");
+    assertContains(loaded, "Previous iterations: 5");
+  }));
+
+  // Atomic Checkout
+  results.push(await runTest("Atomic checkout prevents double-lock", 3, async () => {
+    const { data: obj } = await supabase.from("agent_objectives").insert({
+      goal: "TEST_CHECKOUT — safe to delete",
+      status: "active", constraints: {}, success_criteria: {}, progress: {},
+    }).select("id").single();
+    assertExists(obj);
+
+    try {
+      const lock1 = await checkoutObjective(supabase, obj.id);
+      assertEqual(lock1, true, "First checkout should succeed");
+
+      const lock2 = await checkoutObjective(supabase, obj.id);
+      assertEqual(lock2, false, "Second checkout should fail");
+
+      await releaseObjective(supabase, obj.id);
+      const lock3 = await checkoutObjective(supabase, obj.id);
+      assertEqual(lock3, true, "Post-release checkout should succeed");
+    } finally {
+      await supabase.from("agent_objectives").delete().eq("id", obj.id);
+    }
+  }));
+
+  // Stale Lock Recovery
+  results.push(await runTest("Stale locks (>30min) are recovered", 3, async () => {
+    const staleLockTime = new Date(Date.now() - 35 * 60_000).toISOString();
+    const { data: obj } = await supabase.from("agent_objectives").insert({
+      goal: "TEST_STALE — safe to delete",
+      status: "active", constraints: {}, success_criteria: {}, progress: {},
+      locked_by: "crashed", locked_at: staleLockTime,
+    }).select("id").single();
+    assertExists(obj);
+
+    try {
+      const lock = await checkoutObjective(supabase, obj.id);
+      assertEqual(lock, true, "Should recover stale lock");
+    } finally {
+      await supabase.from("agent_objectives").delete().eq("id", obj.id);
+    }
+  }));
+
+  // Memory Isolation
+  results.push(await runTest("heartbeat_state excluded from general memories", 3, async () => {
+    const memories = await loadMemories(supabase);
+    if (memories.includes("heartbeat_state")) {
+      throw new Error("heartbeat_state leaked into general memories");
+    }
+  }));
+
+  // CMS Schema Loader
+  results.push(await runTest("CMS schema returns structured context", 3, async () => {
+    const schema = await loadCMSSchema(supabase);
+    if (schema) {
+      assertContains(schema, "CMS SCHEMA AWARENESS");
+      assertContains(schema, "pages");
+      assertContains(schema, "block types");
+    }
+    // Empty schema is also acceptable (no modules configured)
+  }));
+
+  // Token usage in activity
+  results.push(await runTest("Activity log accepts token_usage field", 3, async () => {
+    const tokenUsage = { prompt_tokens: 2000, completion_tokens: 800, total_tokens: 2800 };
+    const { data, error } = await supabase.from("agent_activity").insert({
+      agent: "flowpilot",
+      skill_name: "test_token_log",
+      input: { test: true },
+      output: { ok: true },
+      status: "success",
+      duration_ms: 100,
+      token_usage: tokenUsage,
+    }).select("id, token_usage").single();
+    assertExists(data, `Insert failed: ${error?.message}`);
+    assertEqual(data.token_usage.total_tokens, 2800);
+    await supabase.from("agent_activity").delete().eq("id", data.id);
+  }));
+
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN
+// ═══════════════════════════════════════════════════════════════════════════════
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, serviceKey);
+
+  const startTime = Date.now();
+
+  try {
+    // Parse optional layer filter
+    let body: any = {};
+    try { body = await req.json(); } catch { /* empty body OK */ }
+    const layerFilter: number[] = body.layers || [1, 2, 3];
+
+    const allResults: TestResult[] = [];
+
+    // Run selected layers in parallel where possible
+    const tasks: Promise<TestResult[]>[] = [];
+    if (layerFilter.includes(1)) tasks.push(layer1Tests());
+    if (layerFilter.includes(2)) tasks.push(layer2Tests(supabaseUrl, serviceKey));
+    if (layerFilter.includes(3)) tasks.push(layer3Tests(supabase));
+
+    const layerResults = await Promise.all(tasks);
+    for (const lr of layerResults) allResults.push(...lr);
+
+    const passed = allResults.filter(r => r.status === 'pass').length;
+    const failed = allResults.filter(r => r.status === 'fail').length;
+    const skipped = allResults.filter(r => r.status === 'skip').length;
+
+    return new Response(JSON.stringify({
+      summary: { total: allResults.length, passed, failed, skipped, duration_ms: Date.now() - startTime },
+      results: allResults,
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
