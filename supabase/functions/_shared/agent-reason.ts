@@ -883,6 +883,12 @@ async function handleAdvancePlan(supabase: any, supabaseUrl: string, serviceKey:
     let result: any = { status: 'manual', message: 'No skill mapped — requires manual action.' };
     if (nextStep.skill_name) {
       try {
+        // Goal-Aware Execution: pass objective context to agent-execute
+        const objectiveContext = {
+          goal: obj.goal,
+          step: nextStep.description,
+          why: `Step ${nextStep.order} of plan for objective: ${obj.goal}`,
+        };
         const resp = await fetch(`${supabaseUrl}/functions/v1/agent-execute`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
@@ -890,6 +896,7 @@ async function handleAdvancePlan(supabase: any, supabaseUrl: string, serviceKey:
             skill_name: nextStep.skill_name,
             arguments: nextStep.skill_args || {},
             agent_type: 'flowpilot',
+            objective_context: objectiveContext,
           }),
         });
         result = await resp.json();
