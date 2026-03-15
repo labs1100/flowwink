@@ -36,8 +36,7 @@ export interface ModulesSettings {
   leads: ModuleConfig;
   deals: ModuleConfig;
   companies: ModuleConfig;
-  products: ModuleConfig;
-  orders: ModuleConfig;
+  ecommerce: ModuleConfig;
   contentApi: ModuleConfig;
   globalElements: ModuleConfig;
   mediaLibrary: ModuleConfig;
