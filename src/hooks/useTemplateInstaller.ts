@@ -25,10 +25,33 @@ export interface InstallProgress {
   currentStep: string;
 }
 
+export interface TemplateManifest {
+  pageIds: string[];
+  blogPostIds: string[];
+  kbCategoryIds: string[];
+  productIds: string[];
+  consultantIds: string[];
+}
+
 export function useTemplateInstaller() {
   const [step, setStep] = useState<InstallStep>('idle');
   const [progress, setProgress] = useState<InstallProgress>({ currentPage: 0, totalPages: 0, currentStep: '' });
   const [createdPageIds, setCreatedPageIds] = useState<string[]>([]);
+  const [installedTemplate, setInstalledTemplate] = useState<{ template_id: string; template_name: string; manifest: TemplateManifest } | null>(null);
+
+  // Fetch currently installed template on mount
+  useState(() => {
+    supabase.from('installed_template').select('*').order('installed_at', { ascending: false }).limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setInstalledTemplate({
+            template_id: data[0].template_id,
+            template_name: data[0].template_name,
+            manifest: data[0].manifest as unknown as TemplateManifest,
+          });
+        }
+      });
+  });
 
   const { data: existingPages } = usePages();
   const { data: deletedPages } = useDeletedPages();
