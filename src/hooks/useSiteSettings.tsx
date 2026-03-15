@@ -329,6 +329,14 @@ export const defaultChatSettings: ChatSettings = {
   showChatIcons: true,
   showEscalationsInCopilot: false,
   showPublicChatsInCopilot: false,
+  sttProvider: 'browser',
+  sttLocalEndpoint: '',
+  sttLocalModel: 'whisper-1',
+  ttsProvider: 'none',
+  ttsLocalEndpoint: '',
+  ttsLocalModel: 'tts-1',
+  ttsVoice: 'alloy',
+  ttsAutoPlay: false,
 };
 
 // Generic hook for fetching settings
