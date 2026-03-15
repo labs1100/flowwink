@@ -419,8 +419,8 @@ export function PublicNavigation() {
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 md:hidden">
             {headerSettings.showThemeToggle !== false && <ThemeToggle />}
-            {productsEnabled && <AccountIndicator />}
-            {productsEnabled && <CartIndicator />}
+            {ecommerceEnabled && <AccountIndicator />}
+            {ecommerceEnabled && <CartIndicator />}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-md hover:bg-muted transition-colors"
