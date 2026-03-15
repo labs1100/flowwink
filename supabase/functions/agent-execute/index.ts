@@ -415,15 +415,7 @@ async function executeModuleAction(
     }
 
     case 'newsletter': {
-      const { subject, content, schedule_at } = args as any;
-      const { data, error } = await supabase.from('newsletters').insert({
-        subject,
-        content_html: content,
-        status: schedule_at ? 'scheduled' : 'draft',
-        scheduled_at: schedule_at || null,
-      }).select().single();
-      if (error) throw new Error(`Newsletter failed: ${error.message}`);
-      return { newsletter_id: data.id, subject: data.subject, status: data.status };
+      return await executeNewsletterAction(supabase, skillName, args);
     }
 
     case 'orders': {
