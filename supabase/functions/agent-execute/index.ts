@@ -1785,7 +1785,26 @@ async function executeDbAction(
 ): Promise<unknown> {
   switch (table) {
     case 'site_settings': {
-      const { key, value } = args as any;
+      const { action = 'update', key, value } = args as any;
+
+      if (action === 'get_all') {
+        const { data, error } = await supabase.from('site_settings').select('key, value');
+        if (error) throw new Error(`Get settings failed: ${error.message}`);
+        const settings: Record<string, unknown> = {};
+        for (const row of (data || [])) settings[row.key] = row.value;
+        return { settings };
+      }
+
+      if (action === 'get') {
+        if (!key) throw new Error('key is required');
+        const { data, error } = await supabase.from('site_settings')
+          .select('key, value').eq('key', key).maybeSingle();
+        if (error) throw new Error(`Get setting failed: ${error.message}`);
+        return data || { key, value: null, exists: false };
+      }
+
+      // update (default)
+      if (!key) throw new Error('key is required for update');
       const { data, error } = await supabase.from('site_settings')
         .upsert({ key, value }, { onConflict: 'key' })
         .select().single();
