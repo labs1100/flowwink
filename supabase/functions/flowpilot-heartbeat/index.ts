@@ -104,7 +104,7 @@ serve(async (req) => {
 
   try {
     // 1. Gather context + run self-healing in parallel
-    const [{ soul, identity }, memoryCtx, objectiveCtx, activityCtx, statsCtx, automationCtx, healingReport] = await Promise.all([
+    const [{ soul, identity }, memoryCtx, objectiveCtx, activityCtx, statsCtx, automationCtx, healingReport, cmsSchemaCtx, heartbeatStateCtx] = await Promise.all([
       loadSoulIdentity(supabase),
       loadMemories(supabase),
       loadObjectives(supabase),
@@ -112,6 +112,8 @@ serve(async (req) => {
       loadSiteStats(supabase),
       loadLinkedAutomations(supabase),
       runSelfHealing(supabase),
+      loadCMSSchema(supabase),
+      loadHeartbeatState(supabase),
     ]);
 
     // 2. Resolve AI config
@@ -122,7 +124,10 @@ serve(async (req) => {
     const skillTools = await loadSkillTools(supabase, 'internal');
     const allTools = [...builtInTools, ...skillTools];
 
-    // 4. Build system prompt via prompt compiler (OpenClaw Layer 1)
+    // 4. Token budget
+    const TOKEN_BUDGET = 50_000;
+
+    // 5. Build system prompt via prompt compiler (OpenClaw Layer 1)
     const systemPrompt = buildSystemPrompt({
       mode: 'heartbeat',
       soulPrompt: buildSoulPrompt(soul, identity),
@@ -132,6 +137,9 @@ serve(async (req) => {
       statsContext: statsCtx,
       automationContext: automationCtx,
       healingReport: healingReport,
+      cmsSchemaContext: cmsSchemaCtx,
+      heartbeatState: heartbeatStateCtx,
+      tokenBudget: TOKEN_BUDGET,
       maxIterations: MAX_ITERATIONS,
     });
 
