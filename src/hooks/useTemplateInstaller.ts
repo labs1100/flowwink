@@ -40,7 +40,7 @@ export function useTemplateInstaller() {
   const [installedTemplate, setInstalledTemplate] = useState<{ template_id: string; template_name: string; manifest: TemplateManifest } | null>(null);
 
   // Fetch currently installed template on mount
-  useState(() => {
+  useEffect(() => {
     supabase.from('installed_template').select('*').order('installed_at', { ascending: false }).limit(1)
       .then(({ data }) => {
         if (data && data.length > 0) {
@@ -51,7 +51,7 @@ export function useTemplateInstaller() {
           });
         }
       });
-  });
+  }, []);
 
   const { data: existingPages } = usePages();
   const { data: deletedPages } = useDeletedPages();
