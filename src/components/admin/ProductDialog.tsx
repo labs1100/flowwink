@@ -33,6 +33,10 @@ interface FormData {
   price: string;
   currency: string;
   image_url: string;
+  track_inventory: boolean;
+  stock_quantity: string;
+  low_stock_threshold: string;
+  allow_backorder: boolean;
 }
 
 export function ProductDialog({ open, onOpenChange, product }: ProductDialogProps) {
