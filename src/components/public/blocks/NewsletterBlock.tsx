@@ -77,7 +77,7 @@ export function NewsletterBlock({ data }: NewsletterBlockProps) {
 
   if (variant === "minimal") {
     return (
-      <form onSubmit={handleSubmit} className="py-6">
+      <form onSubmit={handleSubmit}>
         <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
           <Input
             type="email"
