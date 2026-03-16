@@ -310,8 +310,75 @@ serve(async (req) => {
 
     console.log(`[briefing] Created: ${title} | Health: ${healthScore} | Actions: ${actionItems.length}`);
 
+    // ─── Send email via Resend ──────────────────────────────────────
+    let emailed = false;
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (RESEND_API_KEY) {
+      try {
+        // Get admin emails from profiles + user_roles
+        const { data: admins } = await supabase
+          .from("user_roles")
+          .select("user_id, profiles!inner(email, full_name)")
+          .eq("role", "admin");
+
+        const adminEmails = (admins || [])
+          .map((a: any) => a.profiles?.email)
+          .filter(Boolean);
+
+        if (adminEmails.length > 0) {
+          // Build email HTML
+          const healthEmoji = healthScore >= 75 ? "🟢" : healthScore >= 50 ? "🟡" : "🔴";
+          const emailHtml = buildBriefingEmail({
+            title,
+            summary,
+            healthScore,
+            healthEmoji,
+            sections,
+            actionItems,
+            metrics,
+          });
+
+          const resendRes = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${RESEND_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: "FlowPilot <flowpilot@news.flowwink.com>",
+              to: adminEmails,
+              subject: `${healthEmoji} ${title} — Health ${healthScore}/100`,
+              html: emailHtml,
+            }),
+          });
+
+          if (resendRes.ok) {
+            emailed = true;
+            await supabase
+              .from("flowpilot_briefings")
+              .update({ emailed_at: new Date().toISOString() })
+              .eq("id", briefing.id);
+            console.log(`[briefing] Email sent to ${adminEmails.join(", ")}`);
+          } else {
+            const err = await resendRes.text();
+            console.error(`[briefing] Resend error: ${err}`);
+          }
+        } else {
+          console.log("[briefing] No admin emails found, skipping email");
+        }
+      } catch (emailErr: any) {
+        console.error("[briefing] Email send failed:", emailErr.message);
+      }
+    }
+
     return new Response(
-      JSON.stringify({ status: "ok", briefing_id: briefing.id, health_score: healthScore, summary }),
+      JSON.stringify({
+        status: "ok",
+        briefing_id: briefing.id,
+        health_score: healthScore,
+        summary,
+        emailed,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {
@@ -322,3 +389,123 @@ serve(async (req) => {
     );
   }
 });
+
+// ─── Email template builder ───────────────────────────────────────────
+function buildBriefingEmail(data: {
+  title: string;
+  summary: string;
+  healthScore: number;
+  healthEmoji: string;
+  sections: any[];
+  actionItems: any[];
+  metrics: any;
+}) {
+  const { title, summary, healthScore, healthEmoji, sections, actionItems, metrics } = data;
+
+  const priorityColors: Record<string, string> = {
+    high: "#ef4444",
+    medium: "#f59e0b",
+    low: "#6b7280",
+  };
+
+  const actionItemsHtml = actionItems.length > 0
+    ? actionItems.map((item: any) => `
+        <tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${priorityColors[item.priority] || "#6b7280"};margin-right:8px;"></span>
+            ${item.text}
+          </td>
+        </tr>
+      `).join("")
+    : '<tr><td style="padding:12px;color:#9ca3af;">No action items — everything looks good! ✨</td></tr>';
+
+  const metricsGrid = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <tr>
+        <td style="padding:8px;text-align:center;background:#f9fafb;border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:#111827;">${metrics.traffic_today}</div>
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;">Visitors Today</div>
+        </td>
+        <td style="width:8px;"></td>
+        <td style="padding:8px;text-align:center;background:#f9fafb;border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:#111827;">${metrics.leads_today}</div>
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;">New Leads</div>
+        </td>
+        <td style="width:8px;"></td>
+        <td style="padding:8px;text-align:center;background:#f9fafb;border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:#111827;">$${(metrics.revenue_week / 100).toFixed(0)}</div>
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;">Revenue (7d)</div>
+        </td>
+        <td style="width:8px;"></td>
+        <td style="padding:8px;text-align:center;background:#f9fafb;border-radius:8px;">
+          <div style="font-size:24px;font-weight:700;color:#111827;">${metrics.flowpilot_success_rate}%</div>
+          <div style="font-size:11px;color:#6b7280;text-transform:uppercase;">AI Success</div>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  const trendArrow = (val: number) =>
+    val > 0 ? `<span style="color:#22c55e;">↑${val}%</span>` :
+    val < 0 ? `<span style="color:#ef4444;">↓${Math.abs(val)}%</span>` :
+    `<span style="color:#9ca3af;">—</span>`;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        
+        <!-- Header -->
+        <tr><td style="background:linear-gradient(135deg,#111827,#1f2937);padding:32px 24px;text-align:center;">
+          <div style="font-size:13px;color:#9ca3af;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">FlowPilot</div>
+          <div style="font-size:22px;font-weight:700;color:#ffffff;">${title}</div>
+        </td></tr>
+
+        <!-- Health Score -->
+        <tr><td style="padding:24px;text-align:center;border-bottom:1px solid #f3f4f6;">
+          <div style="font-size:48px;font-weight:800;color:#111827;">${healthEmoji} ${healthScore}</div>
+          <div style="font-size:13px;color:#6b7280;">Business Health Score</div>
+          <div style="margin-top:8px;font-size:14px;color:#374151;">${summary}</div>
+        </td></tr>
+
+        <!-- Key Metrics -->
+        <tr><td style="padding:20px 24px;">
+          <div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:8px;">📊 Key Metrics</div>
+          ${metricsGrid}
+          <table width="100%" style="font-size:13px;color:#374151;">
+            <tr><td style="padding:4px 0;">Traffic trend (7d)</td><td style="text-align:right;">${trendArrow(metrics.traffic_trend)}</td></tr>
+            <tr><td style="padding:4px 0;">Revenue trend (7d)</td><td style="text-align:right;">${trendArrow(metrics.revenue_trend)}</td></tr>
+            <tr><td style="padding:4px 0;">Subscribers</td><td style="text-align:right;font-weight:600;">${metrics.subscribers}</td></tr>
+            <tr><td style="padding:4px 0;">Bookings (7d)</td><td style="text-align:right;font-weight:600;">${metrics.bookings_week}</td></tr>
+            <tr><td style="padding:4px 0;">Content published</td><td style="text-align:right;font-weight:600;">${metrics.content_published}</td></tr>
+          </table>
+        </td></tr>
+
+        <!-- Action Items -->
+        <tr><td style="padding:20px 24px;border-top:1px solid #f3f4f6;">
+          <div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:8px;">🎯 Action Items</div>
+          <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;color:#374151;">
+            ${actionItemsHtml}
+          </table>
+        </td></tr>
+
+        <!-- CTA -->
+        <tr><td style="padding:20px 24px;text-align:center;border-top:1px solid #f3f4f6;">
+          <a href="https://flowwink.lovable.app/admin" style="display:inline-block;padding:12px 32px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">Open Dashboard →</a>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:16px 24px;text-align:center;background:#f9fafb;border-top:1px solid #f3f4f6;">
+          <div style="font-size:11px;color:#9ca3af;">Sent by FlowPilot · Your autonomous business co-pilot</div>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
