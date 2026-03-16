@@ -40,7 +40,7 @@ export function FeaturedProductBlock({ data }: FeaturedProductBlockProps) {
 
   if (isLoading) {
     return (
-      <section className="py-16 md:py-24">
+      <section>
         <div className="max-w-6xl mx-auto px-4">
           <div className="animate-pulse grid md:grid-cols-2 gap-12">
             <div className="aspect-square bg-muted rounded-2xl" />
