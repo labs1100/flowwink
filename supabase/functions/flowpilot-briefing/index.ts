@@ -315,15 +315,21 @@ serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (RESEND_API_KEY) {
       try {
-        // Get admin emails from profiles + user_roles
-        const { data: admins } = await supabase
+        // Get admin user IDs, then their emails
+        const { data: adminRoles } = await supabase
           .from("user_roles")
-          .select("user_id, profiles!inner(email, full_name)")
+          .select("user_id")
           .eq("role", "admin");
 
-        const adminEmails = (admins || [])
-          .map((a: any) => a.profiles?.email)
-          .filter(Boolean);
+        const adminIds = (adminRoles || []).map((r: any) => r.user_id).filter(Boolean);
+        let adminEmails: string[] = [];
+        if (adminIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("email")
+            .in("id", adminIds);
+          adminEmails = (profiles || []).map((p: any) => p.email).filter(Boolean);
+        }
 
         if (adminEmails.length > 0) {
           // Build email HTML
