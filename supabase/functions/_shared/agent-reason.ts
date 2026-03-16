@@ -744,7 +744,7 @@ export async function loadObjectives(supabase: any): Promise<string> {
       : ' | NO PLAN (needs decompose_objective)';
     const deadline = o.constraints?.deadline ? ` | ⏰ deadline: ${o.constraints.deadline}` : '';
     const priority = o.constraints?.priority ? ` | priority: ${o.constraints.priority}` : '';
-    return `- #${i + 1} [score:${o._priority_score}] [${o.id.slice(0, 8)}] "${o.goal}"${planInfo}${deadline}${priority} | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`;
+    return `- #${i + 1} [score:${o._priority_score}] [${o.id}] "${o.goal}"${planInfo}${deadline}${priority} | progress: ${JSON.stringify(o.progress)} | criteria: ${JSON.stringify(o.success_criteria)}`;
   }).join('\n');
 }
 
