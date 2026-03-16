@@ -151,6 +151,7 @@ export default function AdminDashboard() {
 
   // Module availability map
   const moduleAvailable: Record<string, boolean> = {
+    'business-pulse': true,
     'needs-attention': true,
     'content-overview': true,
     'leads': leadsEnabled,
