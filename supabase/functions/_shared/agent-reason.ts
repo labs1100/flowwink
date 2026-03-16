@@ -385,6 +385,42 @@ Data counts: ${pages.count ?? 0} pages, ${posts.count ?? 0} blog posts, ${leads.
   }
 }
 
+// ─── Site Maturity Detection ──────────────────────────────────────────────────
+
+export async function detectSiteMaturity(supabase: any): Promise<SiteMaturity> {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const [posts, leads, subscribers, views, research, proposals] = await Promise.all([
+    supabase.from('blog_posts').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+    supabase.from('leads').select('id', { count: 'exact', head: true }),
+    supabase.from('newsletter_subscribers').select('id', { count: 'exact', head: true }).eq('status', 'confirmed'),
+    supabase.from('page_views').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo.toISOString()),
+    supabase.from('content_research').select('id', { count: 'exact', head: true }),
+    supabase.from('content_proposals').select('id', { count: 'exact', head: true }),
+  ]);
+
+  const blogPosts = posts.count ?? 0;
+  const leadsCount = leads.count ?? 0;
+  const subscribersCount = subscribers.count ?? 0;
+  const pageViews = views.count ?? 0;
+  const contentResearch = research.count ?? 0;
+  const contentProposals = proposals.count ?? 0;
+
+  // Fresh site: minimal content, no organic traction yet
+  const isFresh = blogPosts <= 2 && leadsCount === 0 && contentResearch === 0 && contentProposals === 0;
+
+  return {
+    isFresh,
+    blogPosts,
+    leads: leadsCount,
+    subscribers: subscribersCount,
+    pageViews,
+    contentResearch,
+    contentProposals,
+  };
+}
+
 // ─── Persistent Heartbeat State ───────────────────────────────────────────────
 
 export async function loadHeartbeatState(supabase: any): Promise<string> {
