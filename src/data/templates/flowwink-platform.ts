@@ -1199,15 +1199,15 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
           data: {
             title: 'The Consultancy Module',
             subtitle: 'Everything you need to manage and match consulting talent — powered by FlowPilot.',
-            items: [
-              { id: 'ck1', text: 'AI Resume Matcher — paste a job description, get ranked matches with scores and tailored summaries', checked: true },
-              { id: 'ck2', text: 'Consultant Profiles — full skill, certification, and experience management with availability tracking', checked: true },
-              { id: 'ck3', text: 'Voice Check-In — consultants update their profile via a conversational chat link, no login required', checked: true },
-              { id: 'ck4', text: 'Chrome Extension Check-In — FlowPilot browses LinkedIn and enriches profiles using your authenticated browser session', checked: true },
-              { id: 'ck5', text: 'Booking Integration — clients book demo sessions, workshops, or strategy calls directly from the site', checked: true },
+            features: [
+              { id: 'ck1', title: 'AI Resume Matcher', description: 'Paste a job description, get ranked matches with scores and tailored summaries.', icon: 'FileUser' },
+              { id: 'ck2', title: 'Consultant Profiles', description: 'Full skill, certification, and experience management with availability tracking.', icon: 'Users' },
+              { id: 'ck3', title: 'Voice Check-In', description: 'Consultants update their profile via a conversational chat link, no login required.', icon: 'Mic' },
+              { id: 'ck4', title: 'Chrome Extension Check-In', description: 'FlowPilot browses LinkedIn and enriches profiles using your authenticated browser session.', icon: 'Globe' },
+              { id: 'ck5', title: 'Booking Integration', description: 'Clients book demo sessions, workshops, or strategy calls directly from the site.', icon: 'Calendar' },
             ],
+            columns: 3,
             variant: 'cards',
-            columns: 1,
           },
         },
         {
