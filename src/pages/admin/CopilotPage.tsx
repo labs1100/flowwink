@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Zap, Plus, Trash2, MessageSquare, PanelLeftClose, PanelLeft, AlertTriangle, Users, Globe, ExternalLink } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminContentHeader } from '@/components/admin/AdminContentHeader';
@@ -11,10 +11,11 @@ import { useExtensionRelay } from '@/hooks/useExtensionRelay';
 import { useBrandingSettings, useChatSettings } from '@/hooks/useSiteSettings';
 import { useProactiveMessages } from '@/hooks/useProactiveMessages';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, isToday, isYesterday, isThisWeek } from 'date-fns';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 
 export default function CopilotPage() {
