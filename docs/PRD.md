@@ -1367,23 +1367,30 @@ Se separat API-dokumentation for fullständig referens of:
 
 ## Appendix D: Starter Templates
 
-### Available Templates
+### Available Templates (10)
 
-| Template | Category | Pages | Target |
-|----------|----------|-------|--------|
-| **Launchpad** | Startup | 5 | SaaS/Tech startups |
-| **TrustCorp** | Enterprise | 5 | B2B companies |
-| **SecureHealth** | Compliance | 7 | Healthcare providers |
-| **FlowWink Platform** | Platform | 5 | CMS showcase |
+| Template | Category | Pages | Blog Posts | KB Articles | Target |
+|----------|----------|-------|------------|-------------|--------|
+| **Launchpad** | Startup | 5 | ✅ | ✅ | SaaS/Tech startups |
+| **Momentum** | Startup | 4 | ✅ | — | Single-page dark design |
+| **TrustCorp** | Enterprise | 5 | ✅ | ✅ | B2B companies |
+| **SecureHealth** | Compliance | 7 | ✅ | ✅ | Healthcare providers (HIPAA) |
+| **FlowWink Platform** | Platform | 5 | ✅ | ✅ | CMS showcase (dogfooding) |
+| **Help Center** | Help Center | 4 | — | ✅ | Help center with KB + AI |
+| **Service Pro** | Startup | 5 | ✅ | — | Service business + booking |
+| **Digital Shop** | Platform | 5 | ✅ | — | E-commerce / digital products |
+| **FlowWink Agency** | Platform | 5 | ✅ | ✅ | Agency white-label |
+| **Consult Agency** | Platform | 5 | ✅ | ✅ | Consulting agency with AI matching |
 
-### SecureHealth Template Highlights
-- HIPAA-compliant messaging
-- Dedicated Appointments page (`/boka`)
-- Service-based booking with 5 pre-configured medical services
-- Webhookintegration for n8n calendar sync
-- Patient resources and FAQ
-- Team profiles for medical staff
-- Emergency contact information
+### Template Features
+
+Each template now includes:
+- **FlowPilot configuration** — soul (purpose, tone, values) + initial objectives + priority skills
+- **Blog posts** — SEO-optimized content relevant to the template niche
+- **KB articles** — support content organized by category
+- **Products** — e-commerce templates include sample products
+- **Consultant profiles** — consulting templates include team expertise profiles
+- **Required modules** — auto-enables relevant modules on install
 
 ### Template Export/Import System
 
