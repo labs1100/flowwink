@@ -561,6 +561,7 @@ export function useAgentOperate() {
     await loadActivity();
   }, [loadActivity]);
 
+  const cancelRequest = useCallback(() => {
     abortRef.current?.abort();
   }, []);
 
