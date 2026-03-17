@@ -152,7 +152,7 @@ const flowwinkAgencyPages: TemplatePage[] = [
         data: {
           title: 'Built for Agencies, By Agencies',
           tabs: [
-            { id: 'tab-team', title: 'For Your Team', icon: 'Users', content: '<h3>Faster Development</h3><ul><li>Visual block editor with 47+ components</li><li>Reusable templates across clients</li><li>Version history and approval workflows</li><li>One platform to learn, use everywhere</li></ul>' },
+            { id: 'tab-team', title: 'For Your Team', icon: 'Users', content: '<h3>Faster Development</h3><ul><li>Visual block editor with 58+ components</li><li>Reusable templates across clients</li><li>Version history and approval workflows</li><li>One platform to learn, use everywhere</li></ul>' },
             { id: 'tab-clients', title: 'For Your Clients', icon: 'Smile', content: '<h3>Happy Clients</h3><ul><li>Simple, intuitive admin interface</li><li>Built-in blog, newsletter, and forms</li><li>AI chat widget for visitor support</li><li>Mobile-friendly editing on any device</li></ul>' },
             { id: 'tab-business', title: 'For Your Business', icon: 'TrendingUp', content: '<h3>Better Margins</h3><ul><li>Charge monthly management fees</li><li>Keep 100% of what you charge</li><li>No per-client platform costs</li><li>Build once, deploy to many clients</li></ul>' },
           ],
