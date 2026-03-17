@@ -1043,7 +1043,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
         titleAlignment: 'center',
       },
       blocks: [
-        { id: 'hero-blocks', type: 'hero', data: { title: 'Block Catalog', subtitle: 'This entire page is built with FlowWink blocks. Explore 47+ block types organized by category.', backgroundType: 'color', heightMode: 'auto', contentAlignment: 'center', overlayOpacity: 0, primaryButton: { text: 'Try the Admin', url: '/admin' }, secondaryButton: { text: 'View Docs', url: '/docs' } } },
+        { id: 'hero-blocks', type: 'hero', data: { title: 'Block Catalog', subtitle: 'This entire page is built with FlowWink blocks. Explore 58+ block types organized by category.', backgroundType: 'color', heightMode: 'auto', contentAlignment: 'center', overlayOpacity: 0, primaryButton: { text: 'Try the Admin', url: '/admin' }, secondaryButton: { text: 'View Docs', url: '/docs' } } },
         { id: 'stats-blocks-overview', type: 'stats', data: { items: [{ id: 'ds1', value: '47+', label: 'Block Types' }, { id: 'ds2', value: '16', label: 'Modules' }, { id: 'ds3', value: '7', label: 'Categories' }, { id: 'ds4', value: 'Drag & Drop', label: 'Editor' }], columns: 4, variant: 'minimal' } },
         // EDITOR INTRO
         { id: 'sep-editor', type: 'separator', data: { variant: 'text', text: 'Visual Editor', icon: 'Palette' } },
