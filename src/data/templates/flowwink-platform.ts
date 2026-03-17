@@ -1204,7 +1204,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
       description: 'Dedicated infrastructure, custom skills, SSO, compliance support, and a dedicated success manager.',
       price_cents: 99000,
       currency: 'EUR',
-      type: 'subscription',
+      type: 'recurring',
       is_active: true,
     },
     {
