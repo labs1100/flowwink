@@ -272,7 +272,7 @@ export function useTemplateInstaller() {
       // Auto-cleanup previous template using manifest
       if (installedTemplate?.manifest) {
         const m = installedTemplate.manifest;
-        const totalCleanup = (m.pageIds?.length || 0) + (m.blogPostIds?.length || 0) + (m.kbCategoryIds?.length || 0) + (m.productIds?.length || 0) + (m.consultantIds?.length || 0);
+        const totalCleanup = (m.pageIds?.length || 0) + (m.blogPostIds?.length || 0) + (m.kbCategoryIds?.length || 0) + (m.productIds?.length || 0) + (m.consultantIds?.length || 0) + (m.bookingServiceIds?.length || 0) + (m.bookingAvailabilityIds?.length || 0);
         if (totalCleanup > 0) {
           setProgress({ currentPage: 0, totalPages: totalCleanup, currentStep: `Uninstalling "${installedTemplate.template_name}"...` });
           let cleaned = 0;
@@ -305,6 +305,18 @@ export function useTemplateInstaller() {
           for (const conId of (m.consultantIds || [])) {
             setProgress({ currentPage: ++cleaned, totalPages: totalCleanup, currentStep: 'Removing previous template consultants...' });
             try { await supabase.from('consultant_profiles').delete().eq('id', conId); } catch { /* already deleted */ }
+          }
+
+          // Remove booking availability (before services due to FK)
+          for (const availId of (m.bookingAvailabilityIds || [])) {
+            setProgress({ currentPage: ++cleaned, totalPages: totalCleanup, currentStep: 'Removing previous template booking availability...' });
+            try { await supabase.from('booking_availability').delete().eq('id', availId); } catch { /* already deleted */ }
+          }
+
+          // Remove booking services
+          for (const svcId of (m.bookingServiceIds || [])) {
+            setProgress({ currentPage: ++cleaned, totalPages: totalCleanup, currentStep: 'Removing previous template booking services...' });
+            try { await supabase.from('booking_services').delete().eq('id', svcId); } catch { /* already deleted */ }
           }
 
           // Remove old manifest record
