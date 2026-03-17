@@ -6,7 +6,8 @@
  * deep-link action buttons.
  */
 
-import { Bot, Sparkles, ArrowRight, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { Bot, Sparkles, ArrowRight, Check, X, Loader2, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,10 +18,11 @@ import ReactMarkdown from 'react-markdown';
 export interface ActionButton {
   label: string;
   link?: string;
-  action?: string;        // e.g. 'approve', 'reject', 'preview'
+  action?: 'approve' | 'reject' | 'preview' | 'navigate';
   variant?: 'default' | 'outline' | 'ghost' | 'destructive';
-  skill?: string;         // skill to execute on click
+  skill?: string;
   skillArgs?: Record<string, unknown>;
+  activityId?: string;
 }
 
 export interface ProactivePayload {
@@ -29,6 +31,9 @@ export interface ProactivePayload {
   healthScore?: number;
   metrics?: Array<{ label: string; value: string | number }>;
   actions?: ActionButton[];
+  activityId?: string;
+  skillName?: string;
+  previewLink?: string;
 }
 
 interface ProactiveMessageCardProps {
@@ -36,6 +41,8 @@ interface ProactiveMessageCardProps {
   payload: ProactivePayload;
   createdAt?: string;
   onAction?: (action: ActionButton) => void;
+  onApprove?: (activityId: string) => Promise<void>;
+  onReject?: (activityId: string) => Promise<void>;
 }
 
 function HealthBadge({ score }: { score: number }) {
@@ -49,22 +56,66 @@ function HealthBadge({ score }: { score: number }) {
   );
 }
 
-export function ProactiveMessageCard({ content, payload, createdAt, onAction }: ProactiveMessageCardProps) {
-  const navigate = useNavigate();
+const typeConfig = {
+  briefing: { emoji: '☀️', label: 'Briefing', badgeVariant: 'secondary' as const },
+  approval: { emoji: '📝', label: 'Needs Approval', badgeVariant: 'default' as const },
+  alert: { emoji: '⚠️', label: 'Alert', badgeVariant: 'destructive' as const },
+  update: { emoji: '🤖', label: 'Update', badgeVariant: 'secondary' as const },
+};
 
-  const handleAction = (btn: ActionButton) => {
+export function ProactiveMessageCard({ content, payload, createdAt, onAction, onApprove, onReject }: ProactiveMessageCardProps) {
+  const navigate = useNavigate();
+  const [actionState, setActionState] = useState<'idle' | 'approving' | 'rejecting' | 'approved' | 'rejected'>('idle');
+
+  const config = typeConfig[payload.type] || typeConfig.update;
+
+  const handleAction = async (btn: ActionButton) => {
+    // HIL approve/reject
+    if (btn.action === 'approve' && (btn.activityId || payload.activityId)) {
+      setActionState('approving');
+      try {
+        await onApprove?.(btn.activityId || payload.activityId!);
+        setActionState('approved');
+      } catch {
+        setActionState('idle');
+      }
+      return;
+    }
+
+    if (btn.action === 'reject' && (btn.activityId || payload.activityId)) {
+      setActionState('rejecting');
+      try {
+        await onReject?.(btn.activityId || payload.activityId!);
+        setActionState('rejected');
+      } catch {
+        setActionState('idle');
+      }
+      return;
+    }
+
+    // Preview — navigate
+    if (btn.action === 'preview' && (btn.link || payload.previewLink)) {
+      const link = btn.link || payload.previewLink!;
+      if (link.startsWith('/')) navigate(link);
+      else window.open(link, '_blank');
+      return;
+    }
+
+    // Generic action callback
     if (onAction) {
       onAction(btn);
-    } else if (btn.link) {
-      if (btn.link.startsWith('/')) {
-        navigate(btn.link);
-      } else {
-        window.open(btn.link, '_blank');
-      }
+      return;
+    }
+
+    // Default: navigate
+    if (btn.link) {
+      if (btn.link.startsWith('/')) navigate(btn.link);
+      else window.open(btn.link, '_blank');
     }
   };
 
-  const typeIcon = payload.type === 'approval' ? '📝' : payload.type === 'alert' ? '⚠️' : payload.type === 'briefing' ? '☀️' : '🤖';
+  const isResolved = actionState === 'approved' || actionState === 'rejected';
+  const isProcessing = actionState === 'approving' || actionState === 'rejecting';
 
   return (
     <div className="flex justify-start">
@@ -81,13 +132,17 @@ export function ProactiveMessageCard({ content, payload, createdAt, onAction }: 
             </span>
           )}
           {payload.healthScore != null && <HealthBadge score={payload.healthScore} />}
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-            {typeIcon} {payload.type}
+          <Badge variant={config.badgeVariant} className="text-[10px] px-1.5 py-0">
+            {config.emoji} {config.label}
           </Badge>
         </div>
 
         {/* Content card */}
-        <div className="rounded-2xl bg-muted border border-border/50 overflow-hidden">
+        <div className={cn(
+          'rounded-2xl bg-muted border overflow-hidden transition-colors',
+          payload.type === 'approval' && !isResolved ? 'border-primary/30' : 'border-border/50',
+          isResolved && 'opacity-80',
+        )}>
           {payload.title && (
             <div className="px-4 pt-3 pb-1">
               <h4 className="text-sm font-semibold text-foreground">{payload.title}</h4>
@@ -117,22 +172,58 @@ export function ProactiveMessageCard({ content, payload, createdAt, onAction }: 
           )}
 
           {/* Action buttons */}
-          {payload.actions && payload.actions.length > 0 && (
+          {!isResolved && payload.actions && payload.actions.length > 0 && (
             <>
               <Separator />
               <div className="px-4 py-2.5 flex flex-wrap gap-2">
-                {payload.actions.map((btn, i) => (
-                  <Button
-                    key={i}
-                    variant={btn.variant || (i === 0 ? 'default' : 'outline')}
-                    size="sm"
-                    className="text-xs gap-1.5"
-                    onClick={() => handleAction(btn)}
-                  >
-                    {btn.label}
-                    {btn.link && <ArrowRight className="h-3 w-3" />}
-                  </Button>
-                ))}
+                {payload.actions.map((btn, i) => {
+                  const isApproveBtn = btn.action === 'approve';
+                  const isRejectBtn = btn.action === 'reject';
+                  const isPreviewBtn = btn.action === 'preview';
+
+                  return (
+                    <Button
+                      key={i}
+                      variant={btn.variant || (isApproveBtn ? 'default' : isRejectBtn ? 'destructive' : i === 0 ? 'default' : 'outline')}
+                      size="sm"
+                      className="text-xs gap-1.5"
+                      disabled={isProcessing}
+                      onClick={() => handleAction(btn)}
+                    >
+                      {isProcessing && (isApproveBtn && actionState === 'approving' || isRejectBtn && actionState === 'rejecting') ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : isApproveBtn ? (
+                        <Check className="h-3 w-3" />
+                      ) : isRejectBtn ? (
+                        <X className="h-3 w-3" />
+                      ) : isPreviewBtn ? (
+                        <Eye className="h-3 w-3" />
+                      ) : null}
+                      {btn.label}
+                      {btn.link && !isApproveBtn && !isRejectBtn && <ArrowRight className="h-3 w-3" />}
+                    </Button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Resolved state */}
+          {isResolved && (
+            <>
+              <Separator />
+              <div className="px-4 py-2.5 flex items-center gap-2">
+                {actionState === 'approved' ? (
+                  <>
+                    <Check className="h-4 w-4 text-emerald-500" />
+                    <span className="text-xs font-medium text-emerald-600">Approved & executed</span>
+                  </>
+                ) : (
+                  <>
+                    <X className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">Rejected</span>
+                  </>
+                )}
               </div>
             </>
           )}

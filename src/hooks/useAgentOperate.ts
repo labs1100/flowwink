@@ -441,6 +441,32 @@ export function useAgentOperate() {
 
       if (error) throw new Error(error.message);
 
+      if (data.status === 'pending_approval') {
+        // Inject a proactive HIL card into the chat as a chat_message
+        const activityId = data.activity_id;
+        const currentConvId = conversationId;
+        if (currentConvId) {
+          const actionPayload = {
+            type: 'approval',
+            title: `"${skillName.replace(/_/g, ' ')}" needs your approval`,
+            activityId,
+            skillName,
+            actions: [
+              { label: 'Approve & Execute', action: 'approve', variant: 'default', activityId },
+              { label: 'Reject', action: 'reject', variant: 'destructive', activityId },
+            ],
+          };
+          // Persist the HIL card as a proactive message
+          await supabase.from('chat_messages').insert({
+            conversation_id: currentConvId,
+            role: 'assistant',
+            content: `⏳ I'd like to execute **${skillName.replace(/_/g, ' ')}** but it requires your approval first.\n\nPlease review and approve or reject below.`,
+            source: 'proactive',
+            action_payload: actionPayload,
+          });
+        }
+      }
+
       const msg: OperateMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -511,6 +537,27 @@ export function useAgentOperate() {
       toast.error('Re-execution failed', { description: err.message });
     }
 
+    await loadActivity();
+  }, [loadActivity]);
+
+  // Reject a pending action
+  const rejectAction = useCallback(async (activityId: string) => {
+    const { error } = await supabase
+      .from('agent_activity')
+      .update({ status: 'rejected' })
+      .eq('id', activityId);
+    if (error) {
+      toast.error('Failed to reject action');
+      return;
+    }
+    const msg: OperateMessage = {
+      id: crypto.randomUUID(),
+      role: 'assistant',
+      content: '❌ Action rejected.',
+      createdAt: new Date(),
+    };
+    setMessages(prev => [...prev, msg]);
+    toast.success('Action rejected');
     await loadActivity();
   }, [loadActivity]);
 
@@ -603,6 +650,7 @@ export function useAgentOperate() {
     sendMessage,
     executeSkill,
     approveAction,
+    rejectAction,
     cancelRequest,
     loadSkills,
     loadActivity,
