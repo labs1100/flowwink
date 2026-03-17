@@ -445,7 +445,7 @@ export function useAgentOperate() {
         // Inject a proactive HIL card into the chat as a chat_message
         const activityId = data.activity_id;
         const currentConvId = conversationId;
-        if (conversationId) {
+        if (currentConvId) {
           const actionPayload = {
             type: 'approval',
             title: `"${skillName.replace(/_/g, ' ')}" needs your approval`,
