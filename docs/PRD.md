@@ -1,14 +1,14 @@
 # FlowWink - Product Requirements Document (PRD)
 
-> **Version:** 2.3  
+> **Version:** 3.0  
 > **Last Updated:** March 2026  
-> **Status:** FlowPilot Agent Architecture Complete
+> **Status:** Autonomous Agentic Web Platform — v2.0 Complete
 
 ---
 
 ## Executive Summary
 
-**FlowWink** is a modernt Content Management System byggt specific for svenska vårdgivare and organisationer that/which behöver:
+**FlowWink** is an autonomous agentic web platform — a self-hosted CMS + AI business operating system that runs your entire digital presence. Built for organizations that need:
 
 - ✅ a komplett webbplats without utvecklare
 - ✅ Headless API for multi-kanal distribution
