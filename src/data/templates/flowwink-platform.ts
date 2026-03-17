@@ -74,7 +74,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             overlayOpacity: 55,
             titleAnimation: 'slide-up',
             showScrollIndicator: true,
-            primaryButton: { text: 'Try It Live', url: '/demo' },
+            primaryButton: { text: 'Meet FlowPilot', url: '#chat-hero-usp' },
             secondaryButton: { text: 'Self-Host Free', url: 'https://github.com/magnusfroste/flowwink' },
           },
         },
