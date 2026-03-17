@@ -159,6 +159,8 @@ export function UnifiedChat({
   onCancel,
   proactiveMessages = [],
   onProactiveAction,
+  onApproveAction,
+  onRejectAction,
   visitorChat,
   visitorSettings,
   conversationId,
