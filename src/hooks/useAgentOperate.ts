@@ -458,7 +458,7 @@ export function useAgentOperate() {
           };
           // Persist the HIL card as a proactive message
           await supabase.from('chat_messages').insert({
-            conversation_id: conversationId,
+            conversation_id: currentConvId,
             role: 'assistant',
             content: `⏳ I'd like to execute **${skillName.replace(/_/g, ' ')}** but it requires your approval first.\n\nPlease review and approve or reject below.`,
             source: 'proactive',
