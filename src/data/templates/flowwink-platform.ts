@@ -142,6 +142,21 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             layout: 'horizontal',
           },
         },
+        // QUICK LINKS — Explore deeper after learning the 3-step loop
+        {
+          id: 'links-after-timeline',
+          type: 'quick-links',
+          data: {
+            heading: 'Want to go deeper?',
+            links: [
+              { id: 'ql1-features', label: 'Deep Dive: Features', url: '/features' },
+              { id: 'ql1-flowpilot', label: 'Meet FlowPilot', url: '/flowpilot' },
+              { id: 'ql1-demo', label: 'Try It Live', url: '/demo' },
+            ],
+            variant: 'dark',
+            layout: 'split',
+          },
+        },
         // BENTO GRID — The Agent Brain
         {
           id: 'bento-agent-brain',
@@ -176,6 +191,21 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             textColor: 'light',
             overlayOpacity: 65,
             contentAlignment: 'center',
+          },
+        },
+        // QUICK LINKS — Go deeper on the agent after bento + parallax
+        {
+          id: 'links-after-agent',
+          type: 'quick-links',
+          data: {
+            heading: 'Explore the architecture',
+            links: [
+              { id: 'ql2-flowpilot', label: 'Explore FlowPilot', url: '/flowpilot' },
+              { id: 'ql2-blocks', label: 'View All 58+ Blocks', url: '/blocks' },
+              { id: 'ql2-features', label: 'Full Feature List', url: '/features' },
+            ],
+            variant: 'muted',
+            layout: 'split',
           },
         },
         // TESTIMONIALS
@@ -256,6 +286,21 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             size: 'md',
             showTitles: true,
             grayscale: false,
+          },
+        },
+        // QUICK LINKS — Evaluate after trust section
+        {
+          id: 'links-after-trust',
+          type: 'quick-links',
+          data: {
+            heading: 'Ready to evaluate?',
+            links: [
+              { id: 'ql3-features', label: 'Compare Features', url: '/features' },
+              { id: 'ql3-pricing', label: 'View Pricing', url: '/pricing' },
+              { id: 'ql3-github', label: 'Self-Host Free', url: 'https://github.com/flowwink/flowwink' },
+            ],
+            variant: 'dark',
+            layout: 'split',
           },
         },
         // CTA — Final
