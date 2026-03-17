@@ -580,7 +580,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
       menu_order: 3,
       showInMenu: true,
       meta: {
-        description: 'FlowPilot: 20+ autonomous skills, persistent memory, self-evolving architecture. The complete feature set for the first agentic CMS.',
+        description: 'FlowPilot: 30+ autonomous skills, persistent memory, self-evolving architecture. The complete feature set for the first agentic CMS.',
         showTitle: false,
         titleAlignment: 'center',
       },
