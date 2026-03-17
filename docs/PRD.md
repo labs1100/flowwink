@@ -734,7 +734,7 @@ Visuellt diagram that/which demonstrerar innehållsflöde from CMS to olika kana
 
 ### 8.3 Content Model Overview
 
-Översikt of alla 50+ Blocks-types with:
+Översikt of alla 58+ Blocks-types with:
 - Antal instanser in Publishede sidor
 - JSON-preview of Blocks-struktur
 - Dokumentation of data-format
