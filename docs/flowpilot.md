@@ -421,6 +421,55 @@ FlowAgent can modify its own behavior:
 
 Every skill execution is automatically matched against active objectives via `SKILL_OBJECTIVE_MAP`. When a skill like `write_blog_post` succeeds, objectives containing keywords like "blog" or "content" automatically get their progress incremented — creating a closed-loop system where actions visibly advance business goals.
 
+### 5.6 Workflow DAGs
+
+Multi-step workflow chains with conditional branching and data passing between steps:
+
+```json
+{
+  "name": "Content Pipeline",
+  "trigger_type": "manual",
+  "steps": [
+    { "id": "s1", "skill_name": "research_content", "args": { "topic": "{{input.topic}}" } },
+    { "id": "s2", "skill_name": "write_blog_post", "depends_on": ["s1"], "args": { "research": "{{s1.output}}" } },
+    { "id": "s3", "skill_name": "send_newsletter", "depends_on": ["s2"], "condition": "s2.output.status === 'published'" }
+  ]
+}
+```
+
+**Built-in tools**: `workflow_create`, `workflow_execute`, `workflow_list`
+**Trigger types**: manual, cron, event, signal
+**Features**: Step dependencies, conditional execution, data passing between steps, error handling per step
+
+### 5.7 Agent-to-Agent (A2A) Delegation
+
+Specialist sub-agents that FlowAgent can delegate tasks to:
+
+| Agent | Specialization |
+|-------|---------------|
+| `seo` | Technical SEO, keyword analysis, meta optimization |
+| `content` | Writing, editing, tone consistency |
+| `sales` | Lead qualification, deal analysis, follow-up |
+| `analytics` | Data analysis, trend identification, reporting |
+| `email` | Newsletter strategy, subject lines, segmentation |
+
+**Built-in tool**: `delegate_task` — routes to specialist with context
+**A2A Peers**: External agents registered in `a2a_peers` table with token-authenticated communication
+**Activity tracking**: All delegations logged in `a2a_activity`
+
+### 5.8 Skill Packs
+
+Bundled capability sets that can be installed as a group:
+
+| Pack | Skills Included |
+|------|----------------|
+| **E-Commerce** | manage_product, lookup_order, inventory alerts |
+| **Content Marketing** | research_content, write_blog_post, generate_content_proposal, send_newsletter |
+| **CRM Nurture** | add_lead, qualify_lead, manage_deal, enrich_company |
+
+**Built-in tools**: `skill_pack_list`, `skill_pack_install`
+**Storage**: `agent_skill_packs` table with version tracking
+
 ---
 
 ## 6. Approval Gating & Human-in-the-Loop
