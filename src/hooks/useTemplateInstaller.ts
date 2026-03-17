@@ -385,6 +385,27 @@ export function useTemplateInstaller() {
         await updateCookieBanner.mutateAsync(template.cookieBannerSettings as any);
       }
 
+      // Create pages
+      if (opts.pages) {
+        const pagesToCreate = templatePages;
+        setProgress({ currentPage: 0, totalPages: pagesToCreate.length, currentStep: 'Creating pages...' });
+        for (let i = 0; i < pagesToCreate.length; i++) {
+          const page = pagesToCreate[i];
+          setProgress({ currentPage: i + 1, totalPages: pagesToCreate.length, currentStep: `Creating page "${page.title}"...` });
+          const created = await createPage.mutateAsync({
+            title: page.title,
+            slug: page.slug,
+            content_json: (page.blocks || []) as unknown as ContentBlock[],
+            meta_json: page.meta || {},
+            menu_order: page.menu_order || i,
+            show_in_menu: page.showInMenu ?? true,
+            is_home_page: page.isHomePage ?? false,
+            status: opts.publishPages ? 'published' : 'draft',
+          });
+          if (created?.id) pageIds.push(created.id);
+        }
+      }
+
       // Set homepage
       if (opts.pages) {
         setProgress({ currentPage: 0, totalPages: 1, currentStep: 'Finalizing...' });
