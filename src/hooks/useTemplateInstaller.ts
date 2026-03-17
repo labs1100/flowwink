@@ -31,6 +31,8 @@ export interface TemplateManifest {
   kbCategoryIds: string[];
   productIds: string[];
   consultantIds: string[];
+  bookingServiceIds: string[];
+  bookingAvailabilityIds: string[];
 }
 
 export function useTemplateInstaller() {
