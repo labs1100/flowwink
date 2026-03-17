@@ -385,10 +385,10 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             subtitle: 'Everything FlowPilot manages autonomously — zero manual steps.',
             columns: 4,
             stats: [
-              { value: '22', label: 'Modules', description: 'Versioned & Zod-validated' },
-              { value: '15+', label: 'Skills', description: 'Autonomous agent capabilities' },
+              { value: '21', label: 'Modules', description: 'Versioned & Zod-validated' },
+              { value: '30+', label: 'Skills', description: 'Autonomous agent capabilities' },
               { value: '7-Step', label: 'Reasoning Loop', description: 'Self-Heal → Remember' },
-              { value: '61+', label: 'Block Types', description: 'Visual content building' },
+              { value: '58+', label: 'Block Types', description: 'Visual content building' },
             ],
           },
         },
