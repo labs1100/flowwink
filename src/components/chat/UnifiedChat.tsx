@@ -123,6 +123,8 @@ interface UnifiedChatProps {
   onCancel?: () => void;
   proactiveMessages?: ProactiveMessage[];
   onProactiveAction?: (action: ActionButton) => void;
+  onApproveAction?: (activityId: string) => Promise<void>;
+  onRejectAction?: (activityId: string) => Promise<void>;
 
   // Visitor mode (public chat) — delegates to ChatConversation internals
   visitorChat?: {
