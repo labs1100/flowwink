@@ -141,6 +141,7 @@ export function useAgentOperate() {
   // ─── Conversation persistence ───────────────────────────────────────
 
   const getOrCreateConversation = useCallback(async (): Promise<string> => {
+    // If we already have an active conversation in state, use it
     const existingId = localStorage.getItem(FLOWPILOT_CONVERSATION_KEY);
     if (existingId && conversationId === existingId) return existingId;
 
@@ -156,11 +157,35 @@ export function useAgentOperate() {
       }
     }
 
+    // Try to find today's existing session
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayLabel = todayStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
     const { data: { user } } = await supabase.auth.getUser();
+
+    const { data: todaySession } = await supabase
+      .from('chat_conversations')
+      .select('id')
+      .eq('conversation_status', 'active')
+      .is('session_id', null)
+      .eq('user_id', user?.id ?? '')
+      .gte('created_at', todayStart.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (todaySession) {
+      localStorage.setItem(FLOWPILOT_CONVERSATION_KEY, todaySession.id);
+      setConversationId(todaySession.id);
+      return todaySession.id;
+    }
+
+    // Create a new daily session
     const { data, error } = await supabase
       .from('chat_conversations')
       .insert({
-        title: 'FlowPilot Session',
+        title: `Session — ${todayLabel}`,
         conversation_status: 'active',
         priority: 'normal',
         user_id: user?.id,
