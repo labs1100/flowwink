@@ -1312,4 +1312,110 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
       is_active: true,
     },
   ],
+
+  branding: {
+    logo: '',
+    organizationName: 'FlowWink',
+    brandTagline: 'Set objectives. FlowPilot operates.',
+    primaryColor: '238 84% 67%',
+    secondaryColor: '240 10% 8%',
+    accentColor: '174 84% 45%',
+    headingFont: 'Plus Jakarta Sans',
+    bodyFont: 'Inter',
+    borderRadius: 'md',
+    shadowIntensity: 'medium',
+    allowThemeToggle: true,
+    defaultTheme: 'dark',
+  },
+
+  chatSettings: {
+    enabled: true,
+    widgetEnabled: true,
+    widgetPosition: 'bottom-right',
+    welcomeMessage: 'Hi! I\'m FlowPilot — the autonomous agent running this site. I\'ve read every page, blog post, and KB article. Ask me anything about FlowWink, pricing, or how autonomous operations work.',
+    suggestedPrompts: [
+      'What is FlowPilot?',
+      'How does autonomous content work?',
+      'Can I self-host for free?',
+      'What AI models are supported?',
+    ],
+  },
+
+  headerSettings: {
+    variant: 'clean',
+    stickyHeader: true,
+    backgroundStyle: 'blur',
+    headerShadow: 'sm',
+    showBorder: false,
+    headerHeight: 'tall',
+    linkColorScheme: 'default',
+  },
+
+  footerSettings: {
+    variant: 'full',
+    email: 'hello@flowwink.com',
+    showBrand: true,
+    showQuickLinks: true,
+    showContact: true,
+    legalLinks: [
+      { id: 'privacy', label: 'Privacy Policy', url: '/privacy-policy', enabled: true },
+      { id: 'terms', label: 'Terms', url: '/terms-of-service', enabled: true },
+    ],
+  },
+
+  seoSettings: {
+    siteTitle: 'FlowWink',
+    titleTemplate: '%s | FlowWink',
+    defaultDescription: 'The first autonomous agentic CMS. FlowPilot writes your content, qualifies your leads, runs your campaigns, and learns from every interaction.',
+    robotsIndex: true,
+    robotsFollow: true,
+    developmentMode: false,
+  },
+
+  aeoSettings: {
+    enabled: true,
+    organizationName: 'FlowWink',
+    shortDescription: 'Open-source autonomous agentic CMS powered by FlowPilot — an AI agent with persistent memory, 30+ skills, and self-evolution.',
+    schemaOrgEnabled: true,
+    schemaOrgType: 'SoftwareApplication',
+    faqSchemaEnabled: true,
+    articleSchemaEnabled: true,
+    sitemapEnabled: true,
+    llmsTxtEnabled: true,
+    llmsFullTxtEnabled: true,
+  },
+
+  cookieBannerSettings: {
+    enabled: true,
+  },
+
+  siteSettings: {
+    homepageSlug: 'home',
+  },
+
+  flowpilot: {
+    objectives: [
+      {
+        goal: 'Day 1: Research the CMS and AI agent market — identify competitors, define ICP, document market positioning',
+        success_criteria: { memory_keys: ['company_research', 'competitor_analysis'] },
+        constraints: { priority: 'critical', deadline_days: 1 },
+      },
+      {
+        goal: 'Write and publish 2 blog posts: one about autonomous CMS operations, one about the agentic web',
+        success_criteria: { published_posts: 2 },
+        constraints: { priority: 'high', deadline_days: 3 },
+      },
+      {
+        goal: 'SEO audit all published pages — fix meta titles, descriptions, and heading structure',
+        success_criteria: { pages_audited: 'all', seo_score_avg: 80 },
+        constraints: { priority: 'high', deadline_days: 2 },
+      },
+    ],
+    prioritySkills: ['blog_write', 'lead_qualify', 'newsletter_create', 'analyze_analytics', 'reflect'],
+    soul: {
+      purpose: 'I am FlowPilot, the autonomous agent running this FlowWink site. I know every feature, module, and block type. I can explain autonomous operations, help visitors evaluate the platform, and qualify leads. I demonstrate by being — this site is my proof of concept.',
+      tone: 'Technical but approachable. Direct, not salesy. I let the product speak through me. When visitors ask about features, I give concrete examples from my own operations on this site.',
+      values: ['transparency', 'technical-accuracy', 'self-hosting-advocacy', 'privacy-first', 'open-source'],
+    },
+  },
 };
