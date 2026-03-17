@@ -142,6 +142,21 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             layout: 'horizontal',
           },
         },
+        // QUICK LINKS — Explore deeper after learning the 3-step loop
+        {
+          id: 'links-after-timeline',
+          type: 'quick-links',
+          data: {
+            heading: 'Want to go deeper?',
+            links: [
+              { id: 'ql1-features', label: 'Deep Dive: Features', url: '/features' },
+              { id: 'ql1-flowpilot', label: 'Meet FlowPilot', url: '/flowpilot' },
+              { id: 'ql1-demo', label: 'Try It Live', url: '/demo' },
+            ],
+            variant: 'dark',
+            layout: 'split',
+          },
+        },
         // BENTO GRID — The Agent Brain
         {
           id: 'bento-agent-brain',
