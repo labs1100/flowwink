@@ -355,8 +355,8 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
               },
               {
                 src: 'https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&q=80',
-                alt: 'Skill Hub with 15+ autonomous skills',
-                caption: 'Skill Hub — 15+ autonomous skills',
+                alt: 'Skill Hub with 30+ autonomous skills',
+                caption: 'Skill Hub — 30+ autonomous skills',
               },
               {
                 src: 'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=800&q=80',
