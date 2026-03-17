@@ -395,11 +395,10 @@ export function useTemplateInstaller() {
           const created = await createPage.mutateAsync({
             title: page.title,
             slug: page.slug,
-            content_json: (page.blocks || []) as unknown as ContentBlock[],
-            meta_json: page.meta || {},
+            content: (page.blocks || []) as unknown as ContentBlock[],
+            meta: page.meta || {},
             menu_order: page.menu_order || i,
             show_in_menu: page.showInMenu ?? true,
-            is_home_page: page.isHomePage ?? false,
             status: opts.publishPages ? 'published' : 'draft',
           });
           if (created?.id) pageIds.push(created.id);
