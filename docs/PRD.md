@@ -10,13 +10,15 @@
 
 **FlowWink** is an autonomous agentic web platform — a self-hosted CMS + AI business operating system that runs your entire digital presence. Built for organizations that need:
 
-- ✅ a komplett webbplats without utvecklare
-- ✅ Headless API for multi-kanal distribution
-- ✅ AI-drivna verktyg for innehållshantering
-- ✅ GDPR- and WCAG-efterlevnad built-in
-- ✅ Svenskt språkstöd and lokalisering
+- ✅ A complete website without developers
+- ✅ Headless API for multi-channel distribution (REST/GraphQL/Markdown for LLMs)
+- ✅ An autonomous AI agent (FlowPilot) that writes content, qualifies leads, runs campaigns
+- ✅ 37+ agent skills with self-healing, plan decomposition, and workflow DAGs
+- ✅ Agent-to-Agent (A2A) delegation protocol for specialist sub-agents
+- ✅ GDPR and WCAG compliance built-in
+- ✅ Self-hostable with Docker, private LLM support (HIPAA-ready)
 
-### Unik Positionering: "Head + Headless"
+### Unique Positioning: "Agentic CMS" — Head + Headless + Autonomous
 
 to skillnad from traditionella CMS (that/which bara levererar webbplats) or rena headless-lösningar (that/which require separate frontend development), offers FlowWink **båda**:
 
