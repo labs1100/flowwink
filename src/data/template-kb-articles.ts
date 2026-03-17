@@ -847,6 +847,218 @@ export const flowwinkKbCategories: TemplateKbCategory[] = [
       },
     ],
   },
+
+  // ===== OBJECTIVES & AUTOMATIONS =====
+  {
+    name: 'Objectives & Automations',
+    slug: 'objectives-automations',
+    description: 'Two cadences of autonomous operation — finite goals and recurring routines.',
+    icon: 'Target',
+    articles: [
+      {
+        title: 'Objectives Overview',
+        slug: 'objectives-overview',
+        question: 'What are FlowPilot objectives and how do they work?',
+        answer_text: 'Objectives are high-level, finite goals with tracked progress. Create one in Admin → FlowPilot → Objectives. Define the goal, success criteria, and any constraints. FlowPilot decomposes the objective into steps, tracks progress via a structured JSONB field, and marks it complete when all criteria are met. Statuses: active, completed, paused, failed.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+      {
+        title: 'Automations Overview',
+        slug: 'automations-overview',
+        question: 'What are automations and how do I set one up?',
+        answer_text: 'Automations are recurring skill executions on a cron schedule. Go to Admin → Skill Hub → Automations → New Automation. Select a trigger type (Cron Schedule), set the schedule (e.g., "0 9 * * 1" for every Monday at 9 AM), choose the skill to execute, and configure arguments. Automations run indefinitely until disabled.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+      {
+        title: 'Objectives vs Automations',
+        slug: 'objectives-vs-automations',
+        question: 'When should I use an objective versus an automation?',
+        answer_text: 'Use objectives for finite, strategic work with a clear end state: "Research competitors and write a positioning memo." Use automations for ongoing operational routines: "Monitor competitor blog every Monday." Objectives complete when done. Automations run on schedule forever. They complement each other — an objective might discover that a recurring task needs an automation.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+      {
+        title: 'Objective Progress Tracking',
+        slug: 'objective-progress',
+        question: 'How does FlowPilot track objective progress?',
+        answer_text: 'Each objective has a success_criteria JSONB field (the definition of done) and a progress JSONB field (current state). FlowPilot updates progress using objective_update_progress and objective_complete tools, creating a structured audit trail. View progress in Admin → FlowPilot → Objectives → click any objective.',
+        include_in_chat: true,
+      },
+      {
+        title: 'Cron Schedule Examples',
+        slug: 'cron-schedule-examples',
+        question: 'What are some common cron schedules for automations?',
+        answer_text: 'Common schedules: "0 9 * * 1" = every Monday at 9 AM. "0 */12 * * *" = every 12 hours. "0 8 * * 1-5" = weekdays at 8 AM. "0 0 1 * *" = first of every month. "0 9 * * 1,4" = Monday and Thursday at 9 AM. Use these for competitor monitoring, content research, lead scoring, and performance reporting.',
+        include_in_chat: true,
+      },
+    ],
+  },
+
+  // ===== A2A PROTOCOL =====
+  {
+    name: 'Agent-to-Agent (A2A)',
+    slug: 'a2a-protocol',
+    description: 'Connect FlowPilot with other AI agents for cross-boundary collaboration.',
+    icon: 'Network',
+    articles: [
+      {
+        title: 'A2A Overview',
+        slug: 'a2a-overview',
+        question: 'What is Agent-to-Agent (A2A) and how does FlowPilot use it?',
+        answer_text: 'A2A is a peer-to-peer protocol that lets AI agents discover capabilities, exchange tasks, and collaborate across organizations. FlowPilot supports A2A natively — register peers in Admin → System → A2A Peers. Each peer has a URL endpoint, capabilities manifest, and separate inbound/outbound authentication tokens.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+      {
+        title: 'Registering an A2A Peer',
+        slug: 'register-a2a-peer',
+        question: 'How do I connect FlowPilot to another AI agent?',
+        answer_text: 'Go to Admin → System → A2A Peers → Add Peer. Enter the peer name, URL endpoint, and capabilities. An outbound token is generated automatically. Share your inbound endpoint and token with the peer for bidirectional communication. Test the connection before enabling production traffic.',
+        include_in_chat: true,
+      },
+      {
+        title: 'A2A Security',
+        slug: 'a2a-security',
+        question: 'How is A2A communication secured?',
+        answer_text: 'Each A2A peer uses separate inbound and outbound tokens. Inbound tokens are stored as hashes (never plaintext). Outbound tokens are generated using cryptographic random bytes. All communication is logged in a2a_activity with direction, payload, status, and duration for full auditability.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+      {
+        title: 'A2A Activity Log',
+        slug: 'a2a-activity-log',
+        question: 'How do I monitor A2A interactions?',
+        answer_text: 'Every A2A interaction is logged in the a2a_activity table. View activity in Admin → System → A2A Activity. Each entry shows: peer name, direction (inbound/outbound), skill name, input/output data, status (pending/success/failed), duration in milliseconds, and any error messages.',
+        include_in_chat: true,
+      },
+    ],
+  },
+
+  // ===== CONTENT API =====
+  {
+    name: 'Content API',
+    slug: 'content-api',
+    description: 'Consume your content via REST/GraphQL endpoints — headless CMS capabilities.',
+    icon: 'Code',
+    articles: [
+      {
+        title: 'Content API Overview',
+        slug: 'content-api-overview',
+        question: 'What is the Content API and how do I use it?',
+        answer_text: 'The Content API (Admin → System → Content API) provides 20+ REST/GraphQL endpoints for consuming your content programmatically. Use it for mobile apps, external websites, newsletters, and AI integrations. The API Explorer lets you test endpoints interactively. Content is served in standardized Tiptap JSON format.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+      {
+        title: 'API Explorer',
+        slug: 'api-explorer',
+        question: 'How do I test Content API endpoints?',
+        answer_text: 'Navigate to Admin → System → Content API. The interactive API Explorer shows all available endpoints with request/response previews. Click any endpoint to see the URL, parameters, and live response data. Copy endpoint URLs directly for use in your applications.',
+        include_in_chat: true,
+      },
+      {
+        title: 'Markdown Export for LLMs',
+        slug: 'markdown-export-llms',
+        question: 'Can I export content as Markdown for AI/LLM consumption?',
+        answer_text: 'Yes. The Content API supports Markdown export optimized for LLMs. This includes LLMs.txt generation for AI search engine optimization (AEO). FlowWink automatically structures content for both traditional search engines and AI answer engines.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+    ],
+  },
+
+  // ===== FLOWAGENT FRAMEWORK =====
+  {
+    name: 'FlowAgent Framework',
+    slug: 'flowagent-framework',
+    description: 'The 7-step autonomous reasoning engine that powers FlowPilot.',
+    icon: 'Cpu',
+    articles: [
+      {
+        title: 'The 7-Step Loop',
+        slug: 'seven-step-loop',
+        question: 'What is the FlowAgent 7-step loop?',
+        answer_text: 'FlowAgent implements a 7-step autonomous reasoning loop: 1) Self-Heal — check system health, retry failed operations. 2) Propose — evaluate objectives and suggest next actions. 3) Plan — decompose proposals into specific skill calls. 4) Advance — execute skills via agent-execute. 5) Automate — identify patterns that should become recurring automations. 6) Reflect — evaluate what worked and what failed. 7) Remember — store learnings in persistent memory.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+      {
+        title: 'Shared Reasoning Engine',
+        slug: 'shared-reasoning-engine',
+        question: 'What is the agent-reason shared module?',
+        answer_text: 'The agent-reason module is the centralized logic core that eliminates duplication between interactive tasks (Operate mode — responding to chat/commands) and autonomous tasks (Heartbeat — scheduled cycles). It handles unified LLM orchestration, context loading (Soul, Identity, Memories, Objectives, Instructions), and the iterative reasoning loop. This ensures consistent decision-making regardless of trigger.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+      {
+        title: 'Built-in Tools',
+        slug: 'flowagent-built-in-tools',
+        question: 'What tools does the FlowAgent reasoning engine have access to?',
+        answer_text: 'FlowAgent has 26+ built-in tools across categories: Ecommerce (product management, order tracking), CRM (lead qualification, company enrichment, deal management), Content (blog writing, page creation, KB updates), Analytics (performance review, conversion analysis), System (soul update, skill instruct, memory management), and A2A (peer communication). The tool registry is database-driven and extensible.',
+        include_in_chat: true,
+      },
+      {
+        title: 'Signal Ingest API',
+        slug: 'signal-ingest-api',
+        question: 'How do external events trigger FlowPilot?',
+        answer_text: 'The Signal Ingest API accepts token-authenticated events from external sources via the signal-dispatcher edge function. Database triggers fire signals for internal events (lead created, form submitted, booking made, blog published). Signals trigger matching automations, which execute skills. This creates a reactive layer on top of the proactive objective system.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+    ],
+  },
+
+  // ===== WEBINARS MODULE =====
+  {
+    name: 'Webinars',
+    slug: 'webinars',
+    description: 'Host and manage webinar events with registration, scheduling, and follow-up.',
+    icon: 'Video',
+    articles: [
+      {
+        title: 'Webinars Overview',
+        slug: 'webinars-overview',
+        question: 'How do webinars work in FlowWink?',
+        answer_text: 'The Webinars module lets you create events with registration forms, scheduling, and attendee management. Add webinar blocks to any page to display upcoming events. FlowPilot can manage event promotion, registration confirmations, and post-event follow-ups through its skill engine.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+      {
+        title: 'Creating a Webinar',
+        slug: 'creating-webinar',
+        question: 'How do I create and promote a webinar?',
+        answer_text: 'Go to Admin → Webinars → New Webinar. Set the title, date, time, description, and registration link. Add a Webinar block to any page to display it. FlowPilot can automatically promote webinars via blog posts, newsletter campaigns, and chat recommendations to site visitors.',
+        include_in_chat: true,
+      },
+    ],
+  },
+
+  // ===== CONSULTANT PROFILES =====
+  {
+    name: 'Consultant Profiles',
+    slug: 'consultant-profiles',
+    description: 'Manage consultant and team member profiles for agency and consulting templates.',
+    icon: 'Users',
+    articles: [
+      {
+        title: 'Consultant Profiles Overview',
+        slug: 'consultant-profiles-overview',
+        question: 'What are consultant profiles and how do they work?',
+        answer_text: 'Consultant Profiles let you showcase team members with skills, experience, certifications, hourly rates, and availability status. Used in consulting and agency templates. Profiles support education history, portfolio links, LinkedIn URLs, and multi-language capabilities. Visitors can browse and filter consultants by skill, availability, and expertise.',
+        is_featured: true,
+        include_in_chat: true,
+      },
+      {
+        title: 'Resume Matcher',
+        slug: 'resume-matcher',
+        question: 'What is the Resume Matcher feature?',
+        answer_text: 'The Resume Matcher block allows visitors to upload a job description or requirements document, and FlowPilot matches it against your consultant profiles — scoring relevance based on skills, experience, and availability. This automates the talent-matching process for staffing agencies and consulting firms.',
+        include_in_chat: true,
+      },
+    ],
+  },
 ];
 
 // =====================================================
