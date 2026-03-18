@@ -149,13 +149,23 @@ export const isExternalUrl = (url: string): boolean => {
   // Skip data URLs
   if (url.startsWith('data:')) return false;
   
-  // Skip relative URLs
-  if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
-  
   // Skip our own storage URLs
   if (url.includes('supabase') && url.includes('cms-images')) return false;
   
+  // Local bundled template images (served from public/)
+  if (url.startsWith('/templates/')) return false;
+  
+  // Skip other relative URLs
+  if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
+  
   return true;
+};
+
+/**
+ * Check if a URL is a local bundled template image
+ */
+export const isLocalTemplateImage = (url: string): boolean => {
+  return typeof url === 'string' && url.startsWith('/templates/');
 };
 
 /**
