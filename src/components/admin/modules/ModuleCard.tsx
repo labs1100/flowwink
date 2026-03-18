@@ -240,7 +240,27 @@ export function ModuleCard({
             </div>
           )}
           
-          {isEnabled && !hasApi && !stats && !canToggleUI && (
+          {/* Integration readiness indicator */}
+          {isEnabled && hasIntegrationDeps && (
+            <div className="flex items-center gap-1.5 pt-1 border-t border-border/50">
+              {!readiness.ready ? (
+                <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  <span>Missing: {readiness.missingRequired.join(', ')}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Plug className="h-3.5 w-3.5" />
+                  <span>
+                    {readiness.activeRequired.length + readiness.activeOptional.length}/
+                    {readiness.totalRequired + readiness.totalOptional} integrations
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {isEnabled && !hasApi && !stats && !canToggleUI && !hasIntegrationDeps && (
             <div className="flex items-center gap-1.5 text-xs text-primary">
               <Check className="h-3.5 w-3.5" />
               <span>Active</span>
