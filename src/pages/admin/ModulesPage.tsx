@@ -56,6 +56,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Target,
   FileUser,
   Network,
+  Megaphone,
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
