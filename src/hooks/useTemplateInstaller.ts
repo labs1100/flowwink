@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { toastSilencer } from '@/lib/toast-silencer';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { StarterTemplate } from '@/data/templates';
@@ -225,6 +226,7 @@ export function useTemplateInstaller() {
     setStep('creating');
     const pageIds: string[] = [];
 
+    toastSilencer.silent = true;
     try {
       // Clear media
       if (opts.clearMedia && mediaCount && mediaCount > 0) {
@@ -603,8 +605,10 @@ export function useTemplateInstaller() {
       await queryClient.invalidateQueries({ queryKey: ['products'] });
       await queryClient.invalidateQueries({ queryKey: ['site-settings'] });
 
+      toastSilencer.silent = false;
       toast({ title: 'Template applied!', description });
     } catch (error) {
+      toastSilencer.silent = false;
       toast({ title: 'Error', description: 'Failed to apply template. Some changes may have been applied.', variant: 'destructive' });
       setStep('idle');
     }
