@@ -25,4 +25,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
+const toast: typeof originalSonnerToast = (...args: Parameters<typeof originalSonnerToast>) => {
+  if (toastSilencer.silent) return;
+  return originalSonnerToast(...args);
+};
+
 export { Toaster, toast };

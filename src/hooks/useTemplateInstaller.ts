@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { toastSilencer } from '@/lib/toast-silencer';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { StarterTemplate } from '@/data/templates';
