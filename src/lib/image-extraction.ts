@@ -262,19 +262,23 @@ export const extractImagesFromTemplate = (template: {
 
   const urlSet = new Set<string>();
 
-  // Extract from pages
+  const isDownloadableUrl = (url: string): boolean => {
+    return isExternalUrl(url) || isLocalTemplateImage(url);
+  };
+
+  // Extract from pages — check both external and local template images
   if (template.pages) {
     template.pages.forEach((page, pageIndex) => {
       if (page.blocks) {
-        const blockImages = extractImageUrls(page.blocks);
-        blockImages.forEach(img => {
-          result.pages.push({
-            pageIndex,
-            blockIndex: img.blockIndex,
-            path: img.path,
-            url: img.url,
+        // Use a modified check that includes local template images
+        const blocks = page.blocks as ContentBlock[];
+        blocks.forEach((block, blockIndex) => {
+          const data = block.data as Record<string, unknown>;
+          const refs = extractImagesFromBlockDataWithLocal(data);
+          refs.forEach(img => {
+            result.pages.push({ pageIndex, blockIndex, path: img.path, url: img.url });
+            urlSet.add(img.url);
           });
-          urlSet.add(img.url);
         });
       }
     });
@@ -283,12 +287,8 @@ export const extractImagesFromTemplate = (template: {
   // Extract from blog posts
   if (template.blogPosts) {
     template.blogPosts.forEach((post, postIndex) => {
-      if (post.featured_image && isExternalUrl(post.featured_image)) {
-        result.blogPosts.push({
-          postIndex,
-          field: 'featured_image',
-          url: post.featured_image,
-        });
+      if (post.featured_image && isDownloadableUrl(post.featured_image)) {
+        result.blogPosts.push({ postIndex, field: 'featured_image', url: post.featured_image });
         urlSet.add(post.featured_image);
       }
     });
@@ -297,11 +297,8 @@ export const extractImagesFromTemplate = (template: {
   // Extract from products
   if (template.products) {
     template.products.forEach((product, productIndex) => {
-      if (product.image_url && isExternalUrl(product.image_url)) {
-        result.products.push({
-          productIndex,
-          url: product.image_url,
-        });
+      if (product.image_url && isDownloadableUrl(product.image_url)) {
+        result.products.push({ productIndex, url: product.image_url });
         urlSet.add(product.image_url);
       }
     });
@@ -311,6 +308,43 @@ export const extractImagesFromTemplate = (template: {
   result.total = result.pages.length + result.blogPosts.length + result.products.length;
 
   return result;
+};
+
+/**
+ * Extract images including local template images from block data
+ */
+const extractImagesFromBlockDataWithLocal = (data: Record<string, unknown>): ImageReference[] => {
+  const images: ImageReference[] = [];
+  const check = (url: string) => isExternalUrl(url) || isLocalTemplateImage(url);
+
+  // Direct image fields
+  const directImageFields = ['src', 'backgroundImage', 'image', 'imageSrc', 'imageUrl', 'backgroundUrl'];
+  for (const field of directImageFields) {
+    if (typeof data[field] === 'string' && check(data[field] as string)) {
+      images.push({ path: field, url: data[field] as string });
+    }
+  }
+
+  // Array fields with image properties
+  const arrayFields = ['images', 'articles', 'links', 'logos', 'team', 'members', 'testimonials', 'features', 'products', 'items', 'slides', 'cards', 'clients', 'partners', 'badges'];
+  const imageProps = ['src', 'image', 'logo', 'avatar', 'photo', 'thumbnail'];
+
+  for (const arrField of arrayFields) {
+    if (Array.isArray(data[arrField])) {
+      (data[arrField] as unknown[]).forEach((item, index) => {
+        if (typeof item === 'object' && item !== null) {
+          const obj = item as Record<string, unknown>;
+          for (const prop of imageProps) {
+            if (typeof obj[prop] === 'string' && check(obj[prop] as string)) {
+              images.push({ path: `${arrField}.${index}.${prop}`, url: obj[prop] as string });
+            }
+          }
+        }
+      });
+    }
+  }
+
+  return images;
 };
 
 /**
