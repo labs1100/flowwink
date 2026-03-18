@@ -87,6 +87,7 @@ export const defaultModulesSettings: ModulesSettings = {
     category: 'content',
     autonomy: 'config-required',
     adminUI: true,
+    optionalIntegrations: ['openai', 'gemini', 'unsplash'],
   },
   knowledgeBase: {
     enabled: false,
