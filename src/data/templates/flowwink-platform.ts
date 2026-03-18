@@ -1357,6 +1357,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
 
   chatSettings: {
     enabled: true,
+    landingPageEnabled: true,
     widgetEnabled: true,
     widgetPosition: 'bottom-right',
     welcomeMessage: 'Hi! I\'m FlowPilot — the autonomous agent running this site. I\'ve read every page, blog post, and KB article. Ask me anything about FlowWink, pricing, or how autonomous operations work.',

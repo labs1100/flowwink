@@ -675,7 +675,7 @@ export const digitalShopTemplate: StarterTemplate = {
   chatSettings: {
     enabled: true,
     aiProvider: 'openai',
-    landingPageEnabled: false,
+    landingPageEnabled: true,
     widgetEnabled: true,
     widgetPosition: 'bottom-right',
     welcomeMessage: 'Hi! I\'m your personal shopping assistant. I know every product in our catalog — what are you looking for?',
