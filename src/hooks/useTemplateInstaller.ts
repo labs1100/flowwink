@@ -13,7 +13,7 @@ import { useModules, useUpdateModules, ModulesSettings, defaultModulesSettings }
 import { useProducts, useCreateProduct, useDeleteProduct } from '@/hooks/useProducts';
 import { useMediaLibraryCount, useClearMediaLibrary } from '@/hooks/useMediaLibrary';
 import { useToast } from '@/hooks/use-toast';
-import { extractImagesFromTemplate, updateBlockAtPath } from '@/lib/image-extraction';
+import { extractImagesFromTemplate, updateBlockAtPath, isLocalTemplateImage } from '@/lib/image-extraction';
 import { supabase } from '@/integrations/supabase/client';
 import { createDocumentFromText } from '@/lib/tiptap-utils';
 import type { ContentBlock } from '@/types/cms';
