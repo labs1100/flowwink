@@ -231,6 +231,7 @@ export const defaultModulesSettings: ModulesSettings = {
     category: 'data',
     autonomy: 'agent-capable',
     adminUI: true,
+    optionalIntegrations: ['openai', 'gemini'],
   },
   browserControl: {
     enabled: false,
