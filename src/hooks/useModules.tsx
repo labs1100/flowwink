@@ -211,6 +211,7 @@ export const defaultModulesSettings: ModulesSettings = {
     category: 'communication',
     autonomy: 'config-required',
     adminUI: true,
+    optionalIntegrations: ['resend'],
   },
   salesIntelligence: {
     enabled: false,
