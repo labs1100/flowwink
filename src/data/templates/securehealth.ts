@@ -416,11 +416,11 @@ export const securehealthTemplate: StarterTemplate = {
         id: 'patients', label: 'For Patients', url: '#', enabled: true,
         description: 'Patient resources and tools',
         children: [
-          { id: 'portal', label: 'Patient Portal', url: '/portal', description: 'Access your health records', icon: '📋' },
-          { id: 'appointments', label: 'Book Appointment', url: '/appointments', description: 'Schedule your next visit', icon: '📅' },
-          { id: 'records', label: 'Medical Records', url: '/records', description: 'View and download your records', icon: '📁' },
-          { id: 'billing', label: 'Billing', url: '/billing', description: 'View and pay bills online', icon: '💳' },
-          { id: 'insurance', label: 'Insurance', url: '/insurance', description: 'Insurance information', icon: '🏥' },
+          { id: 'portal', label: 'Patient Portal', url: '/contact', description: 'Access your health records', icon: '📋' },
+          { id: 'appointments', label: 'Book Appointment', url: '/book', description: 'Schedule your next visit', icon: '📅' },
+          { id: 'records', label: 'Medical Records', url: '/contact', description: 'View and download your records', icon: '📁' },
+          { id: 'billing', label: 'Billing', url: '/contact', description: 'View and pay bills online', icon: '💳' },
+          { id: 'insurance', label: 'Insurance', url: '/contact', description: 'Insurance information', icon: '🏥' },
         ],
       },
       {
