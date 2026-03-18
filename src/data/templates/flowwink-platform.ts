@@ -331,7 +331,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
                 description: 'We run the infrastructure. FlowPilot runs your digital presence.',
                 features: ['Everything in Self-Hosted', 'Automatic updates', 'Daily backups + SSL + CDN', 'Managed AI model access', 'Priority email support', '99.9% uptime SLA'],
                 buttonText: 'Start Free Trial',
-                buttonUrl: '/contact',
+                buttonUrl: '#contact-form',
                 highlighted: true,
                 badge: 'Most Popular',
               },
