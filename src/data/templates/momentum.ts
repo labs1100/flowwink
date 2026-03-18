@@ -5,6 +5,7 @@
  * Bold typography, smooth animations, and maximum impact.
  */
 import type { StarterTemplate } from './types';
+import { momentumBlogPosts } from '../template-blog-posts';
 
 const momentumPages: StarterTemplate['pages'] = [
   {
