@@ -983,6 +983,26 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             animated: true,
           },
         },
+        // MARQUEE — trusted by brands
+        {
+          id: 'ecom-marquee',
+          type: 'marquee',
+          data: {
+            title: 'Trusted by Creators & Brands',
+            items: [
+              { id: 'em1', text: 'Shopify Migrants' },
+              { id: 'em2', text: 'Indie Creators' },
+              { id: 'em3', text: 'SaaS Companies' },
+              { id: 'em4', text: 'Design Studios' },
+              { id: 'em5', text: 'Digital Agencies' },
+              { id: 'em6', text: 'Course Creators' },
+            ],
+            speed: 'normal',
+            pauseOnHover: true,
+            direction: 'left',
+            variant: 'default',
+          },
+        },
         // CTA
         {
           id: 'cta-ecom',
