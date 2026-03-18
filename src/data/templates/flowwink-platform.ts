@@ -421,7 +421,7 @@ export const flowwinkPlatformTemplate: StarterTemplate = {
             buttonText: 'Self-Host Free',
             buttonUrl: 'https://github.com/magnusfroste/flowwink',
             secondaryButtonText: 'Start Trial',
-            secondaryButtonUrl: '/contact',
+            secondaryButtonUrl: '#contact-form',
             gradient: true,
           },
         },
