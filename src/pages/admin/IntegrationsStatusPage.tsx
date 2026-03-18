@@ -38,6 +38,7 @@ import {
   Target,
   MessageSquare,
   Search,
+  Megaphone,
 } from "lucide-react";
 import { useUnsavedChanges, UnsavedChangesDialog } from "@/hooks/useUnsavedChanges";
 import {
