@@ -49,7 +49,7 @@ const momentumPages: StarterTemplate['pages'] = [
           overlayOpacity: 85,
           titleAnimation: 'slide-up',
           showScrollIndicator: true,
-          primaryButton: { text: 'Talk to AI', url: '/chat' },
+          primaryButton: { text: 'Talk to AI', url: '#chat-launcher-home' },
           secondaryButton: { text: 'See Pricing', url: '#pricing' },
         },
       },
