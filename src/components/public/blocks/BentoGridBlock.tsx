@@ -130,7 +130,7 @@ export function BentoGridBlock({ data }: BentoGridBlockProps) {
         <div
           ref={containerRef}
           className={cn(
-            'grid grid-cols-1 md:grid-cols-3 auto-rows-[minmax(180px,auto)]',
+            'grid grid-cols-1 md:grid-cols-3 auto-rows-[minmax(160px,auto)]',
             columns === 4 && 'lg:grid-cols-4',
             getGapClass(gap),
           )}
