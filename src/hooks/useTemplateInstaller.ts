@@ -366,9 +366,10 @@ export function useTemplateInstaller() {
       }
 
       // Apply chat settings
-      if (opts.chatSettings) {
+      if (opts.chatSettings && template.chatSettings) {
         setProgress({ currentPage: 0, totalPages: 1, currentStep: 'Configuring AI chat...' });
-        await updateChat.mutateAsync(template.chatSettings as any);
+        const { defaultChatSettings } = await import('@/hooks/useSiteSettings');
+        await updateChat.mutateAsync({ ...defaultChatSettings, ...template.chatSettings } as any);
       }
 
       // Apply header settings
