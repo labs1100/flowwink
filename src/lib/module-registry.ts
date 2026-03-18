@@ -28,6 +28,7 @@ import {
   formsModule,
   ordersModule,
   webinarsModule,
+  salesIntelligenceModule,
   resumeModule,
   browserControlModule,
   growthModule,
