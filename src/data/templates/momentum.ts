@@ -49,7 +49,7 @@ const momentumPages: StarterTemplate['pages'] = [
           overlayOpacity: 85,
           titleAnimation: 'slide-up',
           showScrollIndicator: true,
-          primaryButton: { text: 'Talk to AI', url: '/chat' },
+          primaryButton: { text: 'Talk to AI', url: '#chat-launcher-home' },
           secondaryButton: { text: 'See Pricing', url: '#pricing' },
         },
       },
@@ -137,7 +137,7 @@ const momentumPages: StarterTemplate['pages'] = [
           imageAlt: 'Code on screen',
           imagePosition: 'right',
           ctaText: 'Explore AI Features →',
-          ctaUrl: '/features',
+          ctaUrl: '/home',
         },
       },
       {
@@ -164,7 +164,7 @@ const momentumPages: StarterTemplate['pages'] = [
           imageAlt: 'Server infrastructure',
           imagePosition: 'left',
           ctaText: 'View Architecture →',
-          ctaUrl: '/features',
+          ctaUrl: '/home',
         },
       },
       {

@@ -51,7 +51,7 @@ const flowwinkAgencyPages: TemplatePage[] = [
           overlayOpacity: 50,
           titleAnimation: 'slide-up',
           showScrollIndicator: true,
-          primaryButton: { text: 'Ask FlowPilot', url: '/chat' },
+          primaryButton: { text: 'Ask FlowPilot', url: '#chat-launcher' },
           secondaryButton: { text: 'Calculate Your Savings', url: '/roi-calculator' },
         },
       },
@@ -553,7 +553,7 @@ const flowwinkAgencyPages: TemplatePage[] = [
           imageAlt: 'Code editor showing API',
           imagePosition: 'right',
           ctaText: 'View API Docs →',
-          ctaUrl: '/docs',
+          ctaUrl: '/home',
         },
       },
       {
@@ -831,8 +831,8 @@ Direct technical questions to demo.flowwink.com for hands-on exploration.`,
     showQuickLinks: true,
     showContact: true,
     legalLinks: [
-      { id: 'privacy', label: 'Privacy', url: '/privacy', enabled: true },
-      { id: 'terms', label: 'Terms', url: '/terms', enabled: true },
+      { id: 'privacy', label: 'Privacy', url: '/privacy-policy', enabled: true },
+      { id: 'terms', label: 'Terms', url: '/terms-of-service', enabled: true },
     ],
   },
   seoSettings: {

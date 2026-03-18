@@ -50,7 +50,7 @@ const launchpadPages: StarterTemplate['pages'] = [
           overlayOpacity: 70,
           titleAnimation: 'slide-up',
           showScrollIndicator: true,
-          primaryButton: { text: 'Ask FlowPilot', url: '/chat' },
+          primaryButton: { text: 'Ask FlowPilot', url: '#chat-launcher' },
           secondaryButton: { text: 'See How It Works', url: '/product' },
         },
       },
@@ -139,7 +139,7 @@ const launchpadPages: StarterTemplate['pages'] = [
           imageAlt: 'Team collaborating on laptop',
           imagePosition: 'right',
           ctaText: 'See How It Works →',
-          ctaUrl: '/features',
+          ctaUrl: '/product',
         },
       },
       {
@@ -346,7 +346,7 @@ const launchpadPages: StarterTemplate['pages'] = [
           imageAlt: 'Dashboard analytics',
           imagePosition: 'left',
           ctaText: 'Explore Docs →',
-          ctaUrl: '/docs',
+          ctaUrl: '/home',
         },
       },
       {
