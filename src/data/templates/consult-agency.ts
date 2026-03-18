@@ -909,6 +909,7 @@ export const consultAgencyTemplate: StarterTemplate = {
 
   chatSettings: {
     enabled: true,
+    landingPageEnabled: true,
     widgetEnabled: true,
     widgetPosition: 'bottom-right',
     welcomeMessage: 'Hi! I\'m FlowPilot, your always-on consultant. Tell me about your assignment — tech stack, duration, timeline — and I\'ll find the right match from our network.',
