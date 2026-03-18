@@ -1665,6 +1665,57 @@ This skill is primarily triggered by automations, not directly by users.
       },
     },
   },
+
+  // ─── Composable Content Skills ──────────────────────────────────────────────
+  {
+    name: 'landing_page_compose',
+    description: 'Autonomously compose a landing page from the block library based on a campaign goal, target audience, and optional ad campaign reference. Uses AI to select optimal block types, generate copy, and publish as a draft page.',
+    handler: 'edge:landing-page-compose',
+    instructions: `You compose high-converting landing pages by selecting from the platform's block library.
+
+## Available block types (use only these):
+hero, text, cta, features, stats, testimonials, pricing, accordion, form, newsletter, quote, two-column, info-box, logos, comparison, social-proof, countdown, chat-launcher, separator
+
+## Composition rules:
+1. ALWAYS start with a hero block — strong headline + subheadline + CTA
+2. Follow with value proposition blocks (features, stats, two-column)
+3. Add social proof (testimonials, logos, social-proof)
+4. Include at least one conversion block (cta, form, newsletter, chat-launcher)
+5. End with a final CTA or contact section
+6. Use separator blocks between major sections
+7. Keep total blocks between 5-10 for focused landing pages
+8. Match tone and messaging to the target audience
+9. If linked to an ad campaign, align messaging with campaign objective
+
+## Output format:
+Return a valid content_json array of ContentBlock objects with proper data for each block type.`,
+    category: 'growth',
+    scope: 'internal',
+    requires_approval: true,
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'landing_page_compose',
+        description: 'Compose a landing page from blocks based on campaign goal and audience. Creates a draft page ready for review.',
+        parameters: {
+          type: 'object',
+          properties: {
+            goal: { type: 'string', description: 'Campaign/page goal, e.g. "Generate leads for consulting services" or "Promote summer sale"' },
+            target_audience: { type: 'string', description: 'Target audience description, e.g. "Small business owners aged 30-50 looking for IT consulting"' },
+            campaign_id: { type: 'string', description: 'Optional: Link to an existing ad_campaign UUID for messaging alignment' },
+            page_title: { type: 'string', description: 'Page title (used for slug generation)' },
+            tone: { type: 'string', enum: ['professional', 'casual', 'urgent', 'inspirational', 'technical'], description: 'Desired tone of voice (default: professional)' },
+            include_blocks: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Optional: specific block types to include (e.g. ["pricing", "testimonials"])',
+            },
+          },
+          required: ['goal', 'target_audience', 'page_title'],
+        },
+      },
+    },
+  },
 ];
 const DEFAULT_SOUL = {
   purpose: 'I help run this website autonomously — managing content, leads, and growth so the owner can focus on their business.',
