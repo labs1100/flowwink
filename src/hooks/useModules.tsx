@@ -21,6 +21,8 @@ export interface ModuleConfig {
   core?: boolean; // Core modules cannot be disabled
   autonomy: ModuleAutonomy;
   adminUI: boolean; // Whether admin interface is shown (default: true for view/config-required)
+  requiredIntegrations?: string[]; // Module won't function without these
+  optionalIntegrations?: string[]; // Enhanced functionality with these
 }
 
 export interface ModulesSettings {
