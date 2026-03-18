@@ -32,6 +32,7 @@ import {
   resumeModule,
   browserControlModule,
   growthModule,
+  federationModule,
 } from '@/lib/modules';
 
 // =============================================================================
@@ -62,6 +63,7 @@ class ModuleRegistry {
       resumeModule,
       browserControlModule,
       growthModule,
+      federationModule,
     ];
 
     for (const mod of builtIn) {
