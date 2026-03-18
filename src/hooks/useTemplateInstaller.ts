@@ -366,9 +366,10 @@ export function useTemplateInstaller() {
       }
 
       // Apply chat settings
-      if (opts.chatSettings) {
+      if (opts.chatSettings && template.chatSettings) {
         setProgress({ currentPage: 0, totalPages: 1, currentStep: 'Configuring AI chat...' });
-        await updateChat.mutateAsync(template.chatSettings as any);
+        const { defaultChatSettings } = await import('@/hooks/useSiteSettings');
+        await updateChat.mutateAsync({ ...defaultChatSettings, ...template.chatSettings } as any);
       }
 
       // Apply header settings
@@ -395,10 +396,19 @@ export function useTemplateInstaller() {
         await updateAeo.mutateAsync(template.aeoSettings as any);
       }
 
-      // Apply cookie banner
-      if (opts.cookieBannerSettings) {
+      // Apply cookie banner (merge with defaults so partial template settings don't erase text)
+      if (opts.cookieBannerSettings && template.cookieBannerSettings) {
         setProgress({ currentPage: 0, totalPages: 1, currentStep: 'Configuring cookies...' });
-        await updateCookieBanner.mutateAsync(template.cookieBannerSettings as any);
+        const cookieDefaults = {
+          enabled: true,
+          title: 'We use cookies',
+          description: 'We use cookies to improve your experience on our website, analyze traffic, and personalize content. By clicking "Accept all", you consent to our use of cookies.',
+          policyLinkText: 'Read our Privacy Policy',
+          policyLinkUrl: '/privacy-policy',
+          acceptButtonText: 'Accept all',
+          rejectButtonText: 'Essential only',
+        };
+        await updateCookieBanner.mutateAsync({ ...cookieDefaults, ...template.cookieBannerSettings } as any);
       }
 
       // Create pages
