@@ -180,6 +180,7 @@ export function SkillEditorSheet({ skill, open, onClose, onSave, onDelete }: Ski
                   <SelectItem value="automation">Automation</SelectItem>
                   <SelectItem value="search">Search</SelectItem>
                   <SelectItem value="analytics">Analytics</SelectItem>
+                  <SelectItem value="growth">Growth</SelectItem>
                 </SelectContent>
               </Select>
             </div>
