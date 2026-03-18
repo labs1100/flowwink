@@ -123,6 +123,7 @@ export const defaultModulesSettings: ModulesSettings = {
     category: 'communication',
     autonomy: 'config-required',
     adminUI: true,
+    requiredIntegrations: ['resend'],
   },
   forms: {
     enabled: true,
