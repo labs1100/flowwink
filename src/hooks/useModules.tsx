@@ -257,6 +257,8 @@ export const defaultModulesSettings: ModulesSettings = {
     category: 'insights',
     autonomy: 'agent-capable',
     adminUI: true,
+    requiredIntegrations: ['meta_ads'],
+    optionalIntegrations: ['openai', 'gemini'],
   },
 };
 
