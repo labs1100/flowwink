@@ -344,6 +344,8 @@ export default function SiteSettingsPage() {
   const { blocker } = useUnsavedChanges({ hasChanges });
 
   const handleSaveAll = async () => {
+    const autonomyChanged = JSON.stringify(autonomyData) !== JSON.stringify(autonomySettings);
+    
     await Promise.all([
       updateGeneral.mutateAsync(generalData),
       updateSeo.mutateAsync(seoData),
@@ -353,7 +355,17 @@ export default function SiteSettingsPage() {
       updatePerformance.mutateAsync(performanceData),
       updateAeo.mutateAsync(aeoData),
       updateSystemAi.mutateAsync(systemAiData),
+      updateAutonomy.mutateAsync(autonomyData),
     ]);
+
+    // If autonomy schedule changed, trigger cron re-registration
+    if (autonomyChanged) {
+      try {
+        await supabase.functions.invoke('update-autonomy-cron');
+      } catch (err) {
+        console.warn('Failed to update cron schedules (non-fatal):', err);
+      }
+    }
   };
 
   if (isLoading) {
