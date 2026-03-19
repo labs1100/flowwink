@@ -874,7 +874,7 @@ async function decomposeObjectiveIntoPlan(
 
   const skillList = (skills || []).map((s: any) => `- ${s.name}: ${s.description} (${s.handler})`).join('\n');
 
-  const { apiKey, apiUrl, model } = await resolveAiConfig(supabase);
+  const { apiKey, apiUrl, model } = await resolveAiConfig(supabase, 'reasoning');
   const aiResp = await fetch(apiUrl, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
