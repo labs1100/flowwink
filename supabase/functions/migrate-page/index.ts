@@ -1195,8 +1195,24 @@ Respond ONLY with valid JSON, no other text:
     },
     { "id": "block-2", "type": "text", "data": { "content": "<p>...</p>" } },
     { "id": "block-3", "type": "lottie", "data": { "src": "https://lottie.host/...", "autoplay": true, "loop": true, "alt": "Animation description" } }
-  ]
-}`;
+  ],
+  "companyProfile": {
+    "company_name": "Company name from the page",
+    "about_us": "Brief company description extracted from about/intro sections",
+    "services": { "Service Name": "Brief description" },
+    "value_proposition": "Main value proposition or tagline",
+    "industry": "Detected industry",
+    "differentiators": ["Key differentiator 1", "Key differentiator 2"],
+    "target_industries": ["Target industry 1"],
+    "contact_email": "info@example.com",
+    "contact_phone": "+46 8 123 45 67",
+    "address": "Street, City, Country",
+    "clients": "Notable clients if mentioned",
+    "client_testimonials": "Short testimonial quotes if found"
+  }
+}
+
+IMPORTANT: The "companyProfile" field is OPTIONAL. Only include it if you can extract meaningful company data from the page (typically homepage or about pages). Include only fields you can confidently extract — omit fields where data is not available.`;
 
     // Identify hero video candidates
     const heroVideos = extractedVideos.filter(v => v.isHeroCandidate);
