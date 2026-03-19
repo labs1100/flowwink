@@ -1672,7 +1672,7 @@ export async function loadSkillInstructions(_supabase: any): Promise<string> {
 // ─── Built-in Tool Definitions ────────────────────────────────────────────────
 
 const MEMORY_TOOLS = [
-  { type: 'function', function: { name: 'memory_write', description: 'Save something to your persistent memory. Generates vector embedding for semantic search.', parameters: { type: 'object', properties: { key: { type: 'string', description: 'Short identifier' }, value: { description: 'The information to remember' }, category: { type: 'string', enum: ['preference', 'context', 'fact'] } }, required: ['key', 'value'] } } },
+  { type: 'function', function: { name: 'memory_write', description: 'Save something to your persistent memory. Generates vector embedding for semantic search.', parameters: { type: 'object', properties: { key: { type: 'string', description: 'Short identifier' }, value: { type: 'string', description: 'The information to remember' }, category: { type: 'string', enum: ['preference', 'context', 'fact'] } }, required: ['key', 'value'] } } },
   { type: 'function', function: { name: 'memory_read', description: 'Search your persistent memory. Supports semantic (vector) search — describe what you\'re looking for naturally.', parameters: { type: 'object', properties: { key: { type: 'string', description: 'Keyword search term' }, category: { type: 'string', enum: ['preference', 'context', 'fact'] }, semantic_query: { type: 'string', description: 'Natural language query for semantic vector search (more accurate than keyword)' } } } } },
 ];
 
