@@ -669,6 +669,35 @@ export function useUpdateStoreSettings() {
   return useUpdateSiteSettings<StoreSettings>('store', 'Store settings have been updated.');
 }
 
+// Autonomy Schedule settings
+export interface AutonomyScheduleSettings {
+  timezone: string;
+  heartbeatEnabled: boolean;
+  heartbeatHours: number[]; // e.g. [0, 12] = twice daily
+  briefingEnabled: boolean;
+  briefingHour: number; // local hour, e.g. 8
+  learnEnabled: boolean;
+  learnHour: number; // local hour, e.g. 3
+}
+
+export const defaultAutonomyScheduleSettings: AutonomyScheduleSettings = {
+  timezone: 'Europe/Stockholm',
+  heartbeatEnabled: true,
+  heartbeatHours: [0, 12],
+  briefingEnabled: true,
+  briefingHour: 8,
+  learnEnabled: true,
+  learnHour: 3,
+};
+
+export function useAutonomyScheduleSettings() {
+  return useSiteSettings<AutonomyScheduleSettings>('autonomy_schedule', defaultAutonomyScheduleSettings);
+}
+
+export function useUpdateAutonomyScheduleSettings() {
+  return useUpdateSiteSettings<AutonomyScheduleSettings>('autonomy_schedule', 'Autonomy schedule has been updated.');
+}
+
 // Re-export modules hooks for convenience
 export { useModules, useUpdateModules, useIsModuleEnabled, useEnabledModules } from './useModules';
 export type { ModulesSettings, ModuleConfig } from './useModules';
