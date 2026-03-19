@@ -93,7 +93,7 @@ export const navigationGroups: NavGroup[] = [
       { name: "Integrations", href: "/admin/integrations", icon: Plug },
       { name: "Content API", href: "/admin/content-api", icon: Code2, moduleId: "contentApi" },
       { name: "Webhooks", href: "/admin/webhooks", icon: Webhook },
-      { name: "Menu Order", href: "/admin/menu-order", icon: Menu },
+      
       { name: "Users", href: "/admin/users", icon: Users },
       { name: "Profile", href: "/admin/profile", icon: UserCircle },
       { name: "Settings", href: "/admin/settings", icon: Settings },

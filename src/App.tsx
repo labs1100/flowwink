@@ -164,7 +164,7 @@ const router = createBrowserRouter([
       { path: "/admin/settings", element: <SiteSettingsPage /> },
       { path: "/admin/profile", element: <ProfilePage /> },
       { path: "/admin/branding", element: <BrandingSettingsPage /> },
-      { path: "/admin/menu-order", element: <MenuOrderPage /> },
+      
       { path: "/admin/chat", element: <ChatSettingsPage /> },
       { path: "/admin/content-api", element: <ContentApiPage /> },
       { path: "/admin/campaigns", element: <ContentCampaignsPage /> },
