@@ -1326,7 +1326,7 @@ async function handleDelegateTask(
     || SPECIALIST_PROMPTS[agent_name]
     || `You are a specialist agent focused on ${agent_name}. Complete the given task thoroughly and concisely.`;
 
-  const { apiKey, apiUrl, model } = await resolveAiConfig(supabase);
+  const { apiKey, apiUrl, model } = await resolveAiConfig(supabase, 'fast');
   const contextStr = Object.keys(context).length > 0
     ? `\n\nContext:\n${JSON.stringify(context, null, 2)}`
     : '';
