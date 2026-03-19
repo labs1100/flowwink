@@ -748,7 +748,7 @@ export async function pruneConversationHistory(
 
 async function summarizeMessages(messages: any[], supabase: any): Promise<string | null> {
   try {
-    const { apiKey, apiUrl, model } = await resolveAiConfig(supabase);
+    const { apiKey, apiUrl, model } = await resolveAiConfig(supabase, 'fast');
 
     // Build a compact representation of old messages
     const compactMessages = messages
