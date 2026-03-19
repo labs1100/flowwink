@@ -26,6 +26,8 @@ import {
   useUpdateAeoSettings,
   useSystemAiSettings,
   useUpdateSystemAiSettings,
+  useAutonomyScheduleSettings,
+  useUpdateAutonomyScheduleSettings,
   SeoSettings,
   PerformanceSettings,
   CustomScriptsSettings,
@@ -34,11 +36,15 @@ import {
   GeneralSettings,
   AeoSettings,
   SystemAiSettings,
+  AutonomyScheduleSettings,
+  defaultAutonomyScheduleSettings,
   SchemaOrgType,
 } from '@/hooks/useSiteSettings';
 import { usePages } from '@/hooks/usePages';
+import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Save, Globe, Zap, ImageIcon, X, AlertTriangle, Code, Cookie, Info, Wrench, Home, Search, Lock, Clock, CheckCircle2, Circle, Bot, FileText, Building2, ExternalLink, Trash2, Sparkles, Server, Copy, Check } from 'lucide-react';
+import { Loader2, Save, Globe, Zap, ImageIcon, X, AlertTriangle, Code, Cookie, Info, Wrench, Home, Search, Lock, Clock, CheckCircle2, Circle, Bot, FileText, Building2, ExternalLink, Trash2, Sparkles, Server, Copy, Check, Timer } from 'lucide-react';
+import { AutonomyScheduleTab } from '@/components/admin/AutonomyScheduleTab';
 import { SystemAiSettingsTab } from '@/components/admin/SystemAiSettingsTab';
 import { MediaLibraryPicker } from '@/components/admin/MediaLibraryPicker';
 import { CodeEditor } from '@/components/admin/CodeEditor';
@@ -163,6 +169,7 @@ export default function SiteSettingsPage() {
   const { data: generalSettings, isLoading: generalLoading } = useGeneralSettings();
   const { data: aeoSettings, isLoading: aeoLoading } = useAeoSettings();
   const { data: systemAiSettings, isLoading: systemAiLoading } = useSystemAiSettings();
+  const { data: autonomySettings, isLoading: autonomyLoading } = useAutonomyScheduleSettings();
   const { data: allPages } = usePages();
   
   const updateSeo = useUpdateSeoSettings();
@@ -173,6 +180,7 @@ export default function SiteSettingsPage() {
   const updateGeneral = useUpdateGeneralSettings();
   const updateAeo = useUpdateAeoSettings();
   const updateSystemAi = useUpdateSystemAiSettings();
+  const updateAutonomy = useUpdateAutonomyScheduleSettings();
 
   const [generalData, setGeneralData] = useState<GeneralSettings>({
     homepageSlug: 'hem',
@@ -259,6 +267,8 @@ export default function SiteSettingsPage() {
     defaultLanguage: 'en',
   });
 
+  const [autonomyData, setAutonomyData] = useState<AutonomyScheduleSettings>(defaultAutonomyScheduleSettings);
+
   useEffect(() => {
     if (seoSettings) setSeoData(seoSettings);
   }, [seoSettings]);
@@ -309,12 +319,16 @@ export default function SiteSettingsPage() {
     }
   }, [systemAiSettings]);
 
-  const isLoading = seoLoading || performanceLoading || scriptsLoading || cookieLoading || maintenanceLoading || generalLoading || aeoLoading || systemAiLoading;
-  const isSaving = updateSeo.isPending || updatePerformance.isPending || updateScripts.isPending || updateCookieBanner.isPending || updateMaintenance.isPending || updateGeneral.isPending || updateAeo.isPending || updateSystemAi.isPending;
+  useEffect(() => {
+    if (autonomySettings) setAutonomyData(autonomySettings);
+  }, [autonomySettings]);
+
+  const isLoading = seoLoading || performanceLoading || scriptsLoading || cookieLoading || maintenanceLoading || generalLoading || aeoLoading || systemAiLoading || autonomyLoading;
+  const isSaving = updateSeo.isPending || updatePerformance.isPending || updateScripts.isPending || updateCookieBanner.isPending || updateMaintenance.isPending || updateGeneral.isPending || updateAeo.isPending || updateSystemAi.isPending || updateAutonomy.isPending;
 
   // Track unsaved changes
   const hasChanges = useMemo(() => {
-    if (!seoSettings || !performanceSettings || !customScriptsSettings || !cookieBannerSettings || !maintenanceSettings || !generalSettings || !aeoSettings || !systemAiSettings) return false;
+    if (!seoSettings || !performanceSettings || !customScriptsSettings || !cookieBannerSettings || !maintenanceSettings || !generalSettings || !aeoSettings || !systemAiSettings || !autonomySettings) return false;
     return (
       JSON.stringify(seoData) !== JSON.stringify(seoSettings) ||
       JSON.stringify(performanceData) !== JSON.stringify(performanceSettings) ||
@@ -323,13 +337,16 @@ export default function SiteSettingsPage() {
       JSON.stringify(maintenanceData) !== JSON.stringify(maintenanceSettings) ||
       JSON.stringify(generalData) !== JSON.stringify(generalSettings) ||
       JSON.stringify(aeoData) !== JSON.stringify(aeoSettings) ||
-      JSON.stringify(systemAiData) !== JSON.stringify(systemAiSettings)
+      JSON.stringify(systemAiData) !== JSON.stringify(systemAiSettings) ||
+      JSON.stringify(autonomyData) !== JSON.stringify(autonomySettings)
     );
-  }, [seoData, performanceData, scriptsData, cookieData, maintenanceData, generalData, aeoData, systemAiData, seoSettings, performanceSettings, customScriptsSettings, cookieBannerSettings, maintenanceSettings, generalSettings, aeoSettings, systemAiSettings]);
+  }, [seoData, performanceData, scriptsData, cookieData, maintenanceData, generalData, aeoData, systemAiData, autonomyData, seoSettings, performanceSettings, customScriptsSettings, cookieBannerSettings, maintenanceSettings, generalSettings, aeoSettings, systemAiSettings, autonomySettings]);
 
   const { blocker } = useUnsavedChanges({ hasChanges });
 
   const handleSaveAll = async () => {
+    const autonomyChanged = JSON.stringify(autonomyData) !== JSON.stringify(autonomySettings);
+    
     await Promise.all([
       updateGeneral.mutateAsync(generalData),
       updateSeo.mutateAsync(seoData),
@@ -339,7 +356,17 @@ export default function SiteSettingsPage() {
       updatePerformance.mutateAsync(performanceData),
       updateAeo.mutateAsync(aeoData),
       updateSystemAi.mutateAsync(systemAiData),
+      updateAutonomy.mutateAsync(autonomyData),
     ]);
+
+    // If autonomy schedule changed, trigger cron re-registration
+    if (autonomyChanged) {
+      try {
+        await supabase.functions.invoke('update-autonomy-cron');
+      } catch (err) {
+        console.warn('Failed to update cron schedules (non-fatal):', err);
+      }
+    }
   };
 
   if (isLoading) {
@@ -367,7 +394,7 @@ export default function SiteSettingsPage() {
         </AdminPageHeader>
 
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 max-w-6xl">
+          <TabsList className="grid w-full grid-cols-9 max-w-6xl">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
               <span className="hidden sm:inline">General</span>
@@ -399,6 +426,10 @@ export default function SiteSettingsPage() {
             <TabsTrigger value="performance" className="flex items-center gap-2">
               <Zap className="h-4 w-4" />
               <span className="hidden sm:inline">Performance</span>
+            </TabsTrigger>
+            <TabsTrigger value="autonomy" className="flex items-center gap-2">
+              <Timer className="h-4 w-4" />
+              <span className="hidden sm:inline">Autonomy</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1542,6 +1573,11 @@ export default function SiteSettingsPage() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Autonomy Schedule Tab */}
+          <TabsContent value="autonomy" className="space-y-6">
+            <AutonomyScheduleTab data={autonomyData} onChange={setAutonomyData} />
           </TabsContent>
         </Tabs>
 
