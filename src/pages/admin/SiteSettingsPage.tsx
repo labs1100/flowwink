@@ -327,7 +327,7 @@ export default function SiteSettingsPage() {
 
   // Track unsaved changes
   const hasChanges = useMemo(() => {
-    if (!seoSettings || !performanceSettings || !customScriptsSettings || !cookieBannerSettings || !maintenanceSettings || !generalSettings || !aeoSettings || !systemAiSettings) return false;
+    if (!seoSettings || !performanceSettings || !customScriptsSettings || !cookieBannerSettings || !maintenanceSettings || !generalSettings || !aeoSettings || !systemAiSettings || !autonomySettings) return false;
     return (
       JSON.stringify(seoData) !== JSON.stringify(seoSettings) ||
       JSON.stringify(performanceData) !== JSON.stringify(performanceSettings) ||
@@ -336,9 +336,10 @@ export default function SiteSettingsPage() {
       JSON.stringify(maintenanceData) !== JSON.stringify(maintenanceSettings) ||
       JSON.stringify(generalData) !== JSON.stringify(generalSettings) ||
       JSON.stringify(aeoData) !== JSON.stringify(aeoSettings) ||
-      JSON.stringify(systemAiData) !== JSON.stringify(systemAiSettings)
+      JSON.stringify(systemAiData) !== JSON.stringify(systemAiSettings) ||
+      JSON.stringify(autonomyData) !== JSON.stringify(autonomySettings)
     );
-  }, [seoData, performanceData, scriptsData, cookieData, maintenanceData, generalData, aeoData, systemAiData, seoSettings, performanceSettings, customScriptsSettings, cookieBannerSettings, maintenanceSettings, generalSettings, aeoSettings, systemAiSettings]);
+  }, [seoData, performanceData, scriptsData, cookieData, maintenanceData, generalData, aeoData, systemAiData, autonomyData, seoSettings, performanceSettings, customScriptsSettings, cookieBannerSettings, maintenanceSettings, generalSettings, aeoSettings, systemAiSettings, autonomySettings]);
 
   const { blocker } = useUnsavedChanges({ hasChanges });
 
