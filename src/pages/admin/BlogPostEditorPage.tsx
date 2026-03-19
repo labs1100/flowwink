@@ -40,7 +40,7 @@ import {
 } from "@/hooks/useBlogPosts";
 import { useBlogCategories } from "@/hooks/useBlogCategories";
 import { useBlogTags, useGetOrCreateBlogTag } from "@/hooks/useBlogTags";
-import { useBlogSettings } from "@/hooks/useSiteSettings";
+import { useBlogSettings, useGeneralSettings } from "@/hooks/useSiteSettings";
 import type { PageStatus, BlogPostMeta, TiptapDocument } from "@/types/cms";
 
 function generateSlug(title: string): string {
