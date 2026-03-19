@@ -1906,7 +1906,7 @@ export async function reason(
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-  const { apiKey, apiUrl, model } = await resolveAiConfig(supabase);
+  const { apiKey, apiUrl, model } = await resolveAiConfig(supabase, config.tier || 'fast');
 
   const builtInTools = getBuiltInTools(config.builtInToolGroups || ['memory', 'objectives', 'reflect']);
   const skillTools = await loadSkillTools(supabase, config.scope);
