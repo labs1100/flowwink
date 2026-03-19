@@ -350,6 +350,12 @@ export default function PageEditorPage() {
                   SAVE DRAFT
                 </Button>
               )}
+              {canPublishDirectly && (
+                <Button onClick={handlePublishDirectly} disabled={updateStatus.isPending} className="bg-success hover:bg-success/90">
+                  <Check className="h-4 w-4 mr-2" />
+                  PUBLISH
+                </Button>
+              )}
               {canSendForReview && (
                 <Button onClick={() => handleSendForReview()} disabled={updateStatus.isPending}>
                   <Send className="h-4 w-4 mr-2" />
