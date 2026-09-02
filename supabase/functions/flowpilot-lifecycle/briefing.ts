@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { filterRecipients } from "../_shared/email-allowlist.ts";
 import { getServiceClient } from '../_shared/supabase-clients.ts';
+import { enrichCronHealth, type CronHealthReport } from "../_shared/cron/health.ts";
 
 /**
  * FlowPilot Morning Briefing
@@ -308,7 +309,82 @@ export async function handler(req: Request): Promise<Response> {
       });
     }
 
+    // 6. Scheduled-job health — THE ops channel for drift findings (River
+    // incident, Magnus 2026-08-28: ops warnings go to the Daily Briefing +
+    // /admin/system Observability, never to River). Evidence-based only: each
+    // listed job carries pg_cron's own verdict from cron.job_run_details
+    // (failed run / never ran / foreign host). Non-fatal — a briefing without
+    // this section is better than no briefing.
+    let cronRedJobs: Array<{ jobname: string; reasons: string[]; last_status: string | null; last_run: string | null }> = [];
+    try {
+      const { data: cronRaw, error: cronErr } = await supabase.rpc("cron_health_report");
+      if (!cronErr && cronRaw && (cronRaw as any).cron_available) {
+        const enriched = enrichCronHealth(cronRaw as CronHealthReport);
+        cronRedJobs = enriched.jobs.filter((j) => j.red);
+        if (cronRedJobs.length > 0) {
+          sections.push({
+            title: "⚙️ Scheduled Jobs",
+            type: "cron_health",
+            items: cronRedJobs.slice(0, 8).map((j) => ({
+              label: j.jobname,
+              value: j.reasons.join("; "),
+              evidence: { last_status: j.last_status, last_run: j.last_run, source: "cron.job_run_details" },
+            })),
+          });
+        }
+      }
+    } catch (cronCatch: any) {
+      console.warn("[briefing] cron-health section skipped (non-fatal):", cronCatch?.message);
+    }
+
+    // 7. Knowledge gaps — questions the public chat could not ground (top
+    // semantic match below threshold, logged by chat-completion). This is the
+    // briefing acting as a documentation order-book: each listed question is a
+    // wiki/KB candidate someone on the team can actually answer. Non-fatal —
+    // the table may not exist on an instance that hasn't migrated yet.
+    try {
+      const { data: gaps } = await supabase
+        .from("knowledge_gap_log")
+        .select("question, top_semantic, asked_at")
+        .gte("asked_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        .order("asked_at", { ascending: false })
+        .limit(30);
+      if (gaps && gaps.length > 0) {
+        // Rough dedup: identical opening 60 chars = the same question asked again.
+        const seen = new Set<string>();
+        const distinct: any[] = [];
+        for (const g of gaps) {
+          const key = String(g.question).toLowerCase().slice(0, 60);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          distinct.push(g);
+          if (distinct.length >= 5) break;
+        }
+        sections.push({
+          title: "📚 Knowledge Gaps (7d)",
+          type: "knowledge_gaps",
+          items: [
+            { label: "Ungrounded chat questions", value: gaps.length },
+            ...distinct.map((g: any) => ({
+              label: `"${String(g.question).slice(0, 90)}"`,
+              value: "no close match in KB/pages — documentation candidate",
+            })),
+          ],
+        });
+      }
+    } catch (gapCatch: any) {
+      console.warn("[briefing] knowledge-gap section skipped (non-fatal):", gapCatch?.message);
+    }
+
     const actionItems: any[] = [];
+
+    if (cronRedJobs.length > 0) {
+      actionItems.push({
+        priority: "high",
+        text: `${cronRedJobs.length} scheduled job${cronRedJobs.length > 1 ? "s" : ""} unhealthy (per job_run_details) — check Observability`,
+        link: "/admin/system",
+      });
+    }
 
     if (newLeadsToday > 0) {
       const hotLeads = (leadsToday.data || []).filter((l: any) => (l.score || 0) >= 20);
@@ -470,7 +546,7 @@ export async function handler(req: Request): Promise<Response> {
       }
 
       if (!conversationId) {
-        const { data: newConv } = await supabase
+        const { data: newConv, error: convErr } = await supabase
           .from("chat_conversations")
           .insert({
             title: `Daily Briefing — ${todayLabel}`,
@@ -482,6 +558,7 @@ export async function handler(req: Request): Promise<Response> {
           })
           .select("id")
           .single();
+        if (convErr) throw new Error(`briefing: conversation insert failed: ${convErr.message}`);
         conversationId = newConv?.id ?? null;
       }
 

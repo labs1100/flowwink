@@ -1,6 +1,7 @@
 // Moved VERBATIM from supabase/functions/send-booking-confirmation/index.ts (edge-surface B2).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
 import { getServiceClient } from '../_shared/supabase-clients.ts';
+import { renderTemplate } from '../_shared/template-render.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,10 @@ interface BookingConfirmationRequest {
 interface EmailConfig {
   fromEmail: string;
   fromName: string;
+}
+
+function escapeHtml(s: string) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 }
 
 export const handler = async (req: Request): Promise<Response> => {
@@ -128,11 +133,12 @@ export const handler = async (req: Request): Promise<Response> => {
             } else {
               // Create new company from domain
               const companyName = domain.split(".")[0].charAt(0).toUpperCase() + domain.split(".")[0].slice(1);
-              const { data: newCompany } = await supabase
+              const { data: newCompany, error: coErr } = await supabase
                 .from("companies")
                 .insert({ name: companyName, domain })
                 .select("id")
                 .single();
+              if (coErr) console.error(`[booking] company insert failed: ${coErr.message}`);
 
               if (newCompany) {
                 companyId = newCompany.id;
@@ -143,7 +149,7 @@ export const handler = async (req: Request): Promise<Response> => {
         }
 
         // Create new lead
-        const { data: newLead } = await supabase
+        const { data: newLead, error: bookingLeadErr } = await supabase
           .from("leads")
           .insert({
             email: booking.customer_email,
@@ -158,6 +164,7 @@ export const handler = async (req: Request): Promise<Response> => {
           })
           .select()
           .single();
+        if (bookingLeadErr) throw new Error(`booking lead insert failed: ${bookingLeadErr.message}`);
 
         if (newLead) {
           // Add initial booking activity
@@ -213,7 +220,6 @@ export const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const emailProvider = bookingsConfig?.bookingEmailProvider || 'resend';
     const siteName = (siteSettings?.value as { siteName?: string })?.siteName || "Our Website";
     
     // Get email configuration from integrations
@@ -223,7 +229,7 @@ export const handler = async (req: Request): Promise<Response> => {
       fromName: siteName,
     };
 
-    console.log(`[send-booking-confirmation] Provider: ${emailProvider}, Sender: ${emailConfig.fromName} <${emailConfig.fromEmail}>`);
+    console.log(`[send-booking-confirmation] Sender: ${emailConfig.fromName} <${emailConfig.fromEmail}>`);
 
     // Format date and time
     const startDate = new Date(booking.start_time);
@@ -258,7 +264,66 @@ export const handler = async (req: Request): Promise<Response> => {
     }
 
     // Build email HTML
-    const emailHtml = `
+    // ── Mallen är sajtinnehåll ────────────────────────────────────────────
+    // Rendera ur email_templates ('booking_confirmation', seedad återhävdbart i
+    // 20260828170000) så admin och agent äger texten via manage_email_template.
+    // Renderingen sker HÄR (inte i email-send) så Gmail-transporten får samma
+    // mall som routern. Saknas mallen faller vi till legacy-HTML:en nedan —
+    // Law 4: mailet uteblir aldrig för att en mall fattas. Defaulten är
+    // TJÄNST-GENERISK med flit: plattformen antar aldrig samtal, möte eller
+    // klipptid — instansens röst är en mallredigering, aldrig kod.
+    let templateSubject: string | null = null;
+    let templateHtml: string | null = null;
+    try {
+      // Mottagarens språk, inte sajtens. Parten bär det sedan steg 13, och
+      // resolve_email_template går samma stege som resten av systemet: exakt
+      // tagg → samma språk → sajtens standard → NÅGON aktiv version. Det sista
+      // steget är avsiktligt — ett mejl som inte skickas är värre än ett mejl på
+      // fel språk.
+      let recipientLang: string | null = null;
+      if (booking.partner_id) {
+        const { data: langRow, error: langErr } = await supabase.rpc('partner_language', { p_partner_id: booking.partner_id });
+        if (langErr) console.warn('[send-booking-confirmation] could not read the recipient language:', langErr.message);
+        recipientLang = (langRow as { lang?: string } | null)?.lang ?? null;
+      }
+      const { data: resolved, error: resolveErr } = await supabase.rpc('resolve_email_template', {
+        p_name: 'booking_confirmation',
+        p_locale: recipientLang,
+      });
+      if (resolveErr) console.warn('[send-booking-confirmation] template lookup failed — using built-in fallback:', resolveErr.message);
+      const tpl = resolved as { ok?: boolean; html?: string; subject?: string; locale?: string } | null;
+      if (tpl?.ok && tpl.html) {
+        const vars: Record<string, string> = {
+          customer_name: booking.customer_name ?? '',
+          service_name: booking.service?.name ?? '',
+          date: formattedDate,
+          start_time: formattedStartTime,
+          end_time: formattedEndTime,
+          // Anteckningen är DATA. Rutan och dess etikett bor i mallen som en
+          // {{#notes}}-sektion (seedbytet i 20260903190000) — annars kan
+          // etiketten aldrig översättas, och en svensk mottagare fick
+          // "Your note:" ur koden.
+          notes: escapeHtml(booking.notes ?? ''),
+          // Legacy: mallar från före sektionssyntaxen bär hela rutan som
+          // variabel, engelsk etikett inklusive. Behålls så en operatörs
+          // gamla omskrivning fortsätter rendera — nya mallar använder
+          // {{#notes}}…{{/notes}}.
+          notes_block: booking.notes
+            ? `<div style="background:#f3f4f6;border-radius:8px;padding:12px 16px;margin:16px 0;"><p style="margin:0;"><strong>Your note:</strong> ${booking.notes}</p></div>`
+            : '',
+          site_name: siteName,
+        };
+        templateHtml = renderTemplate(tpl.html, vars);
+        templateSubject = tpl.subject ? renderTemplate(tpl.subject, vars) : null;
+        if (recipientLang && tpl.locale && tpl.locale !== recipientLang.toLowerCase()) {
+          console.warn(`[send-booking-confirmation] no ${recipientLang} template — sent the ${tpl.locale} one`);
+        }
+      }
+    } catch (tplErr) {
+      console.warn('[send-booking-confirmation] template read failed — using built-in fallback:', (tplErr as Error).message);
+    }
+
+    const emailHtml = templateHtml ?? `
       <!DOCTYPE html>
       <html>
       <head>
@@ -305,38 +370,25 @@ export const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Send email via selected provider
+    // ── EN väg: routern äger transporten ─────────────────────────────────────
+    // Tidigare valde bokningsMODULEN provider (bookingsConfig.bookingEmailProvider)
+    // och composio_gmail gick i en EGEN gren direkt mot composio-proxy — förbi
+    // routerns allowlist, suppressions och outbound-logg. Ett lagerbrott med
+    // en blind fläck: gmail-vägen lämnade inget spår i outbound_communications.
+    // email-send stödjer composio som provider (explicit/enabledMap) sedan
+    // edge-surface-arbetet, så grenen är legacy. Varsamt borttagen: ett lagrat
+    // legacy-värde 'composio_gmail' följer med som provider-HINT till routern —
+    // ingen instans tappar sitt gmail-beteende, men varje mail går nu genom
+    // vakterna och loggen. Providervalet hör hemma i Communications → Router.
     let emailId: string | undefined;
-
-    if (emailProvider === 'composio_gmail') {
-      // Send via Composio Gmail
-      console.log("[send-booking-confirmation] Sending via Composio Gmail");
-      const composioResponse = await supabase.functions.invoke('composio-proxy', {
-        body: {
-          action: 'GMAIL_SEND_EMAIL',
-          arguments: {
-            recipient_email: booking.customer_email,
-            subject: `Booking Confirmation - ${formattedDate}`,
-            body: emailHtml,
-            content_type: 'text/html',
-          },
-        },
-      });
-
-      if (composioResponse.error) {
-        console.error("[send-booking-confirmation] Composio Gmail error:", composioResponse.error);
-        throw new Error(`Composio Gmail failed: ${composioResponse.error.message || 'Unknown error'}`);
-      }
-
-      emailId = composioResponse.data?.id || 'composio-sent';
-      console.log("[send-booking-confirmation] Gmail sent successfully");
-    } else {
-      // Send via central email-send router (provider-agnostic SMTP/Resend)
+    {
+      const legacyHint = bookingsConfig?.bookingEmailProvider === 'composio_gmail' ? 'composio' : undefined;
       const { data: emailResponse, error: emailError } = await supabase.functions.invoke('email-send', {
         body: {
           to: booking.customer_email,
-          subject: `Booking Confirmation - ${formattedDate}`,
+          subject: templateSubject ?? `Booking Confirmation - ${formattedDate}`,
           html: emailHtml,
+          ...(legacyHint ? { provider: legacyHint } : {}),
           fromOverride: `${emailConfig.fromName} <${emailConfig.fromEmail}>`,
           tags: { source: 'send-booking-confirmation', booking_id: bookingId },
         },
@@ -354,7 +406,7 @@ export const handler = async (req: Request): Promise<Response> => {
       .eq("id", bookingId);
 
     return new Response(
-      JSON.stringify({ success: true, emailId, provider: emailProvider }),
+      JSON.stringify({ success: true, emailId, provider: "router" }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
 

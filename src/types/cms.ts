@@ -86,6 +86,14 @@ export interface Page {
   deleted_by: string | null;
   show_in_menu?: boolean;
   menu_order?: number;
+  /**
+   * BCP-47 tag for the language this page is written in. NOTE: the column
+   * DEFAULTS to 'en' in the schema, so a value of 'en' may mean "nobody chose"
+   * rather than "this page is English" — see src/pages/PublicPage.tsx.
+   */
+  locale?: string | null;
+  /** Pages sharing this id are language versions of each other. */
+  translation_group_id?: string | null;
 }
 
 export interface PageVersion {
@@ -413,6 +421,7 @@ export type HeroTextTheme = 'auto' | 'light' | 'dark';
 
 // Design System 2026: Hero title size options
 export type HeroTitleSize = 'default' | 'large' | 'display' | 'massive';
+export type HeroButtonVariant = 'solid' | 'outline' | 'ghost';
 
 export interface HeroBlockData {
   title: string;
@@ -448,9 +457,10 @@ export interface HeroBlockData {
   parallaxEffect?: boolean;
   titleAnimation?: 'none' | 'fade-in' | 'slide-up' | 'typewriter';
   showScrollIndicator?: boolean;
-  // Buttons
-  primaryButton?: { text: string; url: string };
-  secondaryButton?: { text: string; url: string };
+  // Buttons. `variant` växlar designen per knapp; utelämnad = dagens
+  // default (primär fylld, sekundär outline) så inga befintliga heros ändras.
+  primaryButton?: { text: string; url: string; variant?: HeroButtonVariant };
+  secondaryButton?: { text: string; url: string; variant?: HeroButtonVariant };
   // Design System 2026: Premium Typography
   titleSize?: HeroTitleSize;
   gradientTitle?: boolean;

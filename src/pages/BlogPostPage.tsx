@@ -45,9 +45,9 @@ export default function BlogPostPage() {
     return (
       <>
         <PublicNavigation />
-        <main className="min-h-screen bg-background">
+        <main className="pt-[var(--overlay-header-offset,0px)] min-h-screen bg-background">
           <div className="container mx-auto px-4 py-12">
-            <p className="text-center text-muted-foreground">Loading article...</p>
+            <p className="text-center text-muted-foreground">{t('blog.loadingArticle', 'Loading article...')}</p>
           </div>
         </main>
         <PublicFooter />
@@ -104,7 +104,7 @@ export default function BlogPostPage() {
       
       <PublicNavigation />
       
-      <main className="min-h-screen bg-background">
+      <main className="pt-[var(--overlay-header-offset,0px)] min-h-screen bg-background">
         <article className="container mx-auto px-4 py-8 max-w-4xl">
           {/* Breadcrumb */}
           <nav className="mb-6">
@@ -140,7 +140,7 @@ export default function BlogPostPage() {
             {post.author && (
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4" />
-                <span>{post.author.full_name || post.author.email}</span>
+                <span>{post.author.full_name || "Author"}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
@@ -171,14 +171,14 @@ export default function BlogPostPage() {
           {/* Reviewer badge */}
           {blogSettings?.showReviewer && post.reviewer && (
             <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-8 flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
+              <CheckCircle className="h-5 w-5 text-success shrink-0" />
               <div className="text-sm">
                 <span className="text-green-800 dark:text-green-200">
                   Reviewed by {post.reviewer.full_name || post.reviewer.email}
                   {post.reviewer.title && `, ${post.reviewer.title}`}
                 </span>
                 {post.reviewed_at && (
-                  <span className="text-green-600 dark:text-green-400 ml-2">
+                  <span className="text-success ml-2">
                     ({formatDateTime(post.reviewed_at, { year: "numeric", month: "short", day: "numeric" })})
                   </span>
                 )}
@@ -222,7 +222,7 @@ export default function BlogPostPage() {
                   }`}
                   className="text-sm text-primary hover:underline"
                 >
-                  View all posts by {post.author.full_name || post.author.email} →
+                  View all posts by {post.author.full_name || "Author"} →
                 </Link>
               </div>
             </div>

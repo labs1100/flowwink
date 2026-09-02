@@ -306,6 +306,38 @@ The artifact's sha256 is stored in site_settings.skills_artifact_sha on success.
 "inserted"/"updated" counts plus the first 40 names of each. modules_skipped_disabled counts modules whose skills were left alone because the module is off — enable the module and re-run to pick them up.`,
   },
   {
+    name: 'email_admins',
+    description:
+      "Email every instance admin (resolved from user_roles at send time) through the provider-agnostic email gateway. Use when: an automation or agent needs to alert the humans running this instance (new booking, failed sweep, threshold crossed). NOT for: customer-facing mail (send_email); lead outreach (send_email_to_lead); newsletters (send_newsletter).",
+    category: 'communication',
+    handler: 'internal:email_admins',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'email_admins',
+        description:
+          'Deliver one finished message to all instance admins. Recipients come from user_roles at send time — never pass addresses. Outcomes are kept apart: sent / simulated (no provider) / blocked_by_allowlist (pilot guard, logged) / failed.',
+        parameters: {
+          type: 'object',
+          properties: {
+            subject: { type: 'string', description: 'Email subject line.' },
+            html: { type: 'string', description: 'HTML body — compose the full message before calling.' },
+            source: { type: 'string', description: 'Originating label for outbound_communications (default "email_admins").' },
+          },
+          required: ['subject', 'html'],
+        },
+      },
+    },
+    instructions: `## email_admins
+### What
+One message → every admin (user_roles role='admin', emails via auth at send time). Routed through email-send: provider-agnostic, allowlist-guarded, every outcome logged to outbound_communications.
+### When
+Automations reacting to platform events (booking.created and friends) and agents that must reach the instance operators. Not a customer channel.
+### Read the result honestly
+{sent, blocked, failed, detail[]} — 'blocked' is the outbound allowlist doing its job on pilot instances and is neither success nor failure; report it as withheld. Born from the booking incident where a skipped confirmation left zero trace.`,
+  },
+  {
     name: 'search_web',
     description: 'Search the web for information. Supports Firecrawl and Jina providers. Use when: researching a topic; finding current information; answering questions requiring web data. NOT for: scraping a specific URL (scrape_url); fetching login-walled content (browser_fetch).',
     category: 'search',
@@ -546,7 +578,32 @@ Reads and updates site settings including module configuration, site name, theme
 ### Edge cases
 - Some settings changes require page reload to take effect.
 - ai_config controls which AI provider FlowPilot uses.
-- Be careful with module toggles — disabling a module hides its UI.`,
+- Be careful with module toggles — disabling a module hides its UI.
+
+### Translating the visitor-facing chrome (\`ui_text\`)
+\`ui_text\` holds the strings AROUND the blocks — buttons, empty states,
+"Back to homepage" — the text a page editor cannot reach. Block content is not
+here; that lives on the page.
+
+The map has two layers, and \`update\` REPLACES the whole value, so always
+\`get\` first and send the merged object back:
+
+\`\`\`json
+{
+  "page.backHome": "Tillbaka till startsidan",
+  "chat.send": "Skicka",
+  "@en": { "page.backHome": "Back to homepage", "chat.send": "Send" }
+}
+\`\`\`
+
+- **Flat keys** are the base layer: the site's own language.
+- **\`@<locale>\`** keys are per-language overlays, used when the visitor is
+  reading a page in that language. \`@sv-SE\` beats \`@sv\`.
+
+A key absent from every layer falls back to the English written in the code, so
+a partial translation is safe — never invent a key name to "complete" the map.
+To make a site bilingual, translate the flat keys into an \`@<locale>\` overlay
+for the second language; the base layer stays as it is.`,
   },
   {
     name: 'update_skill_instructions',
@@ -661,7 +718,7 @@ export const PLATFORM_AUTOMATIONS: AutomationSeed[] = [
   {
     name: 'Integration Health Check',
     description:
-      'Platform automation. Probes every enabled integration daily at 06:30 UTC (before the briefing) and posts a warning to admin FlowChat when one fails. Born from the 2026-07-22 SearXNG incident: a broken integration must never fail silently behind a fallback.',
+      'Platform automation. Probes every enabled integration daily at 06:30 UTC (before the briefing) and updates the integration health state on System → Observability. Only a CHANGE — healthy→failing, a new failure, or a recovery — raises an acknowledgeable notice in the header bell; "still failing, third day" is silent. Born from the 2026-07-22 SearXNG incident (a broken integration must never fail silently behind a fallback) and reshaped 2026-08-27, when the sweep\'s old habit of posting into admin FlowChat had left nine unresolvable assistant messages and turned the alarm into wallpaper.',
     trigger_type: 'cron',
     trigger_config: { cron: '30 6 * * *', timezone: 'UTC' },
     skill_name: 'check_integrations',

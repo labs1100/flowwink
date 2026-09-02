@@ -43,37 +43,49 @@ const GOOGLE_FONTS_MAP: Record<string, string> = {
   'Plus Jakarta Sans': 'Plus+Jakarta+Sans:wght@400;500;600;700',
 };
 
-function loadGoogleFont(fontName: string) {
+function loadGoogleFont(fontName: string, doc: Document = document) {
   const fontParam = GOOGLE_FONTS_MAP[fontName];
   if (!fontParam) return;
-  
-  const existingLink = document.querySelector(`link[data-font="${fontName}"]`);
+
+  const existingLink = doc.querySelector(`link[data-font="${fontName}"]`);
   if (existingLink) return;
-  
-  const link = document.createElement('link');
+
+  const link = doc.createElement('link');
   link.rel = 'stylesheet';
   link.href = `https://fonts.googleapis.com/css2?family=${fontParam}&display=swap`;
   link.setAttribute('data-font', fontName);
-  document.head.appendChild(link);
+  doc.head.appendChild(link);
 }
 
-function applyBrandingToDocument(branding: BrandingSettings) {
-  const root = document.documentElement;
+// Exported so preview surfaces that render into their own document (the page
+// editor's device-preview iframe) can brand that document's root — the admin
+// parent has these variables deliberately reset.
+export function applyBrandingToDocument(branding: BrandingSettings, doc: Document = document) {
+  const root = doc.documentElement;
   
+  // The document CARRIES its theme (next-themes stamps `dark` on <html>, and
+  // PreviewFrame mirrors it into its own root) — so per-theme brand values
+  // resolve from the doc we are painting, never from module state. Same rule
+  // as useScrollAnimation's ownerDocument resolution.
+  const isDark = root.classList.contains('dark');
+
+  // House pattern promoted from secondary (it had this since birth; primary
+  // never got it — the adoption class again): a brand surface derives its own
+  // text color from its lightness, so black-on-dark-blue cannot be authored.
+  const contrastForeground = (hsl: string): string => {
+    const lightness = parseFloat(hsl.split(/\s+/)[2] || '50');
+    return lightness < 40 ? '0 0% 98%' : '0 0% 9%';
+  };
+
   // Apply colors
-  if (branding.primaryColor) {
-    root.style.setProperty('--primary', branding.primaryColor);
+  const effectivePrimary = (isDark && branding.primaryColorDark) || branding.primaryColor;
+  if (effectivePrimary) {
+    root.style.setProperty('--primary', effectivePrimary);
+    root.style.setProperty('--primary-foreground', contrastForeground(effectivePrimary));
   }
   if (branding.secondaryColor) {
     root.style.setProperty('--secondary', branding.secondaryColor);
-    // Auto-derive contrasting foreground for secondary
-    const parts = branding.secondaryColor.split(/\s+/);
-    const lightness = parseFloat(parts[2] || '50');
-    if (lightness < 40) {
-      root.style.setProperty('--secondary-foreground', '0 0% 98%');
-    } else {
-      root.style.setProperty('--secondary-foreground', '0 0% 9%');
-    }
+    root.style.setProperty('--secondary-foreground', contrastForeground(branding.secondaryColor));
   }
   if (branding.accentColor) {
     root.style.setProperty('--accent', branding.accentColor);
@@ -81,23 +93,39 @@ function applyBrandingToDocument(branding: BrandingSettings) {
   
   // Apply fonts
   if (branding.headingFont) {
-    loadGoogleFont(branding.headingFont);
+    loadGoogleFont(branding.headingFont, doc);
     root.style.setProperty('--font-serif', `'${branding.headingFont}', Georgia, serif`);
   }
   if (branding.bodyFont) {
-    loadGoogleFont(branding.bodyFont);
+    loadGoogleFont(branding.bodyFont, doc);
     root.style.setProperty('--font-sans', `'${branding.bodyFont}', system-ui, sans-serif`);
   }
   
-  // Apply border radius
+  // Apply border radius — BOTH scales from the same dial.
+  //
+  // --radius is the control-level radius (buttons, inputs); --radius-block is
+  // the PANEL radius the self-styled blocks draw with (cta, newsletter,
+  // pricing-calculator, ai-faq — rounded-[var(--radius-block,1rem)]). Until
+  // 2026-08-25 only --radius followed branding, so a customer who chose sharp
+  // corners still got 1rem-rounded panels: half the page obeyed the dial.
+  // The block scale is deliberately ~2× the control scale — a panel is a
+  // bigger shape than a button and reads flat at button radii — and 'none'
+  // means none everywhere: sharp is a design choice, not a control-only one.
   const radiusMap: Record<string, string> = {
     none: '0',
     sm: '0.25rem',
     md: '0.5rem',
     lg: '0.75rem',
   };
+  const blockRadiusMap: Record<string, string> = {
+    none: '0',
+    sm: '0.5rem',
+    md: '1rem',
+    lg: '1.5rem',
+  };
   if (branding.borderRadius) {
     root.style.setProperty('--radius', radiusMap[branding.borderRadius] || '0.5rem');
+    root.style.setProperty('--radius-block', blockRadiusMap[branding.borderRadius] || '1rem');
   }
   
   // Apply scroll animation mode (on | eager | off). Read by useScrollAnimation
@@ -105,16 +133,17 @@ function applyBrandingToDocument(branding: BrandingSettings) {
   const scrollMode = branding.scrollAnimations || 'on';
   root.dataset.scrollAnimations = scrollMode;
 
-  // Apply favicon
-  if (branding.favicon) {
-    const existingFavicon = document.querySelector('link[rel="icon"]');
+  // Apply favicon — only meaningful on the top-level document; a preview
+  // iframe has no tab of its own.
+  if (branding.favicon && doc === document) {
+    const existingFavicon = doc.querySelector('link[rel="icon"]');
     if (existingFavicon) {
       existingFavicon.setAttribute('href', branding.favicon);
     } else {
-      const favicon = document.createElement('link');
+      const favicon = doc.createElement('link');
       favicon.rel = 'icon';
       favicon.href = branding.favicon;
-      document.head.appendChild(favicon);
+      doc.head.appendChild(favicon);
     }
   }
 }
@@ -132,7 +161,9 @@ function resetBrandingToDefaults() {
   root.style.removeProperty('--accent');
   root.style.removeProperty('--font-serif');
   root.style.removeProperty('--font-sans');
+  root.style.removeProperty('--primary-foreground');
   root.style.removeProperty('--radius');
+  root.style.removeProperty('--radius-block');
 }
 
 interface BrandingProviderProps {
@@ -140,7 +171,7 @@ interface BrandingProviderProps {
 }
 
 export function BrandingProvider({ children }: BrandingProviderProps) {
-  const { setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [pathname, setPathname] = useState(window.location.pathname);
   const themeSetRef = useRef(false);
   
@@ -190,6 +221,8 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
 
   useEffect(() => {
     if (branding && !isAdminRoute) {
+      // resolvedTheme i deps: per-tema-primären måste appliceras OM när temat
+      // flippar — dokumentklassen är sanningen appliceringen läser.
       applyBrandingToDocument(branding);
       themeSetRef.current = false;
       
@@ -223,7 +256,7 @@ export function BrandingProvider({ children }: BrandingProviderProps) {
       resetBrandingToDefaults();
       themeSetRef.current = true;
     }
-  }, [branding, setTheme, isAdminRoute]);
+  }, [branding, setTheme, isAdminRoute, resolvedTheme]);
 
   return (
     <BrandingContext.Provider value={{ branding: branding || null, isLoading }}>

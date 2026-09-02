@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useBlockEditor } from '@/hooks/useBlockEditor';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
@@ -53,13 +55,16 @@ const TEXT_ALIGNMENT_OPTIONS: { value: HeroTextAlignment; label: string; icon: t
 ];
 
 export function HeroBlockEditor({ data, onChange, isEditing }: HeroBlockEditorProps) {
-  const [localData, setLocalData] = useState<HeroBlockData>(data);
-
-  const handleChange = (updates: Partial<HeroBlockData>) => {
-    const newData = { ...localData, ...updates };
-    setLocalData(newData);
-    onChange(newData);
-  };
+  // Prop-sync, not a one-shot copy. useState(data) froze whatever the FIRST
+  // render passed: switching the page editor between language versions kept
+  // this block on the previous page's text, because the component stays mounted
+  // across the route change (Magnus, 2026-08-31). useBlockEditor re-syncs when
+  // the parent hands over new content and guards against the editor's own
+  // changes bouncing back.
+  const { data: localData, updateFields: handleChange } = useBlockEditor<HeroBlockData>({
+    initialData: data,
+    onChange,
+  });
 
   const layout = localData.layout || 'centered';
   const backgroundType = localData.backgroundType || 'image';
@@ -609,6 +614,27 @@ export function HeroBlockEditor({ data, onChange, isEditing }: HeroBlockEditorPr
               }
               placeholder="Link"
             />
+            <Select
+              value={localData.primaryButton?.variant || 'default'}
+              onValueChange={(v) =>
+                handleChange({
+                  primaryButton: {
+                    ...localData.primaryButton,
+                    text: localData.primaryButton?.text || '',
+                    url: localData.primaryButton?.url || '',
+                    variant: v === 'default' ? undefined : (v as 'solid' | 'outline' | 'ghost'),
+                  },
+                })
+              }
+            >
+              <SelectTrigger><SelectValue placeholder="Style" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default (solid)</SelectItem>
+                <SelectItem value="solid">Solid</SelectItem>
+                <SelectItem value="outline">Outline</SelectItem>
+                <SelectItem value="ghost">Ghost (text only)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Secondary Button</Label>
@@ -630,6 +656,27 @@ export function HeroBlockEditor({ data, onChange, isEditing }: HeroBlockEditorPr
               }
               placeholder="Link"
             />
+            <Select
+              value={localData.secondaryButton?.variant || 'default'}
+              onValueChange={(v) =>
+                handleChange({
+                  secondaryButton: {
+                    ...localData.secondaryButton,
+                    text: localData.secondaryButton?.text || '',
+                    url: localData.secondaryButton?.url || '',
+                    variant: v === 'default' ? undefined : (v as 'solid' | 'outline' | 'ghost'),
+                  },
+                })
+              }
+            >
+              <SelectTrigger><SelectValue placeholder="Style" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default (outline)</SelectItem>
+                <SelectItem value="solid">Solid</SelectItem>
+                <SelectItem value="outline">Outline</SelectItem>
+                <SelectItem value="ghost">Ghost (text only)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

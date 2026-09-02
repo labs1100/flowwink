@@ -3,16 +3,20 @@ import { useUiText } from '@/lib/ui-text';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { useBranding } from '@/providers/BrandingProvider';
 import { ThemeToggle } from './ThemeToggle';
 import { CartIndicator } from './CartIndicator';
 import { AccountIndicator } from './AccountIndicator';
+import { LanguageSwitcher, type PageTranslation } from './LanguageSwitcher';
+import { pickLocale } from '@/lib/pick-locale';
+import { pagePath } from '@/lib/language-path';
+import { operatorText } from '@/lib/operator-text';
 import { SandboxBanner } from '@/components/SandboxBanner';
 import { useHeaderBlock, defaultHeaderData } from '@/hooks/useGlobalBlocks';
-import { useBlogSettings, useStoreSettings, useCustomerPortalSettings } from '@/hooks/useSiteSettings';
+import { useBlogSettings, useStoreSettings, useCustomerPortalSettings, useSiteLanguages } from '@/hooks/useSiteSettings';
 import { useIsModuleEnabled } from '@/hooks/useModules';
 import type { HeaderNavItem } from '@/types/cms';
 
@@ -23,7 +27,17 @@ interface NavPage {
   menu_order: number;
 }
 
-export function PublicNavigation() {
+interface PublicNavigationProps {
+  /**
+   * Published language versions of the page being shown, when it has any.
+   * Only PublicPage passes these — every other public page keeps calling
+   * <PublicNavigation /> with no props and behaves exactly as before.
+   */
+  translations?: PageTranslation[];
+  currentLocale?: string | null;
+}
+
+export function PublicNavigation({ translations, currentLocale }: PublicNavigationProps = {}) {
   const t = useUiText();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openMegaMenu, setOpenMegaMenu] = useState<string | null>(null);
@@ -57,6 +71,7 @@ export function PublicNavigation() {
   
   // Blog settings
   const { data: blogSettings } = useBlogSettings();
+  const { defaultLanguage: siteDefaultLanguage } = useSiteLanguages();
 
   // Close mega menu when clicking outside
   useEffect(() => {
@@ -67,7 +82,7 @@ export function PublicNavigation() {
     }
   }, [openMegaMenu]);
 
-  const { data: pages = [] } = useQuery({
+  const { data: sourcePages = [] } = useQuery({
     queryKey: ['public-nav-pages'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -85,8 +100,132 @@ export function PublicNavigation() {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Overlay-headern tar ingen plats i flödet — sidor UTAN hero börjar annars
+  // på y=0 under den (chatten på /chat låg under nav-länkarna, autoversio
+  // 2026-08-28). Headern annonserar sin uppmätta höjd som CSS-variabel;
+  // hero-lösa sidor konsumerar den som padding-top. Icke-overlay: variabeln
+  // tas bort → 0 → ingen effekt.
+  const overlayStyle = headerSettings.backgroundStyle || 'solid';
+  const headerIsOverlay = overlayStyle === 'transparent';
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!headerIsOverlay) { root.style.removeProperty('--overlay-header-offset'); return; }
+    const set = () => root.style.setProperty('--overlay-header-offset', `${headerRef.current?.offsetHeight ?? 64}px`);
+    set();
+    window.addEventListener('resize', set);
+    return () => { window.removeEventListener('resize', set); root.style.removeProperty('--overlay-header-offset'); };
+  }, [headerIsOverlay]);
+
+  // ── Bloggänkens etikett ────────────────────────────────────────────────
+  // archiveTitle är operatörens ord för SITT EGET språk — samma roll som det
+  // platta baslagret i ui_text-packet. På en sida i ett annat språk får det
+  // därför inte vara fallbacken, annars står "Blogg" kvar i en engelsk meny.
+  // Där svarar packets overlay, och annars kodens engelska.
+  const blogLabel = operatorText(
+    blogSettings?.archiveTitle,
+    t('nav.blog', 'Blog'),
+    currentLocale,
+    siteDefaultLanguage,
+  );
+
+  // ── Navigationen följer besökarens språk ───────────────────────────────
+  // Utan det här landar en engelsk besökare som klickar "Tjänster" på den
+  // svenska sidan, och språkvalet varar exakt en sida. Frågan ställs BARA när
+  // sidan deklarerat ett språk, och den träffar bara sidor som faktiskt ingår
+  // i en översättningsgrupp — på en enspråkig instans finns inga sådana rader,
+  // så kostnaden där är noll.
+  const { data: siblings = [] } = useQuery({
+    queryKey: ['public-nav-translations'],
+    enabled: !!currentLocale,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pages')
+        .select('slug, title, locale, translation_group_id')
+        .eq('status', 'published')
+        .is('deleted_at', null)
+        .not('translation_group_id', 'is', null);
+      if (error) throw error;
+      return (data || []) as Array<{ slug: string; title: string; locale: string | null; translation_group_id: string | null }>;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
+  /** The sibling of `slug` in the visitor's language, or null when there is none. */
+  const siblingOf = useMemo(() => {
+    if (!currentLocale || siblings.length === 0) return () => null as null | { slug: string; title: string; path: string };
+    const bySlug = new Map(siblings.map((p) => [p.slug, p]));
+    return (slug: string) => {
+      const source = bySlug.get(slug);
+      if (!source?.translation_group_id) return null;
+      const group = siblings.filter((p) => p.translation_group_id === source.translation_group_id);
+      const chosen = pickLocale({
+        available: group.map((p) => String(p.locale ?? '')),
+        wanted: currentLocale,
+      });
+      if (!chosen) return null;
+      const target = group.find((p) => String(p.locale ?? '') === chosen);
+      if (!target || target.slug === slug) return null;
+      const groupBase = group.find(
+        (p) => String(p.locale ?? '').toLowerCase().split('-')[0] === siteDefaultLanguage.split('-')[0],
+      )?.slug ?? null;
+      return {
+        slug: target.slug,
+        title: target.title,
+        // Adressformen: /en/<basslugg>, aldrig den egna -en-sluggen.
+        path: pagePath({
+          slug: target.slug, locale: String(target.locale ?? ''),
+          defaultLanguage: siteDefaultLanguage, baseSlug: groupBase,
+        }),
+      };
+    };
+  }, [siblings, currentLocale]);
+
+  /** '/product/#privatai' → the same path against the sibling slug. */
+  const localizeUrl = (url: string): string => {
+    if (!url || !url.startsWith('/')) return url;
+    const [path, hash] = url.split('#');
+    const slug = path.replace(/^\//, '').replace(/\/$/, '');
+    const sibling = slug ? siblingOf(slug) : null;
+    if (!sibling) return url;
+    return `${sibling.path}${hash ? `#${hash}` : ''}`;
+  };
+
+  // The menu is built from ALREADY localised data, so every renderer below —
+  // desktop, mobile, mega-menu — stays exactly as it was.
+  const pages = useMemo(() => {
+    const localized = sourcePages.map((page) => {
+      const sibling = siblingOf(page.slug);
+      return sibling
+        ? { ...page, slug: sibling.slug, title: sibling.title, path: sibling.path }
+        : { ...page, path: page.slug === 'hem' ? '/' : `/${page.slug}` };
+    });
+    // En översättningsgrupp är EN menypost. show_in_menu frågar inte på språk,
+    // så en operatör som bockar i både /home och /home-en får båda i listan —
+    // och lokaliseringen ovan pekar då om båda till SAMMA syskon. Dubbletten
+    // syns som två identiska poster i besökarens meny. Dedupe på slutadressen
+    // löser båda formerna av felet på en gång.
+    const seen = new Set<string>();
+    return localized.filter((page) => {
+      if (seen.has(page.slug)) return false;
+      seen.add(page.slug);
+      return true;
+    });
+  }, [sourcePages, siblingOf]);
+
   // Custom nav items from header settings
-  const customNavItems = (headerSettings.customNavItems || []).filter(item => item.enabled);
+  const customNavItems = useMemo(() => {
+    const localizeItem = (item: HeaderNavItem): HeaderNavItem => ({
+      ...item,
+      url: item.url ? localizeUrl(item.url) : item.url,
+      label: (item.url && siblingOf(item.url.replace(/^\//, '').split('#')[0].replace(/\/$/, ''))?.title) || item.label,
+      children: item.children?.map(localizeItem),
+    });
+    return (headerSettings.customNavItems || [])
+      .filter((item) => item.enabled)
+      .map(localizeItem);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headerSettings.customNavItems, siblingOf]);
 
   // Background style classes
   const getBackgroundClasses = () => {
@@ -101,13 +240,31 @@ export function PublicNavigation() {
       lg: 'shadow-lg',
     };
     
+    // Transparent är ett ÖVERLÄGG, inte en färg. bg-transparent i normalt
+    // dokumentflöde tar bara bort färgen men behåller PLATSEN — headern blev
+    // ett sidbakgrundsfärgat band OVANFÖR heron i stället för att sväva över
+    // den (uppmätt på optic 2026-08-26; redigeraren lovar 'Minimalist
+    // transparent header'). Kontraktet nu: transparent = absolut positionerad
+    // över innehållet — heron fortsätter upp bakom den — och scrollar bort
+    // med sidan (parad med en hero, som mönstret alltid används). Vill man ha
+    // följ-med-vid-scroll är det blur/solid + sticky som är valet.
+    // Båda rattarna talar sanning: transparent är alltid ett ÖVERLÄGG (heron
+    // fortsätter upp bakom), och sticky-ratten avgör om överlägget FÖLJER MED
+    // (fixed) eller scrollar bort (absolute). Preset-matrisen valde detta
+    // långt före oss: clean = transparent + sticky:false, sticky-varianten =
+    // blur + sticky:true. En manuell kombination transparent+sticky är
+    // författarens uttryckliga val av två rattar — den ignoreras inte tyst.
+    const isOverlay = style === 'transparent';
+    const overlayFollows = headerSettings.stickyHeader !== false;
     const baseClasses = cn(
       "z-50",
-      headerSettings.stickyHeader !== false && "sticky top-0",
+      isOverlay
+        ? (overlayFollows ? "fixed top-0 left-0 right-0" : "absolute top-0 left-0 right-0")
+        : headerSettings.stickyHeader !== false && "sticky top-0",
       showBorder && "border-b",
       shadowClasses[shadow]
     );
-    
+
     switch (style) {
       case 'transparent':
         return cn(baseClasses, "bg-transparent");
@@ -271,7 +428,7 @@ export function PublicNavigation() {
   return (
     <>
     <SandboxBanner />
-    <header className={getBackgroundClasses()}>
+    <header ref={headerRef} className={getBackgroundClasses()}>
       {/* Mega Menu Dropdowns - Rendered at header level for full width */}
       {isMegaMenuVariant && customNavItems.map((item) => (
         item.children && item.children.length > 0 && (
@@ -414,7 +571,7 @@ export function PublicNavigation() {
             {pages.map((page) => (
               <Link
                 key={page.id}
-                to={page.slug === 'hem' ? '/' : `/${page.slug}`}
+                to={page.path}
                 className={getLinkClasses(currentSlug === page.slug)}
               >
                 {page.title}
@@ -423,15 +580,16 @@ export function PublicNavigation() {
             {/* Blog link */}
             {blogModuleEnabled && blogSettings?.enabled && (
               <Link
-                to={`/${blogSettings.archiveSlug || 'blog'}`}
-                className={getLinkClasses(location.pathname.startsWith(`/${blogSettings.archiveSlug || 'blog'}`))}
+                to={'/blog'}
+                className={getLinkClasses(location.pathname.startsWith('/blog'))}
               >
-                {blogSettings.archiveTitle || 'Blog'}
+                {blogLabel}
               </Link>
             )}
             {/* Custom nav items - with mega menu support */}
             {customNavItems.map((item) => renderNavItem(item))}
             {branding?.allowThemeToggle !== false && <ThemeToggle />}
+            <LanguageSwitcher translations={translations} currentLocale={currentLocale} />
             {accountEnabled && <AccountIndicator />}
             {cartEnabled && <CartIndicator />}
           </nav>
@@ -439,6 +597,7 @@ export function PublicNavigation() {
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 md:hidden">
             {branding?.allowThemeToggle !== false && <ThemeToggle />}
+            <LanguageSwitcher translations={translations} currentLocale={currentLocale} />
             {accountEnabled && <AccountIndicator />}
             {cartEnabled && <CartIndicator />}
             <button
@@ -467,7 +626,7 @@ export function PublicNavigation() {
               {pages.map((page) => (
                 <Link
                   key={page.id}
-                  to={page.slug === 'hem' ? '/' : `/${page.slug}`}
+                  to={page.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     'px-4 py-3 rounded-md text-base font-medium transition-colors',
@@ -482,17 +641,17 @@ export function PublicNavigation() {
               ))}
               {blogModuleEnabled && blogSettings?.enabled && (
                 <Link
-                  to={`/${blogSettings.archiveSlug || 'blog'}`}
+                  to={'/blog'}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     'px-4 py-3 rounded-md text-base font-medium transition-colors',
                     'hover:bg-muted',
-                    location.pathname.startsWith(`/${blogSettings.archiveSlug || 'blog'}`)
+                    location.pathname.startsWith('/blog')
                       ? 'bg-primary/10 text-primary'
                       : 'text-muted-foreground'
                   )}
                 >
-                  {blogSettings.archiveTitle || 'Blog'}
+                  {blogLabel}
                 </Link>
               )}
               {customNavItems.map((item) => (
@@ -535,7 +694,7 @@ export function PublicNavigation() {
               {pages.map((page) => (
                 <Link
                   key={page.id}
-                  to={page.slug === 'hem' ? '/' : `/${page.slug}`}
+                  to={page.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     'text-2xl font-medium transition-colors',
@@ -549,16 +708,16 @@ export function PublicNavigation() {
               ))}
               {blogModuleEnabled && blogSettings?.enabled && (
                 <Link
-                  to={`/${blogSettings.archiveSlug || 'blog'}`}
+                  to={'/blog'}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     'text-2xl font-medium transition-colors',
-                    location.pathname.startsWith(`/${blogSettings.archiveSlug || 'blog'}`)
+                    location.pathname.startsWith('/blog')
                       ? 'text-primary'
                       : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
-                  {blogSettings.archiveTitle || 'Blog'}
+                  {blogLabel}
                 </Link>
               )}
               {customNavItems.map((item) => (
@@ -596,7 +755,7 @@ export function PublicNavigation() {
               {pages.map((page) => (
                 <Link
                   key={page.id}
-                  to={page.slug === 'hem' ? '/' : `/${page.slug}`}
+                  to={page.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     'px-4 py-3 rounded-md text-base font-medium transition-colors',
@@ -611,17 +770,17 @@ export function PublicNavigation() {
               ))}
               {blogModuleEnabled && blogSettings?.enabled && (
                 <Link
-                  to={`/${blogSettings.archiveSlug || 'blog'}`}
+                  to={'/blog'}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     'px-4 py-3 rounded-md text-base font-medium transition-colors',
                     'hover:bg-muted',
-                    location.pathname.startsWith(`/${blogSettings.archiveSlug || 'blog'}`)
+                    location.pathname.startsWith('/blog')
                       ? 'bg-primary/10 text-primary'
                       : 'text-muted-foreground'
                   )}
                 >
-                  {blogSettings.archiveTitle || 'Blog'}
+                  {blogLabel}
                 </Link>
               )}
               {customNavItems.map((item) => (

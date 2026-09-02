@@ -174,7 +174,7 @@ export function AiAssistantBlock({ data }: AiAssistantBlockProps) {
                 isFocused && 'scale-[1.01]',
               )}>
                 <div className={cn(
-                  'relative flex items-center rounded-2xl border-2 bg-background transition-all duration-300',
+                  'relative flex items-center rounded-[var(--radius-block,1rem)] border-2 bg-background transition-all duration-300',
                   'hover:border-primary/40 hover:shadow-lg',
                   isFocused
                     ? 'border-primary shadow-xl ring-4 ring-primary/10'
@@ -239,7 +239,7 @@ export function AiAssistantBlock({ data }: AiAssistantBlockProps) {
                 'mt-6 flex items-center gap-1 text-xs text-muted-foreground',
                 !isSplit && 'justify-center',
               )}>
-                <Star className="h-3 w-3 fill-current text-yellow-500" />
+                <Star className="h-3 w-3 fill-current text-warning" />
                 <span>Powered by AI • Knows our entire product catalog</span>
               </div>
             </>
@@ -262,7 +262,7 @@ export function AiAssistantBlock({ data }: AiAssistantBlockProps) {
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="border rounded-2xl overflow-hidden shadow-lg bg-background">
+              <div className="border rounded-[var(--radius-block,1rem)] overflow-hidden shadow-lg bg-background">
                 <ChatConversation
                   mode="block"
                   className="h-[450px]"

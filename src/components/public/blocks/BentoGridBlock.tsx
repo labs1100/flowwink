@@ -54,8 +54,7 @@ function getGapClass(gap?: string): string {
 }
 
 function LucideIcon({ name, className }: { name: string; className?: string }) {
-  const IconComponent = icons[name as keyof typeof icons];
-  if (!IconComponent) return null;
+  const IconComponent = icons[name as keyof typeof icons] ?? icons.Sparkles;
   return <IconComponent className={className} />;
 }
 
@@ -93,14 +92,14 @@ export function BentoGridBlock({ data }: BentoGridBlockProps) {
   }, [items.length, staggeredReveal]);
 
   const cardBaseClasses = cn(
-    'relative overflow-hidden rounded-2xl p-6 transition-all duration-500 group',
+    'relative overflow-hidden rounded-[var(--radius-block,1rem)] p-6 transition-all duration-500 group',
     variant === 'default' && 'bg-card border border-border/50 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5',
     variant === 'glass' && 'bg-card/40 backdrop-blur-xl border border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] hover:bg-card/60 hover:border-white/20 hover:shadow-xl hover:shadow-primary/10',
     variant === 'bordered' && 'bg-transparent border-2 border-border hover:border-primary/40 hover:bg-card/30',
   );
 
   return (
-    <section className="py-12 md:py-20">
+    <section>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         {(eyebrow || title || subtitle) && (
@@ -180,10 +179,16 @@ export function BentoGridBlock({ data }: BentoGridBlockProps) {
                     <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors duration-300"
                       style={{
+                        // Fallbacken följer systemets ikonkanon: accent-plattan
+                        // (bg-accent/50 + accent-foreground) som 14 block kör —
+                        // features på /product bland dem. Primary-fallbacken här
+                        // var avvikaren teamet såg som "olika ikonfärger mellan
+                        // landing och /product" (2026-08-26). item.accentColor
+                        // är ett PER-CELL-innehållsval och rör vi aldrig.
                         backgroundColor: item.accentColor
                           ? `${item.accentColor}15`
-                          : 'hsl(var(--primary) / 0.1)',
-                        color: item.accentColor || 'hsl(var(--primary))',
+                          : 'hsl(var(--accent) / 0.5)',
+                        color: item.accentColor || 'hsl(var(--accent-foreground))',
                       }}
                     >
                       <LucideIcon name={item.icon} className="h-6 w-6" />

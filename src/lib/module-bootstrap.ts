@@ -135,6 +135,15 @@ export async function ensurePlatformCron(): Promise<{ registered: boolean; error
     if (rErr && !/could not find|does not exist/i.test(rErr.message)) {
       logger.warn('[module-bootstrap] retrieval cron registration failed:', rErr.message);
     }
+    // Booking reminders — samma tolerans: en äldre instans utan registrarn är
+    // inte ett fel, den får jobbet vid nästa bootstrap efter sin migration.
+    const { error: bErr } = await (supabase.rpc as any)('register_booking_cron', {
+      p_supabase_url: url,
+      p_anon_key: key,
+    });
+    if (bErr && !/could not find|does not exist/i.test(bErr.message)) {
+      logger.warn('[module-bootstrap] booking cron registration failed:', bErr.message);
+    }
     logger.log('[module-bootstrap] platform cron ensured');
     return { registered: true };
   } catch (err) {
@@ -281,14 +290,23 @@ async function syncSkillRegistry(): Promise<SkillRegistryResult> {
  */
 let modulesRowPromise: Promise<{ status: string; missing: string[]; error?: string }> | null = null;
 
+// `ModulesSettings` is an interface, and TypeScript grants implicit index
+// signatures to object type ALIASES but never to interfaces — so the live
+// `defaultModulesSettings` could not be passed to a plain
+// `Record<string, { enabled?: boolean }>` parameter (TS2345). The union takes
+// both, and `Object.entries` reads either without indexing a union type. The
+// call site stays literally `ensureModulesRow(defaultModulesSettings)`, which
+// is the shape module-defaults-reach-the-server.guardrails.test.ts pins: the
+// LIVE code defaults must be what reaches the row, not a migration snapshot.
 export function ensureModulesRow(
-  defaults: Record<string, { enabled?: boolean }>
+  defaults: ModulesSettings | Record<string, { enabled?: boolean }>
 ): Promise<{ status: string; missing: string[]; error?: string }> {
   if (modulesRowPromise) return modulesRowPromise;
 
   modulesRowPromise = (async () => {
-    const ids = Object.keys(defaults);
-    const minimal = Object.fromEntries(ids.map((id) => [id, { enabled: defaults[id]?.enabled === true }]));
+    const entries = Object.entries(defaults) as Array<[string, { enabled?: boolean } | undefined]>;
+    const ids = entries.map(([id]) => id);
+    const minimal = Object.fromEntries(entries.map(([id, cfg]) => [id, { enabled: cfg?.enabled === true }]));
 
     try {
       // `ensure_modules_settings` is newer than the generated types. Cast the

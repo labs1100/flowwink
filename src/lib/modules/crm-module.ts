@@ -71,6 +71,53 @@ Adds a new lead to the CRM system.
 - Always set source accurately for attribution tracking.`,
   },
   {
+    name: 'summarize_contact_state',
+    description: "Rewrite one contact's standing summary (leads.ai_summary) from its activity ledger: where we stand right now, at most four sentences, grounded only in logged entries and stamped with what it rests on (entries counted, through which date). Replaces the previous summary — it is state, not history. Call WITHOUT leadId to sweep contacts whose ledger has moved since their summary was written. Use when: activities were logged and the summary is stale; a salesperson asks where we stand; a nightly refresh. NOT for: scoring (qualify_lead); logging an activity (manage_lead_activity); researching a company (prospect_research).",
+    category: 'crm',
+    handler: 'internal:distill_contact_state',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'summarize_contact_state',
+        description: "Rewrite a contact's standing summary from its activity ledger. With leadId: that contact. Without: sweep up to `limit` contacts whose ledger moved since their last summary.",
+        parameters: {
+          type: 'object',
+          properties: {
+            leadId: { type: 'string', description: 'Contact UUID. Omit to sweep stale summaries instead.' },
+            limit: { type: 'number', description: 'Sweep only: max contacts to summarise (default 10, max 25).' },
+          },
+        },
+      },
+    },
+    instructions: `## summarize_contact_state
+### What
+Distils one contact's whole activity ledger into the standing answer to "where
+do we stand right now", written into leads.ai_summary. The ledger is the
+history; this is the balance.
+
+### When to use
+- New activities have been logged since the summary was written
+- A salesperson asks about a contact they have not touched in a while
+- Scheduled refresh (call without leadId to sweep)
+
+### Parameters
+- **leadId**: optional. Omit to sweep stale summaries (bounded, default 10).
+- **limit**: sweep only, max 25.
+
+### What it guarantees
+- Grounded ONLY in logged entries — it never invents a situation or a next step.
+- Replaces the previous summary; history stays in the ledger.
+- Stores its own basis (ai_summary_basis: entries, through, model). A sales
+  ledger is never complete — conversations happen off-platform — so the surface
+  shows what the summary rests on.
+- Empty ledger returns {skipped}, never a fabricated paragraph.
+
+### Chain
+manage_lead_activity (log what happened) then summarize_contact_state (refresh
+the picture), then qualify_lead (score) if the status may have changed.`,
+  },
+  {
     name: 'qualify_lead',
     description: 'Score and qualify a lead based on activities and engagement data. Use when: evaluating lead quality; automating lead scoring; prioritizing sales pipeline. NOT for: adding new leads (add_lead); managing lead records (manage_leads). Call WITHOUT leadId to sweep: qualifies up to 10 pending leads (ai_qualified_at null) oldest first — this is what the qualify_new_leads automation runs.',
     category: 'crm',
@@ -225,6 +272,51 @@ Full lead management: list, get, update status/score, delete.
 - Delete is permanent. Consider archiving instead — setting status=lost with a lost_reason keeps history and feeds win-rate reporting.
 - Status is normalized to the pipeline's canonical stages: setting status to "qualified" persists as "opportunity" (synonyms map to the nearest canonical stage). The update succeeds — re-read the lead to see the canonical value; this is expected, not a failure.
 - Re-opening a lost lead (setting any non-lost status) automatically clears lost_reason and lost_note.`,
+  },
+  {
+    name: 'ensure_lead_partner',
+    description: 'Create (or re-use) the PARTY behind a lead — the customer record that invoices, subscriptions and projects will point at — and link the lead to it. A lead is a pipeline record; a party is who you actually do business with, and the two are separate on purpose. Use when: a lead becomes a real counterparty you will quote, invoice or deliver to; before creating an invoice or subscription for someone who only exists as a lead. NOT for: creating leads (add_lead); changing lead status (manage_leads); company master data (manage_company). Idempotent — calling it twice returns the same party and writes nothing. Refuses a lead that has neither a name nor an email, because a party with no identity gets duplicated on the next call. If the lead has a company, that company gets its party first so the person lands under its organisation.',
+    category: 'crm',
+    handler: 'rpc:ensure_lead_partner',
+    scope: 'internal',
+    tool_definition: {
+      type: 'function',
+      function: {
+        name: 'ensure_lead_partner',
+        description: 'Create or re-use the party (customer record) behind a lead and link the lead to it. Idempotent.',
+        parameters: {
+          type: 'object',
+          required: ['lead_id'],
+          properties: {
+            lead_id: { type: 'string', description: "The lead's uuid" },
+          },
+        },
+      },
+    },
+    instructions: `## ensure_lead_partner
+### Why a lead is not a customer
+A lead is the PIPELINE record: status, score, stage, why it was lost. A party is
+WHO you do business with: name, org number, VAT, billing address. The same
+person can be several leads over the years and is still one party — which is why
+they are separate records and why this skill exists to join them.
+
+### What it does
+- Returns the existing party if the lead already has one (\`created: false\`).
+- Otherwise creates a person-party from the lead's name (or email if unnamed).
+- If the lead has a company, that company's party is created first and the
+  person is hung underneath it via parent_id.
+- Sets leads.partner_id.
+
+### Read the response
+\`partner_id\` is the id to use downstream. \`created\` tells you whether this call
+made it or found it — report that honestly rather than claiming you created a
+party that already existed. \`parent_created: true\` means the company got its
+party in the same call, which is worth mentioning.
+
+### It will refuse
+A lead with neither a name nor an email gets no party. Do not work around this
+by inventing a name — fill in the lead's real name or email first, then call
+again. An invented identity is duplicated forever; a missing one is fixable.`,
   },
   {
     name: 'assign_lead',

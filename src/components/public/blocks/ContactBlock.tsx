@@ -1,4 +1,5 @@
 import { ContactBlockData } from '@/types/cms';
+import { useUiText } from '@/lib/ui-text';
 import { Phone, Mail, MapPin, Clock } from 'lucide-react';
 
 interface ContactBlockProps {
@@ -6,8 +7,13 @@ interface ContactBlockProps {
 }
 
 export function ContactBlock({ data }: ContactBlockProps) {
+  const t = useUiText();
   return (
-    <section className="py-16 px-6 bg-muted/30">
+    <section
+      /* Målad sektion = PANEL (cta-doktrinen #278): paddingen är INVÄNDIG och
+         står kvar; radien är systemets panelradie. Renderarens wrapper ger
+         layoutrytmen utanför. */
+      className="py-16 px-6 bg-muted/30 rounded-[var(--radius-block,1rem)]">
       <div className="container mx-auto max-w-6xl">
         {data.title && (
           <h2 className="font-serif text-3xl font-bold mb-8 text-center">{data.title}</h2>
@@ -41,7 +47,7 @@ export function ContactBlock({ data }: ContactBlockProps) {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Clock className="h-5 w-5 text-accent-foreground" />
-                <span className="font-medium">Opening Hours</span>
+                <span className="font-medium">{t('contact.hours', 'Opening Hours')}</span>
               </div>
               <div className="space-y-2">
                 {data.hours.map((item, index) => (

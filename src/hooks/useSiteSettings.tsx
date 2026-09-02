@@ -85,6 +85,17 @@ export interface BrandingSettings {
   
   // Colors (HSL format)
   primaryColor?: string;
+  /**
+   * Optional dark-theme override for primary. The design system was born with
+   * TWO primaries (index.css: deep 220 100% 26% light / lifted 210 60% 60%
+   * dark) but branding used to flatten both to one value — the unsatisfiable
+   * contrast loop Magnus hit when locking optic to dark (2026-08-26): links on
+   * dark want a light primary, which then fails as a surface under the theme's
+   * near-black foreground. Unset = primaryColor is used in both themes, with
+   * the foreground auto-derived per theme (see applyBrandingToDocument).
+   * Naming follows the logoDark convention.
+   */
+  primaryColorDark?: string;
   secondaryColor?: string;
   accentColor?: string;
   
@@ -474,11 +485,14 @@ function useUpdateSiteSettings<T>(key: string, successMessage: string) {
 // map first so other translations survive (the pack is shared by cookie
 // banner, search empty-states, chat lead capture, …).
 export function useUiTextSettings() {
-  return useSiteSettings<Record<string, string>>('ui_text', {});
+  // Values are strings in the base layer and objects under `@<locale>` overlay
+  // keys — see src/lib/ui-text.tsx. Typed honestly so a writer cannot assume
+  // the map is flat and quietly drop a translation overlay.
+  return useSiteSettings<Record<string, string | Record<string, string>>>('ui_text', {});
 }
 
 export function useUpdateUiTextSettings() {
-  return useUpdateSiteSettings<Record<string, string>>('ui_text', 'Visitor texts updated.');
+  return useUpdateSiteSettings<Record<string, string | Record<string, string>>>('ui_text', 'Visitor texts updated.');
 }
 
 // SEO hooks
@@ -619,6 +633,62 @@ export function useUpdateSalesPipelineSettings() {
   return useUpdateSiteSettings<SalesPipelineSettings>('sales_pipeline', 'Pipeline settings updated.');
 }
 
+export interface SiteLanguages {
+  /** The language a visitor gets when they have not asked for another. */
+  default: string;
+  /** Every language the site publishes content in, including the default. */
+  enabled: string[];
+}
+
+const FALLBACK: SiteLanguages = { default: 'en', enabled: ['en'] };
+
+/**
+ * The languages this site publishes in, declared rather than inferred.
+ *
+ * Before this existed, the set was computed by scanning which pages happened to
+ * carry a locale, and the default was read off `platform_locale` — a setting
+ * that governs number and date FORMAT. Three things followed, all the same
+ * mistake: adding a language was a side effect of creating a page, the default
+ * could not be changed because there was no dial, and `pages.locale` defaulted
+ * to 'en' in the schema, so every reader had to guess whether an 'en' meant
+ * English or meant nobody chose.
+ *
+ * A note on what is NOT here: English is not automatically enabled. For the
+ * product's own chrome English genuinely is the floor — every `t()` call site
+ * carries it and it cannot be removed. But a page has no free English version;
+ * one exists only if somebody wrote it. Listing a language nobody has published
+ * would put a door in the switcher that opens onto nothing.
+ */
+export function useSiteLanguages() {
+  const query = useSiteSettings<SiteLanguages>('site_languages', FALLBACK);
+  const value = query.data ?? FALLBACK;
+  const enabled = value.enabled?.length ? value.enabled : [value.default || 'en'];
+  return {
+    ...query,
+    defaultLanguage: (value.default || 'en').toLowerCase(),
+    languages: enabled.map((l) => l.toLowerCase()),
+    /** True when the site publishes in more than one language. */
+    isMultilingual: enabled.length > 1,
+    /**
+     * Whether the site has actually DECLARED its languages, or we are looking
+     * at the fallback.
+     *
+     * The two are not the same answer and one caller must tell them apart:
+     * hreflang's `x-default` names the version a stranger should get, and
+     * naming the wrong one sends the wrong market to the wrong page. On
+     * optictunnels.se the fallback pointed x-default at the ENGLISH page of a
+     * Swedish site, because the row was unreadable to anonymous visitors and
+     * the query answered with zero rows rather than an error. A guess that
+     * looks like knowledge is the whole problem.
+     */
+    isDeclared: !!query.data,
+  };
+}
+
+export function useUpdateSiteLanguages() {
+  return useUpdateSiteSettings<SiteLanguages>('site_languages', 'Languages updated.');
+}
+
 export function usePlatformLocaleSettings() {
   return useSiteSettings<PlatformLocaleSettings>('platform_locale', defaultPlatformLocaleSettings);
 }
@@ -650,7 +720,11 @@ const defaultBlogSettings: BlogSettings = {
   showAuthorBio: true,
   showReadingTime: true,
   showReviewer: false,
-  archiveTitle: 'Blogg',
+  // English, like every other default in the product. 'Blogg' sat here for
+  // months and was the reason an English page showed a Swedish menu item —
+  // nobody had chosen it, it was simply what the code fell back to. A Swedish
+  // site sets its own word; the product does not assume a country.
+  archiveTitle: 'Blog',
   archiveSlug: 'blog',
   rssEnabled: true,
   rssTitle: 'RSS Feed',

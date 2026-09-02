@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useUiText } from '@/lib/ui-text';
 import { Link, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -31,7 +32,7 @@ function useAuthorBySlug(slug: string | undefined) {
       if (slug && uuidRe.test(slug)) {
         const { data } = await supabase
           .from('profiles')
-          .select('id, full_name, email, avatar_url, bio, title, show_as_author')
+          .select('id, full_name, avatar_url, bio, title, show_as_author')
           .eq('id', slug)
           .maybeSingle();
         if (data) return data as AuthorProfile;
@@ -39,7 +40,7 @@ function useAuthorBySlug(slug: string | undefined) {
       // Otherwise fetch candidates and match slugified full_name
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url, bio, title, show_as_author')
+        .select('id, full_name, avatar_url, bio, title, show_as_author')
         .not('full_name', 'is', null);
       if (error) throw error;
       const match = (data ?? []).find(
@@ -68,13 +69,14 @@ function useAuthorPosts(authorId: string | undefined) {
 }
 
 export default function BlogAuthorPage() {
+  const t = useUiText();
   const { slug } = useParams();
   const { data: author, isLoading } = useAuthorBySlug(slug);
   const { data: posts = [] } = useAuthorPosts(author?.id);
 
   const initials = useMemo(
     () =>
-      (author?.full_name || author?.email || '?')
+      (author?.full_name || '?')
         .split(' ')
         .map((s) => s[0])
         .join('')
@@ -87,7 +89,7 @@ export default function BlogAuthorPage() {
     return (
       <>
         <PublicNavigation />
-        <main className="min-h-screen bg-background">
+        <main className="pt-[var(--overlay-header-offset,0px)] min-h-screen bg-background">
           <div className="container mx-auto px-4 py-12">
             <p className="text-center text-muted-foreground">Loading author…</p>
           </div>
@@ -99,7 +101,7 @@ export default function BlogAuthorPage() {
 
   if (!author) return <NotFound />;
 
-  const displayName = author.full_name || author.email;
+  const displayName = author.full_name || author.title || 'Author';
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const canonicalUrl = `${baseUrl}/blog/author/${slug}`;
 
@@ -112,7 +114,7 @@ export default function BlogAuthorPage() {
         ogImage={author.avatar_url || undefined}
       />
       <PublicNavigation />
-      <main className="min-h-screen bg-background">
+      <main className="pt-[var(--overlay-header-offset,0px)] min-h-screen bg-background">
         <section className="container mx-auto px-4 py-12 max-w-4xl">
           <div className="flex items-start gap-6 mb-10">
             <Avatar className="h-24 w-24">
@@ -128,7 +130,7 @@ export default function BlogAuthorPage() {
 
           <h2 className="text-xl font-semibold mb-4">Posts by {displayName}</h2>
           {posts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No published posts yet.</p>
+            <p className="text-sm text-muted-foreground">{t('blog.authorEmpty', 'No published posts yet.')}</p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               {posts.map((p) => (

@@ -1,6 +1,6 @@
 import React from 'react';
 import { LinkGridBlockData } from '@/types/cms';
-import { ArrowRight, icons, LucideIcon } from 'lucide-react';
+import { ArrowRight, icons } from 'lucide-react';
 
 interface LinkGridBlockProps {
   data: LinkGridBlockData;
@@ -9,13 +9,8 @@ interface LinkGridBlockProps {
 function renderIcon(iconName: string, className?: string) {
   if (!iconName) return <ArrowRight className={className} />;
   
-  const LucideIconComponent = icons[iconName as keyof typeof icons] as LucideIcon | undefined;
-  
-  if (LucideIconComponent) {
-    return <LucideIconComponent className={className} />;
-  }
-  
-  return <ArrowRight className={className} />;
+  const LucideIconComponent = icons[iconName as keyof typeof icons] ?? ArrowRight;
+  return <LucideIconComponent className={className} />;
 }
 
 export function LinkGridBlock({ data }: LinkGridBlockProps) {
@@ -28,7 +23,7 @@ export function LinkGridBlock({ data }: LinkGridBlockProps) {
   };
 
   return (
-    <section className="py-16 px-6">
+    <section>
       <div className="container mx-auto">
         <div className={`grid gap-6 ${gridCols[data.columns] ?? gridCols[3]}`}>
           {data.links.map((link, index) => {

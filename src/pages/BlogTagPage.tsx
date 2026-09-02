@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useUiText } from '@/lib/ui-text';
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Helmet } from "react-helmet-async";
@@ -13,6 +14,7 @@ import { useBlogSettings, useSeoSettings } from "@/hooks/useSiteSettings";
 import NotFound from "./NotFound";
 
 export default function BlogTagPage() {
+  const t = useUiText();
   const { slug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
@@ -37,7 +39,7 @@ export default function BlogTagPage() {
     return (
       <>
         <PublicNavigation />
-        <main className="min-h-screen bg-background">
+        <main className="pt-[var(--overlay-header-offset,0px)] min-h-screen bg-background">
           <div className="container mx-auto px-4 py-12">
             <p className="text-center text-muted-foreground">Loading...</p>
           </div>
@@ -64,7 +66,7 @@ export default function BlogTagPage() {
       
       <PublicNavigation />
       
-      <main className="min-h-screen bg-background">
+      <main className="pt-[var(--overlay-header-offset,0px)] min-h-screen bg-background">
         <div className="container mx-auto px-4 py-12">
           {/* Breadcrumb */}
           <nav className="mb-6">
@@ -92,7 +94,7 @@ export default function BlogTagPage() {
                 </div>
               ) : posts.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">No posts with this tag yet.</p>
+                  <p className="text-muted-foreground">{t('blog.tagEmpty', 'No posts with this tag yet.')}</p>
                 </div>
               ) : (
                 <>

@@ -696,12 +696,48 @@ export function BrandingSettingsContent({ embedded = false }: { embedded?: boole
                       />
                       <div className="flex-1">
                         <p className="text-sm font-medium">Main color</p>
-                        <p className="text-xs text-muted-foreground">Buttons, links, header</p>
+                        {/* Säger vad koden GÖR: headern är avsiktligt neutralt glas
+                            (bg-background/80 + blur) som innehållet scrollar under;
+                            FOOTERN är ytan som bär primärfärgen (PublicFooter:
+                            bg-primary). Copyn sa 'header' — och födde exakt frågan
+                            'varför har footern en annan färg än headern?' (teamet,
+                            2026-08-26). En beskrivning som pekar fel yta är samma
+                            klass som en ratt som inte gör vad etiketten säger. */}
+                        <p className="text-xs text-muted-foreground">Buttons, links, footer</p>
                       </div>
                     </div>
-                    {/* Contrast: white text on primary background */}
-                    <div className="text-xs text-muted-foreground">vs white text</div>
-                    <ContrastBadge ratio={getContrastRatio(settings.primaryColor || '220 100% 26%', '0 0% 100%')} />
+                    {/* Kontrasten mäts mot den text primären FAKTISKT får:
+                        foregrounden härleds numera ur färgens ljushet (ljus
+                        primär → mörk text, mörk → ljus). En badge mot alltid-
+                        vitt dömde ljusa primärer fel. */}
+                    <div className="text-xs text-muted-foreground">vs auto text</div>
+                    <ContrastBadge ratio={getContrastRatio(
+                      settings.primaryColor || '220 100% 26%',
+                      parseFloat((settings.primaryColor || '220 100% 26%').split(/\s+/)[2] || '50') < 40 ? '0 0% 98%' : '0 0% 9%'
+                    )} />
+
+                    <div className="pt-2 space-y-2 border-t">
+                      <Label className="text-xs">Primary — dark theme (optional)</Label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={hslToHex(settings.primaryColorDark || settings.primaryColor || '210 60% 60%')}
+                          onChange={(e) => updateField('primaryColorDark', hexToHsl(e.target.value))}
+                          className="h-9 w-9 rounded-lg border cursor-pointer"
+                        />
+                        <p className="text-xs text-muted-foreground flex-1">
+                          Used when the site renders dark. A deep brand blue that
+                          works in light theme often needs a lifted variant here —
+                          text color adapts automatically to whichever is active.
+                        </p>
+                      </div>
+                      {settings.primaryColorDark && (
+                        <ContrastBadge ratio={getContrastRatio(
+                          settings.primaryColorDark,
+                          parseFloat(settings.primaryColorDark.split(/\s+/)[2] || '50') < 40 ? '0 0% 98%' : '0 0% 9%'
+                        )} />
+                      )}
+                    </div>
                   </div>
                   
                   <div className="space-y-3">
@@ -734,7 +770,7 @@ export function BrandingSettingsContent({ embedded = false }: { embedded?: boole
                       />
                       <div className="flex-1">
                         <p className="text-sm font-medium">Highlights</p>
-                        <p className="text-xs text-muted-foreground">Hover, focus states</p>
+                        <p className="text-xs text-muted-foreground">Icon tiles, hover, focus states</p>
                       </div>
                     </div>
                     {/* Contrast: white text on accent background */}

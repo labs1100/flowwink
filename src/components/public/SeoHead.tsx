@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { useSeoSettings, usePerformanceSettings, useCustomScriptsSettings, useAeoSettings } from '@/hooks/useSiteSettings';
+import { useSeoSettings, usePerformanceSettings, useCustomScriptsSettings, useAeoSettings, useSiteLanguages } from '@/hooks/useSiteSettings';
 import { renderToHtml } from '@/lib/tiptap-utils';
 
 interface ContentBlock {
@@ -20,6 +20,13 @@ interface SeoHeadProps {
   canonicalUrl?: string;
   noIndex?: boolean;
   noFollow?: boolean;
+  /**
+   * BCP-47 tag for <html lang>. Pass the page's own locale when it has one.
+   * Omitted, it falls back to the instance's platform locale — see below.
+   */
+  lang?: string;
+  /** <link rel="alternate" hreflang> — the other language versions of this page. */
+  alternates?: Array<{ hreflang: string; href: string }>;
   keywords?: string[];
   // New props for structured data
   pageType?: 'page' | 'article' | 'kb-article';
@@ -217,6 +224,8 @@ export function SeoHead({
   canonicalUrl,
   noIndex = false,
   noFollow = false,
+  lang,
+  alternates,
   keywords,
   pageType = 'page',
   contentBlocks = [],
@@ -227,6 +236,7 @@ export function SeoHead({
   articleTags
 }: SeoHeadProps) {
   const { data: seoSettings } = useSeoSettings();
+  const { defaultLanguage } = useSiteLanguages();
   const { data: performanceSettings } = usePerformanceSettings();
   const { data: scriptsSettings } = useCustomScriptsSettings();
   const { data: aeoSettings } = useAeoSettings();
@@ -314,8 +324,18 @@ export function SeoHead({
 
   const structuredData = generateStructuredData();
 
+  // <html lang> was hardcoded to "en" in index.html, on every page of every
+  // instance — while four of the five live sites publish Swedish. A screen
+  // reader therefore pronounced Swedish with an English voice.
+  //
+  // The page's own locale wins; the language belongs to the page. Absent that
+  // — a route that is not a CMS page — the site's DECLARED default answers.
+  // That used to be read off platform_locale, which governs number format and
+  // was only ever an inference.
+  const htmlLang = (lang || defaultLanguage || 'en').trim() || 'en';
+
   return (
-    <Helmet>
+    <Helmet htmlAttributes={{ lang: htmlLang }}>
       {/* Basic Meta */}
       <title>{finalTitle}</title>
       {finalDescription && <meta name="description" content={finalDescription} />}
@@ -365,6 +385,14 @@ export function SeoHead({
 
       {/* Canonical */}
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+      {/* Language versions. Publishing a translation without declaring it is
+          most of the way to wasting it — a search engine that cannot see that
+          two URLs are the same page in two languages picks one and may treat
+          the other as duplicate content in the wrong market. */}
+      {(alternates ?? []).map((alt) => (
+        <link key={alt.hreflang} rel="alternate" hrefLang={alt.hreflang} href={alt.href} />
+      ))}
 
       {/* Performance hints */}
       {performanceSettings?.prefetchLinks && (

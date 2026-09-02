@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { useUiText } from '@/lib/ui-text';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { BookingBlockData } from '@/types/cms';
 import { useBookingServices, useAvailableSlots } from '@/hooks/useBookings';
 import { usePlatformFormat } from '@/hooks/usePlatformFormat';
+import { useVisitorDateFormat } from '@/lib/visitor-date';
 import { webhookEvents } from '@/lib/webhook-utils';
 import { format, addDays, startOfWeek, addWeeks, isSameDay, isToday, isBefore, startOfDay } from 'date-fns';
 import { FALLBACK_CURRENCY } from '@/lib/platform-fallbacks';
@@ -25,8 +27,15 @@ interface SmartBookingBlockProps {
 type BookingStep = 'service' | 'datetime' | 'details' | 'confirmed';
 
 export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockProps) {
-  const { formatCurrency, formatDate } = usePlatformFormat();
+  const t = useUiText();
+  const { formatCurrency } = usePlatformFormat();
+  // Veckodags- och månadsNAMN är språk, inte format: kalendern läses på sidans
+  // språk, inte i platform_locale — annars står "mån, tis" på en engelsk sida.
+  const { formatDate } = useVisitorDateFormat();
   const [step, setStep] = useState<BookingStep>('service');
+  // Sant först när comms-send SVARAT att mailet gick (inte skipped/blocked) —
+  // skärmen lovar bara det inkorgen faktiskt håller.
+  const [confirmationEmailed, setConfirmationEmailed] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -214,7 +223,7 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
       // No payment needed — standard flow
       // Trigger confirmation email
       try {
-        await fetch(
+        const emailResp = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/comms-send?kind=booking_confirmation`,
           {
             method: 'POST',
@@ -225,6 +234,9 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
             body: JSON.stringify({ bookingId: bookingData.id }),
           }
         );
+        const emailResult = await emailResp.json().catch(() => null);
+        // Lova bara det som hände: success utan skipped = mailet är på väg.
+        setConfirmationEmailed(Boolean(emailResult?.success && !emailResult?.skipped));
       } catch (emailErr) {
         logger.warn('Could not trigger confirmation email:', emailErr);
       }
@@ -282,7 +294,7 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
       <section className={containerClasses}>
         <div className="max-w-md mx-auto text-center py-12">
           <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No Services Available</h3>
+          <h3 className="text-lg font-medium mb-2">{t('booking.noServices', 'No Services Available')}</h3>
           <p className="text-muted-foreground">
             Booking services are not configured yet.
           </p>
@@ -297,10 +309,15 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
       <section className={containerClasses}>
         <div className="max-w-md mx-auto text-center py-12">
           <CheckCircle2 className="h-16 w-16 text-success mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Booking Request Submitted!</h3>
+          <h3 className="text-xl font-semibold mb-2">{t('booking.submitted', 'Booking Request Submitted!')}</h3>
           <p className="text-muted-foreground mb-4">
-            {data.successMessage || "Thank you! We'll contact you to confirm your appointment."}
+            {data.successMessage || t('booking.successDefault', "Thank you! We'll contact you to confirm your appointment.")}
           </p>
+          {confirmationEmailed && (
+            <p className="text-sm text-muted-foreground mt-2">
+              A confirmation email is on its way to {formData.email}.
+            </p>
+          )}
           {selectedService && selectedDate && selectedSlot && (
             <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2">
               <p><span className="font-medium">Service:</span> {selectedService.name}</p>
@@ -352,7 +369,7 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
         {/* Step 1: Service Selection */}
         {step === 'service' && (
           <div className="space-y-4">
-            <h3 className="font-medium text-lg">Select a Service</h3>
+            <h3 className="font-medium text-lg">{t('booking.selectService', 'Select a Service')}</h3>
             <div className="grid gap-3">
               {activeServices.map((service) => (
                 <button
@@ -375,7 +392,7 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
                         <Clock className="h-4 w-4" />
                         {service.duration_minutes} min
                       </div>
-                      {service.price_cents && service.price_cents > 0 && (
+                      {(service.price_cents ?? 0) > 0 && (
                         <p className="font-medium mt-1">
                           {formatCurrency(service.price_cents, service.currency)}
                         </p>
@@ -397,9 +414,9 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
                 className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Back
+                {t('booking.back', 'Back')}
               </button>
-              <h3 className="font-medium text-lg">Select Date & Time</h3>
+              <h3 className="font-medium text-lg">{t('booking.selectDateTime', 'Select Date & Time')}</h3>
               <div className="w-12" />
             </div>
 
@@ -454,7 +471,7 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
             {/* Time slots */}
             {selectedDate && (
               <div className="space-y-3">
-                <h4 className="font-medium">Available Times</h4>
+                <h4 className="font-medium">{t('booking.availableTimes', 'Available Times')}</h4>
                 {slotsLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -495,9 +512,9 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
                 className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Back
+                {t('booking.back', 'Back')}
               </button>
-              <h3 className="font-medium text-lg">Your Details</h3>
+              <h3 className="font-medium text-lg">{t('booking.yourDetails', 'Your Details')}</h3>
               <div className="w-12" />
             </div>
 
@@ -519,18 +536,18 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="smart-booking-name">Name *</Label>
+                  <Label htmlFor="smart-booking-name">{t('booking.name', 'Name')} *</Label>
                   <Input
                     id="smart-booking-name"
                     type="text"
-                    placeholder="Your name"
+                    placeholder={t('booking.namePlaceholder', 'Your name')}
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="smart-booking-email">Email *</Label>
+                  <Label htmlFor="smart-booking-email">{t('booking.email', 'Email')} *</Label>
                   <Input
                     id="smart-booking-email"
                     type="email"
@@ -544,11 +561,11 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
 
               {data.showPhoneField !== false && (
                 <div className="space-y-2">
-                  <Label htmlFor="smart-booking-phone">Phone</Label>
+                  <Label htmlFor="smart-booking-phone">{t('booking.phone', 'Phone')}</Label>
                   <Input
                     id="smart-booking-phone"
                     type="tel"
-                    placeholder="Your phone number"
+                    placeholder={t('booking.phonePlaceholder', 'Your phone number')}
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                   />
@@ -556,10 +573,10 @@ export function SmartBookingBlock({ data, blockId, pageId }: SmartBookingBlockPr
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="smart-booking-notes">Notes</Label>
+                <Label htmlFor="smart-booking-notes">{t('booking.notes', 'Notes')}</Label>
                 <Textarea
                   id="smart-booking-notes"
-                  placeholder="Any additional information..."
+                  placeholder={t('booking.notesPlaceholder', 'Any additional information...')}
                   value={formData.notes}
                   onChange={(e) => handleInputChange('notes', e.target.value)}
                   rows={3}

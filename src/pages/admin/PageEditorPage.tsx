@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { PageLanguageSwitch } from '@/components/admin/pages/PageLanguageSwitch';
 import { ArrowLeft, Save, Send, Check, X, Loader2, ExternalLink, Eye, Clock, Undo2, Redo2, Monitor, Smartphone, Tablet } from 'lucide-react';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
@@ -9,6 +10,10 @@ import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/StatusBadge';
 import { VersionHistoryPanel } from '@/components/admin/VersionHistoryPanel';
 import { BlockEditor } from '@/components/admin/blocks/BlockEditor';
+import { PreviewFrame } from '@/components/admin/PreviewFrame';
+import { PageBlocks } from '@/components/public/PageBlocks';
+import { useBranding } from '@/providers/BrandingProvider';
+import { useDebounce } from '@/hooks/useDebounce';
 import { PageSettingsDialog } from '@/components/admin/PageSettingsDialog';
 import { SchedulePublishDialog } from '@/components/admin/SchedulePublishDialog';
 import { AeoAnalyzer } from '@/components/admin/AeoAnalyzer';
@@ -32,6 +37,7 @@ export default function PageEditorPage() {
   const { toast } = useToast();
   const { isApprover } = useAuth();
   const { data: generalSettings } = useGeneralSettings();
+  const { branding } = useBranding();
   const reviewEnabled = generalSettings?.contentReviewEnabled === true;
   
   const { data: page, isLoading, refetch } = usePage(id);
@@ -43,6 +49,7 @@ export default function PageEditorPage() {
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop');
+  const isDevicePreview = previewMode !== 'desktop';
   // Undo/Redo for blocks
   const {
     present: blocks,
@@ -56,6 +63,11 @@ export default function PageEditorPage() {
 
   // Keyboard shortcuts for undo/redo
   useUndoRedoKeyboard({ undo, redo, canUndo, canRedo });
+
+  // The device preview re-renders the full public renderer on every blocks
+  // change (e.g. undo/redo while a preview is open) — debounce so bursts
+  // collapse into one iframe re-render.
+  const previewBlocks = useDebounce(blocks, 300);
 
   const { blocker } = useUnsavedChanges({ hasChanges });
 
@@ -71,17 +83,33 @@ export default function PageEditorPage() {
       resetBlocks(hydratedBlocks);
       setMeta(JSON.parse(JSON.stringify(page.meta_json || {})));
       setHasChanges(false);
+      userInteracted.current = false; // fresh page: absorb init-normalisation anew
     }
   }, [page?.id, page?.updated_at, resetBlocks]);
 
+  // Everything that happens before the FIRST user gesture is, by definition,
+  // not an edit. Tiptap normalises stored content on initialisation (schema
+  // fixes, trailing paragraphs — especially on agent-written pages that came
+  // through markdownToTiptap), and that normalisation fires the same onUpdate →
+  // onChange path a keystroke does. Latching hasChanges on it meant: open a
+  // page, touch nothing, get the "unsaved changes" prompt on the way out. The
+  // gate absorbs those mount-time writes into state WITHOUT marking dirty; the
+  // first pointer/keyboard gesture inside the editor arms the latch. A user
+  // action triggered by that gesture (including AI-toolbar generation) still
+  // marks dirty, because the gesture came first.
+  const userInteracted = useRef(false);
+  const armDirtyTracking = useCallback(() => {
+    userInteracted.current = true;
+  }, []);
+
   const handleBlocksChange = useCallback((newBlocks: ContentBlock[]) => {
     setBlocks(newBlocks);
-    setHasChanges(true);
+    if (userInteracted.current) setHasChanges(true);
   }, []);
 
   const handleMetaChange = useCallback((newMeta: PageMeta) => {
     setMeta(newMeta);
-    setHasChanges(true);
+    if (userInteracted.current) setHasChanges(true);
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -214,12 +242,20 @@ export default function PageEditorPage() {
               <div>
                 <Input
                   value={title}
-                  onChange={(e) => { setTitle(e.target.value); setHasChanges(true); }}
+                  onChange={(e) => { userInteracted.current = true; setTitle(e.target.value); setHasChanges(true); }}
                   className="text-xl font-serif font-bold border-none p-0 h-auto focus-visible:ring-0"
                   disabled={!canEdit}
                 />
                 <p className="text-sm text-muted-foreground">/{page.slug}</p>
               </div>
+              {/* Same gesture as the pages list, carried in here so a translator
+                  never has to go back out to switch. Renders nothing unless the
+                  page actually has another language. */}
+              <PageLanguageSwitch
+                pageId={page.id}
+                translationGroupId={page.translation_group_id}
+                locale={page.locale}
+              />
             </div>
             <div className="flex items-center gap-3">
               {/* Preview mode toggle */}
@@ -289,24 +325,49 @@ export default function PageEditorPage() {
           </div>
         </div>
 
-        {/* Block Editor - scrollable area */}
-        <div className="flex-1 min-h-0 overflow-auto p-8 bg-background">
-          <div 
-            className={`mx-auto pb-4 transition-all duration-300 ${
-              previewMode === 'mobile' 
-                ? 'max-w-[375px] border-x border-dashed border-border' 
-                : previewMode === 'tablet' 
-                  ? 'max-w-[768px] border-x border-dashed border-border' 
-                  : 'max-w-3xl'
-            }`}
-          >
-            <BlockEditor
-              blocks={blocks}
-              onChange={handleBlocksChange}
-              canEdit={canEdit}
-            />
+        {/* Editing surface (desktop) / device preview (mobile & tablet).
+            A narrowed container can't change which md:/lg: media queries
+            match, so mobile/tablet render the PUBLIC renderer inside a real
+            iframe whose viewport IS 375/768 px. Editing stays a desktop-mode
+            activity — the frame is read-only. */}
+        {isDevicePreview ? (
+          <div className="flex-1 min-h-0 p-8 bg-muted/40 flex justify-center">
+            <PreviewFrame
+              width={previewMode === 'mobile' ? 375 : 768}
+              title={`${previewMode === 'mobile' ? 'Mobile' : 'Tablet'} preview`}
+              branding={branding}
+            >
+              <main className="min-h-screen bg-background">
+                {meta?.showTitle !== false && (
+                  <div className="max-w-4xl mx-auto px-6 pt-12">
+                    <h1
+                      className={`text-4xl md:text-5xl font-serif font-bold text-foreground ${
+                        (meta?.titleAlignment || 'left') === 'center' ? 'text-center' : 'text-left'
+                      }`}
+                    >
+                      {title}
+                    </h1>
+                  </div>
+                )}
+                <PageBlocks blocks={previewBlocks} pageId={id} />
+              </main>
+            </PreviewFrame>
           </div>
-        </div>
+        ) : (
+          <div
+            className="flex-1 min-h-0 overflow-auto p-8 bg-background"
+            onPointerDownCapture={armDirtyTracking}
+            onKeyDownCapture={armDirtyTracking}
+          >
+            <div className="mx-auto pb-4 max-w-3xl">
+              <BlockEditor
+                blocks={blocks}
+                onChange={handleBlocksChange}
+                canEdit={canEdit}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Sticky Save Bar */}
         <div className="sticky-save-bar">

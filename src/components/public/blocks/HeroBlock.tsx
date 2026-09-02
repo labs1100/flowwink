@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { useUiText } from '@/lib/ui-text';
+import { useParallaxBackground, parallaxLayerStyle } from '@/hooks/use-parallax-background';
 import { HeroBlockData, HeroTitleSize } from '@/types/cms';
 import { cn } from '@/lib/utils';
 import { ChevronDown, Play, Pause, Volume2, VolumeX } from 'lucide-react';
@@ -67,6 +69,26 @@ const alignmentClasses: Record<string, string> = {
   bottom: 'items-end pb-32',
 };
 
+// Per-knapp-design med dagens utseende som default. Två kontexter: split-
+// layouten står på sidyta (tokens), den centrerade på bild/overlay (ljus på
+// mörkt). "ghost" är textknappen — för heros där EN handling ska dominera.
+const heroButtonClasses = (
+  variant: 'solid' | 'outline' | 'ghost' | undefined,
+  fallback: 'solid' | 'outline',
+  onOverlay: boolean,
+): string => {
+  const v = variant ?? fallback;
+  const base = 'inline-flex items-center justify-center px-6 py-3 font-medium rounded-lg transition-colors';
+  if (onOverlay) {
+    if (v === 'solid') return `${base} bg-background text-foreground hover:opacity-90`;
+    if (v === 'outline') return `${base} border border-current hover:bg-foreground/10`;
+    return `${base} underline underline-offset-4 hover:opacity-80`;
+  }
+  if (v === 'solid') return `${base} bg-primary text-primary-foreground hover:bg-primary/90`;
+  if (v === 'outline') return `${base} border border-border text-foreground hover:bg-muted`;
+  return `${base} underline underline-offset-4 text-foreground hover:opacity-80`;
+};
+
 const titleAnimationClasses: Record<string, string> = {
   none: '',
   'fade-in': 'animate-fade-in',
@@ -121,6 +143,15 @@ function extractVideoId(url: string, type: 'youtube' | 'vimeo'): string | null {
 }
 
 export function HeroBlock({ data }: HeroBlockProps) {
+  const t = useUiText();
+  /* Schemat vitlistar BÅDE backgroundImage och imageSrc — men bara det
+     förra lästes, så imageSrc var ett spökfält: validerat, lagrat, aldrig
+     renderat (Restagård 2026-08-27: alla heroes visade gradient-fallback).
+     Aliaset gör fältet sant i stället för att avlista det — sidor skrivna
+     av äldre composer-utfall fortsätter fungera (Law 4). */
+  const heroImage = data.backgroundImage || (data as { imageSrc?: string }).imageSrc;
+  const hasImageParallax = !!data.parallaxEffect && !!heroImage;
+  const { sectionRef, bgRef } = useParallaxBackground(hasImageParallax);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(data.videoMuted !== false);
   const [videoError, setVideoError] = useState(false);
@@ -260,7 +291,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
   const renderVideoFallback = () => {
     if (!videoError || data.backgroundType !== 'video') return null;
     // Prefer poster image as fallback, then background image, then gradient
-    const fallbackImage = data.videoPosterUrl || data.backgroundImage;
+    const fallbackImage = data.videoPosterUrl || heroImage;
     if (fallbackImage) {
       return (
         <div
@@ -305,7 +336,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
   // Split layout rendering
   if (layout === 'split-left' || layout === 'split-right') {
     const imageOnLeft = layout === 'split-left';
-    const hasImage = data.backgroundImage;
+    const hasImage = heroImage;
     const hasVideo = data.backgroundType === 'video' && data.videoUrl;
     
     return (
@@ -356,7 +387,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
               )
             ) : hasImage ? (
               <img
-                src={data.backgroundImage}
+                src={heroImage}
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -400,7 +431,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
                   <a
                     href={data.primaryButton.url}
                     onClick={(e) => isAnchorLink(data.primaryButton?.url) && handleAnchorClick(e, data.primaryButton!.url)}
-                    className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                    className={heroButtonClasses(data.primaryButton.variant, 'solid', false)}
                   >
                     {data.primaryButton.text}
                   </a>
@@ -409,7 +440,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
                   <a
                     href={data.secondaryButton.url}
                     onClick={(e) => isAnchorLink(data.secondaryButton?.url) && handleAnchorClick(e, data.secondaryButton!.url)}
-                    className="inline-flex items-center justify-center px-6 py-3 border border-border text-foreground font-medium rounded-lg hover:bg-muted transition-colors"
+                    className={heroButtonClasses(data.secondaryButton.variant, 'outline', false)}
                   >
                     {data.secondaryButton.text}
                   </a>
@@ -425,7 +456,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
   // Centered layout (original behavior with enhancements)
   const backgroundType = data.backgroundType || 'image';
   const hasVideoBackground = backgroundType === 'video' && data.videoUrl;
-  const hasImageBackground = backgroundType === 'image' && data.backgroundImage;
+  const hasImageBackground = backgroundType === 'image' && heroImage;
   const heightMode = data.heightMode || 'auto';
   const contentAlignment = data.contentAlignment || 'center';
   const overlayOpacity = data.overlayOpacity ?? 60;
@@ -437,6 +468,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
 
   return (
     <section
+      ref={sectionRef}
       className={cn(
         "relative px-6 overflow-hidden flex",
         backgroundType === 'color' && "bg-primary text-primary-foreground",
@@ -454,12 +486,18 @@ export function HeroBlock({ data }: HeroBlockProps) {
       
       {/* Image Background */}
       {hasImageBackground && (
-        <div 
+        <div
+          ref={hasImageParallax ? bgRef : undefined}
           className={cn(
-            "absolute inset-0 bg-cover bg-center",
-            data.parallaxEffect && "bg-fixed"
+            "bg-cover bg-center",
+            hasImageParallax
+              ? "absolute left-0 w-full will-change-transform"
+              : "absolute inset-0"
           )}
-          style={{ backgroundImage: `url(${data.backgroundImage})` }}
+          style={{
+            backgroundImage: `url(${heroImage})`,
+            ...(hasImageParallax ? parallaxLayerStyle : null),
+          }}
         />
       )}
       
@@ -477,7 +515,13 @@ export function HeroBlock({ data }: HeroBlockProps) {
       <div className={cn(
         "relative container mx-auto max-w-3xl z-10 flex flex-col",
         textAlignmentClasses[textAlignment] ?? textAlignmentClasses.center,
-        heightMode === 'auto' && "py-0"
+        heightMode === 'auto' && "py-0",
+        /* Centrerat innehåll i viewport-höjd har ingen egen kant: är innehållet
+           högre än sektionen svämmar det över mot y=0 och krockar med en
+           overlay-header (optic mobil, 2026-08-27). 6 rem > headerns 4 rem;
+           när innehållet får plats ändrar paddingen inget — centreringen
+           består. top/bottom-lägena bär redan 8 rem sektionspadding. */
+        heightMode !== 'auto' && contentAlignment === 'center' && "py-24"
       )}>
         {data.eyebrow && (
           <p className={cn(
@@ -519,7 +563,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
             <a
               href={data.primaryButton.url}
               onClick={(e) => isAnchorLink(data.primaryButton?.url) && handleAnchorClick(e, data.primaryButton!.url)}
-              className="bg-background text-foreground px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
+              className={heroButtonClasses(data.primaryButton.variant, 'solid', true)}
             >
               {data.primaryButton.text}
             </a>
@@ -528,7 +572,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
             <a
               href={data.secondaryButton.url}
               onClick={(e) => isAnchorLink(data.secondaryButton?.url) && handleAnchorClick(e, data.secondaryButton!.url)}
-              className="border border-current px-6 py-3 rounded-lg font-medium hover:bg-foreground/10 transition-colors"
+              className={heroButtonClasses(data.secondaryButton.variant, 'outline', true)}
             >
               {data.secondaryButton.text}
             </a>
@@ -556,7 +600,7 @@ export function HeroBlock({ data }: HeroBlockProps) {
           onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
           className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-opacity"
           style={{ opacity: scrollOpacity * 0.8 }}
-          aria-label="Scroll down"
+          aria-label={t('hero.scrollDown', 'Scroll down')}
         >
           <ChevronDown className="h-8 w-8 animate-bounce-down text-foreground drop-shadow-lg" />
         </button>
