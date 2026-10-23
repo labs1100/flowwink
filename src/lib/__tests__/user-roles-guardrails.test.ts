@@ -72,6 +72,11 @@ describe('handle_new_user trigger', () => {
   );
   const fnBody = fnMatch?.[0] ?? '';
 
+  it('reads the role request from app_metadata, never from the caller-written user_metadata', () => {
+    expect(fnBody).toMatch(/raw_app_meta_data\s*->>\s*'signup_type'/);
+    expect(fnBody).not.toMatch(/raw_user_meta_data\s*->>\s*'signup_type'/);
+  });
+
   it('has a dedicated branch for signup_type = admin', () => {
     expect(fnBody).toMatch(/signup_type\s*=\s*'admin'/i);
     // The admin branch must INSERT 'admin' (not 'writer' / 'customer')
@@ -163,9 +168,36 @@ describe('edge functions: user_roles admin checks', () => {
 // ─────────────────────────────────────────────────────────────
 
 describe('scripts/flowwink.sh create-admin', () => {
-  it('passes signup_type=admin in user_metadata', () => {
+  it('passes signup_type=admin in app_metadata — the field only the service role can write', () => {
     const sh = readFileSync('scripts/flowwink.sh', 'utf8');
-    // Only the create-admin curl call writes user_metadata with signup_type.
-    expect(sh).toMatch(/user_metadata[\s\S]{0,200}signup_type[\\"' :]+admin/);
+    expect(sh).toMatch(/app_metadata[\s\S]{0,80}signup_type[\\"' :]+admin/);
+    // user_metadata is the caller's own JSON; a role request there is the hole
+    // 20261022010000 closed (self-signup with data.signup_type=admin became admin).
+    expect(sh).not.toMatch(/user_metadata\\":\{[^}]*signup_type/);
+  });
+});
+
+describe('invite paths grant roles themselves — never through the caller-written metadata', () => {
+  // The trigger reads the role request from app_metadata only. An invite's
+  // `data` is user_metadata, so a signup_type there is dead at best and, were
+  // the trigger ever to read it again, the self-signup hole at worst. Observed
+  // 2026-10-23: invite-employee still sent signup_type=employee in data, so a
+  // newly invited colleague was born as customer+employee instead of
+  // employee+writer.
+  const employee = readFileSync('supabase/functions/invite-employee/index.ts', 'utf8');
+  const colleague = readFileSync('supabase/functions/invite-colleague/index.ts', 'utf8');
+
+  it('invite-employee puts no role request in user_metadata', () => {
+    expect(employee).not.toMatch(/data:\s*\{[^}]*signup_type/);
+  });
+
+  it('invite-employee grants employee + writer to a fresh invite and removes the trigger\'s customer seed', () => {
+    expect(employee).toMatch(/found \? \["employee"\] : \["employee", "writer"\]/);
+    expect(employee).toMatch(/\.delete\(\)\.eq\("user_id", userId\)\.eq\("role", "customer"\)/);
+  });
+
+  it('invite-colleague reconciles the chosen role on top of the trigger and clears the customer seed', () => {
+    expect(colleague).toMatch(/upsert\(\s*\{ user_id: userId, role \}/);
+    expect(colleague).toMatch(/\.delete\(\)\.eq\("user_id", userId\)\.eq\("role", "customer"\)/);
   });
 });
