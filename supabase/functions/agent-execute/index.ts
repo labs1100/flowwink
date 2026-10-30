@@ -8,8 +8,8 @@ import { buildUnknownParameterBounce } from '../_shared/skills/parameter-contrac
 import { isTransportKey } from '../_shared/skills/parameter-contract.ts';
 import { callWakesModule, moduleWakeAuditRow, moduleWakeNote } from '../_shared/modules/module-wake.ts';
 import { bounceManagePageArgs, collectPageUpdateFields, parseMenuFields, resolveCreateLocale, type SiteLanguagesDeclaration } from '../_shared/pages/manage-page-contract.ts';
-import { extractTextFromBlock, extractTextFromTiptap } from '../_shared/chat-context.ts';
-import { assessPost, imageQueryFor, altTextFor, countWords, detectLanguage, findForbiddenClaims } from '../_shared/content-quality.ts';
+import { extractTextFromBlock } from '../_shared/chat-context.ts';
+import { assessPost, imageQueryFor, altTextFor, countWords, detectLanguage, findForbiddenClaims, postBodyText, countInlineImages, isBrandCovers, readingMinutes, mergePostMeta } from '../_shared/content-quality.ts';
 import { titleSimilarity } from '../_shared/domains/content-memory.ts';
 import { retiredSkillResult } from '../_shared/skills/retired-skills.ts';
 import { isIdleScheduledRun, declaredWorkDone } from '../_shared/activity/work-done.ts';
@@ -8711,27 +8711,32 @@ async function executeBlogAction(
     const prof = (setting('company_profile') ?? {}) as Record<string, unknown>;
     const claims = Array.isArray(prof.claims_to_avoid) ? prof.claims_to_avoid : [];
     const minWords = Math.max(0, Number((setting('blog') as { minWords?: unknown } | undefined)?.minWords ?? 600) || 0);
+    const brandCovers = isBrandCovers(setting('blog'));
     const siteDefault = String((setting('site_languages') as { default?: string } | undefined)?.default ?? '').toLowerCase() || null;
 
     type Finding = { kind: string; post_id: string; slug: string; title: string; status: string; detail: string; fix?: { skill: string; args: Record<string, unknown> } };
     const findings: Finding[] = [];
     const perPost = posts.map((p) => {
-      const text = extractTextFromTiptap(p.content_json);
+      // Both stored shapes — a Tiptap doc (agent-written) and a block array with
+      // docs inside (template-seeded) — or a block-array post read as 0 words
+      // and its text escaped the claim and language checks.
+      const text = postBodyText(p.content_json);
       const words = text.split(/\s+/).filter(Boolean).length;
       const verdict = detectLanguage(text);
       const declared = String(p.locale ?? siteDefault ?? '').toLowerCase() || null;
       const hits = findForbiddenClaims(`${p.title}\n${text}`, claims);
-      const inlineImages = p.content_json && typeof p.content_json === 'object' && Array.isArray((p.content_json as { content?: unknown[] }).content)
-        ? ((p.content_json as { content: Array<{ type?: string }> }).content).filter((n) => n?.type === 'image').length : 0;
+      const inlineImages = countInlineImages(p.content_json);
       const stock = !!p.featured_image && /images\.unsplash\.com/i.test(p.featured_image);
       const genericAlt = !!p.featured_image_alt && /^(a|an|the)\s/i.test(p.featured_image_alt) && p.featured_image_alt !== p.title;
       const base = { post_id: p.id, slug: p.slug, title: p.title, status: p.status };
       if (words < minWords) findings.push({ kind: 'thin', ...base, detail: `${words} words (floor ${minWords})`, fix: { skill: 'manage_blog_posts', args: { action: 'update', slug: p.slug, content: '<the full body, ' + Math.max(minWords, 800) + '+ words>' } } });
       if (verdict && declared && verdict.language !== declared) findings.push({ kind: 'language', ...base, detail: `reads as ${verdict.language}, declared ${declared}`, fix: { skill: 'manage_blog_posts', args: { action: 'update', slug: p.slug, content: `<the body in ${declared}>` } } });
       if (hits.length) findings.push({ kind: 'forbidden_claim', ...base, detail: hits.join('; '), fix: { skill: 'manage_blog_posts', args: { action: 'update', slug: p.slug, content: '<the body without the ruled-out phrasing>' } } });
-      if (!p.featured_image) findings.push({ kind: 'no_image', ...base, detail: 'no featured image', fix: { skill: 'manage_blog_posts', args: { action: 'update', slug: p.slug, featured_image: '<url from media_browse import_from_url>', featured_image_alt: p.title } } });
-      else if (stock && genericAlt) findings.push({ kind: 'stock_image', ...base, detail: `stock photo, alt "${p.featured_image_alt}" — says what the photo shows, not what the article is`, fix: { skill: 'manage_blog_posts', args: { action: 'update', slug: p.slug, featured_image_alt: p.title } } });
-      return { id: p.id, slug: p.slug, title: p.title, status: p.status, locale: declared, published_at: p.published_at, words, headings: undefined, inline_images: inlineImages, featured_image: p.featured_image ? (stock ? 'stock' : 'own') : 'none', reads_as: verdict?.language ?? null, forbidden_claims: hits };
+      // Brand covers (blog.coverStyle 'brand'): every post's picture is drawn
+      // from the branding, so a missing or stock featured image is no finding.
+      if (!brandCovers && !p.featured_image) findings.push({ kind: 'no_image', ...base, detail: 'no featured image', fix: { skill: 'manage_blog_posts', args: { action: 'update', slug: p.slug, featured_image: '<url from media_browse import_from_url>', featured_image_alt: p.title } } });
+      else if (!brandCovers && stock && genericAlt) findings.push({ kind: 'stock_image', ...base, detail: `stock photo, alt "${p.featured_image_alt}" — says what the photo shows, not what the article is`, fix: { skill: 'manage_blog_posts', args: { action: 'update', slug: p.slug, featured_image_alt: p.title } } });
+      return { id: p.id, slug: p.slug, title: p.title, status: p.status, locale: declared, published_at: p.published_at, words, headings: undefined, inline_images: inlineImages, featured_image: brandCovers ? 'brand' : p.featured_image ? (stock ? 'stock' : 'own') : 'none', reads_as: verdict?.language ?? null, forbidden_claims: hits };
     });
     // Duplicate clusters: each post against the earlier ones; a cluster is the
     // first post plus every later title that re-words it.
@@ -8762,6 +8767,7 @@ async function executeBlogAction(
         drafts: posts.filter((p) => p.status === 'draft').length,
         median_words: median,
         min_words: minWords,
+        cover_style: brandCovers ? 'brand' : 'photo',
         site_language: siteDefault,
         claims_to_avoid: claims.length,
         findings: counts,
@@ -8915,6 +8921,7 @@ async function executeBlogAction(
   const { data: blogSettingsRow, error: blogSettingsErr } = await supabase.from('site_settings').select('value').eq('key', 'blog').maybeSingle();
   if (blogSettingsErr) console.warn('[write_blog_post] blog settings read failed, floor stays at the default:', blogSettingsErr.message);
   const minWords = Math.max(0, Number((blogSettingsRow?.value as { minWords?: unknown } | null)?.minWords ?? 600) || 0);
+  const brandCovers = isBrandCovers(blogSettingsRow?.value);
   let declaredLanguage: string | null = null;
   {
     const { data: langRowEarly, error: langEarlyErr } = await supabase.from('site_settings').select('value').eq('key', 'site_languages').maybeSingle();
@@ -8974,7 +8981,12 @@ async function executeBlogAction(
   // 'auto' is treated the same as not provided — explicit opt-in to auto-fetch.
   let featuredImage: string | null = providedImage && providedImage !== 'auto' ? providedImage : null;
   let featuredImageAlt: string | null = providedImageAlt || null;
-  let imageStatus: 'provided' | 'unsplash' | 'none' | 'no_key' | 'error' = featuredImage ? 'provided' : 'none';
+  let imageStatus: 'provided' | 'unsplash' | 'none' | 'no_key' | 'error' | 'brand' = featuredImage ? 'provided' : 'none';
+  // Brand covers (Blog settings → Cover images = Brand): every post's picture
+  // is drawn from the branding, so no stock photo is looked up and none is
+  // stored. A URL the caller passed explicitly is kept (it shows if the site
+  // switches back to photos) but the answer says the cover is the brand's.
+  if (brandCovers) imageStatus = 'brand';
 
   // Never the brief: `topic` used to be the first Unsplash query, and on
   // autoversio the whole task prompt ("Draft the original blog post
@@ -8984,7 +8996,7 @@ async function executeBlogAction(
   // The alt is the title: an Unsplash alt ("a sign on a pole") describes the
   // photo and tells the reader nothing about the article.
   let imageQuery: string | null = null;
-  if (!featuredImage) {
+  if (!featuredImage && !brandCovers) {
     imageQuery = typeof requestedImageQuery === 'string' && requestedImageQuery.trim()
       ? requestedImageQuery.trim().slice(0, 80)
       : imageQueryFor(resolvedTitle, typeof profile.industry === 'string' ? profile.industry : null);
@@ -9010,6 +9022,7 @@ async function executeBlogAction(
     status,
     excerpt,
     content_json: tiptapDoc,
+    reading_time_minutes: readingMinutes(tiptapDoc),
     meta_json: { tone, ...(language ? { language } : {}), generated_by: 'external_agent', topic },
   };
   // The post's SOURCE language — only a language the site has enabled: a post
@@ -9092,6 +9105,7 @@ async function executeBlogAction(
       url: path(own, data.slug),
       has_featured_image: !!featuredImage,
       image_status: imageStatus,
+      ...(brandCovers ? { image_note: 'Brand covers are on (Blog settings → Cover images): the post is shown with a cover drawn from the branding — no featured image needed.' } : {}),
       ...(imageQuery ? { image_query: imageQuery } : {}),
       quality: { words: countWords(content), inline_images: inlineImages, min_words: minWords, judged: !isImport && force !== true },
       ...(angleNote ? { angle: angleNote } : {}),
@@ -11068,11 +11082,16 @@ function blogPublishedAt(value: unknown): string | null {
   return d.toISOString();
 }
 
+// Every argument manage_blog_posts reads — the tool_definition's properties,
+// one for one (blog-post-update.guardrails.test.ts holds the two together).
+// Anything else is named back as `ignored`, never swallowed into "updated".
+const MANAGE_BLOG_POSTS_ARGS = new Set(['action', 'post_id', 'slug', 'status', 'scheduled_at', 'title', 'excerpt', 'content', 'content_json', 'featured_image', 'featured_image_alt', 'category', 'published_at', 'locale', 'retranslate', 'force', 'limit', 'seo_title', 'meta_description', 'og_image', 'meta_json']);
+
 async function executeBlogPostsManagement(
   supabase: any,
   args: Record<string, unknown>,
 ): Promise<unknown> {
-  const { action = 'list', post_id, slug, status, title, excerpt, content, content_json, featured_image, category, published_at, locale, retranslate, limit = 20 } = args as any;
+  const { action = 'list', post_id, slug, status, title, excerpt, content, content_json, featured_image, featured_image_alt, category, published_at, locale, retranslate, seo_title, meta_description, og_image, meta_json, limit = 20 } = args as any;
 
   if (action === 'list') {
     let query = supabase.from('blog_posts')
@@ -11149,6 +11168,31 @@ async function executeBlogPostsManagement(
       }
       updates.content_json = content_json;
     }
+    // A new body is a new length: the editor's rule (words / 200, up), so a
+    // rewrite to ~900 words no longer keeps the old "2 min read".
+    if (updates.content_json !== undefined) updates.reading_time_minutes = readingMinutes(updates.content_json);
+    // SEO title, description and share image live in meta_json — the keys the
+    // post page (Helmet), api/html.ts and api/og.ts read: seoTitle,
+    // description, ogImage. `meta_json` was accepted, silently dropped and
+    // answered "updated: true"; it is MERGED now (null or "" removes a key),
+    // and the three named fields are the safe way to set the common ones.
+    const metaPatch: Record<string, unknown> = {};
+    if (meta_json !== undefined) {
+      if (!meta_json || typeof meta_json !== 'object' || Array.isArray(meta_json)) throw new Error('meta_json must be an object — it is merged into the post\'s meta (a key set to null is removed). For the common keys use seo_title, meta_description, og_image.');
+      Object.assign(metaPatch, meta_json);
+    }
+    if (seo_title !== undefined) metaPatch.seoTitle = seo_title;
+    if (meta_description !== undefined) metaPatch.description = meta_description;
+    if (og_image !== undefined) metaPatch.ogImage = og_image;
+    for (const [k, v] of Object.entries(metaPatch)) {
+      if (v !== null && (k === 'seoTitle' || k === 'description' || k === 'ogImage') && typeof v !== 'string') throw new Error(`${k === 'seoTitle' ? 'seo_title' : k === 'description' ? 'meta_description' : 'og_image'} must be a string (or null / "" to clear it).`);
+    }
+    if (Object.keys(metaPatch).length) {
+      const { data: curMeta, error: metaErr } = await supabase.from('blog_posts').select('meta_json').eq('id', resolvedPostId).single();
+      if (metaErr) throw new Error(`Post read failed before the meta merge: ${metaErr.message}`);
+      updates.meta_json = mergePostMeta(curMeta?.meta_json, metaPatch);
+    }
+    if (featured_image_alt !== undefined) updates.featured_image_alt = featured_image_alt === null || String(featured_image_alt).trim() === '' ? null : String(featured_image_alt).trim();
     // `status` was accepted, ignored, and answered with "updated" — the post stayed a draft
     // while the caller believed it was live. It is honoured now, and so is scheduled_at
     // (a post waiting for its time is `reviewing` + scheduled_at; publish_scheduled_content
@@ -11173,8 +11217,15 @@ async function executeBlogPostsManagement(
       if (cur?.status !== 'published') throw new Error('published_at can only be set on a published post — publish it (status: "published", published_at) in the same call.');
       updates.published_at = blogPublishedAt(published_at);
     }
+    let imageNote: string | undefined;
     if (featured_image !== undefined) {
-      if (featured_image === 'auto') {
+      const { data: blogRow } = featured_image === 'auto'
+        ? await supabase.from('site_settings').select('value').eq('key', 'blog').maybeSingle()
+        : { data: null };
+      if (featured_image === 'auto' && isBrandCovers(blogRow?.value)) {
+        // Brand covers: no stock photo — the cover is drawn from the branding.
+        imageNote = 'Brand covers are on (Blog settings → Cover images): no stock photo was looked up — the post is shown with a cover drawn from the branding.';
+      } else if (featured_image === 'auto') {
         // Look up current post to use title/excerpt as query basis
         const { data: cur } = await supabase.from('blog_posts')
           .select('title, excerpt, meta_json').eq('id', resolvedPostId).single();
@@ -11196,13 +11247,26 @@ async function executeBlogPostsManagement(
       if (!/^[a-z]{2}(-[a-z0-9]{2,8})?$/.test(l)) throw new Error(`locale "${locale}" is not a language tag — use "sv", "en", "en-GB".`);
       updates.locale = l;
     }
+    // An argument this skill does not know is named back, never folded into a
+    // silent "updated: true" (the agent envelope, CLAUDE.md). Nothing known to
+    // change → no write at all: UNKNOWN_PARAMETERS when something unknown was
+    // sent, MISSING_REQUIRED_PARAMETER when nothing was.
+    const ignored = Object.keys(args).filter((k) => !k.startsWith('_') && !MANAGE_BLOG_POSTS_ARGS.has(k));
+    const acted = Object.keys(updates).some((k) => k !== 'updated_at') || category !== undefined || featured_image !== undefined;
+    if (!acted) {
+      return ignored.length
+        ? { error: `Nothing was updated: ${ignored.join(', ')} ${ignored.length === 1 ? 'is not a parameter' : 'are not parameters'} of manage_blog_posts.`, code: 'UNKNOWN_PARAMETERS', retryable: true, ignored,
+            hint: 'Use the declared names (read_skill manage_blog_posts): title, excerpt, content | content_json, seo_title, meta_description, og_image, meta_json (merged), featured_image, featured_image_alt, category, status, scheduled_at, published_at, locale.' }
+        : { error: 'Nothing to update: pass at least one field to change (title, excerpt, content, seo_title, meta_description, …).', code: 'MISSING_REQUIRED_PARAMETER', retryable: true,
+            hint: 'Name the field and its new value; update never writes an empty change.' };
+    }
     const { data, error } = await supabase.from('blog_posts')
-      .update(updates).eq('id', resolvedPostId).select('id, title, status, featured_image, published_at').single();
+      .update(updates).eq('id', resolvedPostId).select('id, title, status, featured_image, published_at, meta_json, reading_time_minutes').single();
     if (error) throw new Error(`Update post failed: ${error.message}`);
     const cat = category !== undefined ? await setBlogPostCategory(supabase, data.id, category) : undefined;
     // Translations follow the edit: only the units whose source changed are
     // translated, in the languages the post already has (§9).
-    const textChanged = title !== undefined || excerpt !== undefined || updates.content_json !== undefined || updates.locale !== undefined;
+    const textChanged = title !== undefined || excerpt !== undefined || updates.content_json !== undefined || updates.locale !== undefined || updates.meta_json !== undefined;
     let translations: Array<Record<string, unknown>> | undefined;
     if (textChanged && retranslate !== false) {
       try {
@@ -11214,7 +11278,10 @@ async function executeBlogPostsManagement(
     }
     // `status` is the POST's status, read back from the row — never the word "updated".
     return { post_id: data.id, updated: true, status: data.status, featured_image: data.featured_image, published_at: data.published_at,
-      ...(updates.content_json !== undefined ? { content_updated: true } : {}),
+      ...(imageNote ? { image_note: imageNote } : {}),
+      ...(updates.content_json !== undefined ? { content_updated: true, reading_time_minutes: data.reading_time_minutes } : {}),
+      ...(updates.meta_json !== undefined ? { meta: { seoTitle: data.meta_json?.seoTitle ?? null, description: data.meta_json?.description ?? null, ogImage: data.meta_json?.ogImage ?? null }, meta_keys_changed: Object.keys(metaPatch) } : {}),
+      ...(ignored.length ? { ignored, note: `${ignored.join(', ')} ${ignored.length === 1 ? 'is not a parameter' : 'are not parameters'} of manage_blog_posts and changed nothing.` } : {}),
       ...(updates.locale !== undefined ? { locale: updates.locale } : {}),
       ...(translations ? { translations } : {}),
       ...(cat !== undefined ? { category: cat ? cat.slug : null } : {}) };
