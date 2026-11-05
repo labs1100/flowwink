@@ -7,7 +7,7 @@ import { normalizeSkillArgs } from '../_shared/skill-aliases.ts';
 import { buildUnknownParameterBounce } from '../_shared/skills/parameter-contract.ts';
 import { isTransportKey } from '../_shared/skills/parameter-contract.ts';
 import { callWakesModule, moduleWakeAuditRow, moduleWakeNote } from '../_shared/modules/module-wake.ts';
-import { describeRefusals, moduleSkillNames, planModuleChange, skillsToDisable, suggestOff, type ModuleCatalogEntry, type ModuleEvidence, type ModulesSetting } from '../_shared/modules/module-plan.ts';
+import { describeRefusals, moduleSkillNames, planModuleChange, planModuleKeep, skillsToDisable, suggestOff, type ModuleCatalogEntry, type ModuleEvidence, type ModuleKeep, type ModulesSetting } from '../_shared/modules/module-plan.ts';
 import { appendSent, feedbackKey, judgeFeedback, type SentFeedback } from '../_shared/feedback/feedback-cadence.ts';
 import { clusterReports, type BoardPost } from '../_shared/feedback/feedback-clusters.ts';
 import { bounceManagePageArgs, collectPageUpdateFields, parseMenuFields, resolveCreateLocale, type SiteLanguagesDeclaration } from '../_shared/pages/manage-page-contract.ts';
@@ -86,6 +86,9 @@ import { handleDraftEmailReply } from '../_shared/handlers/draft-email-reply.ts'
 import { handleTranslatePage } from '../_shared/handlers/translate-page.ts';
 import { classifyCall, isDryRunRead } from '../_shared/skills/read-surface.ts';
 import { parseReport } from '../_shared/reports/blocks.ts';
+import { overviewDashboard } from '../_shared/reports/overview.ts';
+import { weeklyDigestReport, monthCloseReport, previousMonth, type ScheduledFormat } from '../_shared/reports/scheduled.ts';
+import { siteLanguages } from '../_shared/handlers/page-translations.ts';
 import { handleTranslateContent, translatePostEverywhere, translateEntityEverywhere, type TranslateContentArgs } from '../_shared/handlers/translate-content.ts';
 import { listContentOverlays } from '../_shared/handlers/content-overlay.ts';
 import { blogPostPath } from '../_shared/i18n/blog-address.ts';
@@ -122,6 +125,7 @@ import { handler as hEnrichCompanyProfile } from '../_shared/handlers/enrich-com
 import { handler as hExtractReceipt } from '../_shared/handlers/extract-receipt.ts';
 import { handler as hAnalyzeBrand } from '../_shared/handlers/analyze-brand.ts';
 import { handler as hDocsSync } from '../_shared/handlers/docs-sync.ts';
+import { loadOrgName } from '../_shared/org-name.ts';
 import { handler as hGithubContentSync } from '../_shared/handlers/github-content-sync.ts';
 import { handler as hUnsplashSearch } from '../_shared/handlers/unsplash-search.ts';
 import { handler as hFetchImage } from '../_shared/handlers/fetch-image.ts';
@@ -715,6 +719,7 @@ serve(async (req) => {
     if (agent_type === 'chat' && skill.scope === 'internal') {
       await logActivity(supabase, {
         agent: agent_type, skill_id: skill.id, skill_name: skill.name,
+        api_key_id: caller_api_key_id || null,
         input: args, output: { error: 'Scope violation' },
         trace_id: trace_id || undefined,
         status: 'failed', conversation_id, duration_ms: Date.now() - startTime,
@@ -909,6 +914,7 @@ serve(async (req) => {
     if (trustLevel === 'approve' && !bypassApproval) {
       const activityId = await logActivity(supabase, {
         agent: agent_type, skill_id: skill.id, skill_name: skill.name,
+        api_key_id: caller_api_key_id || null,
         input: args, output: {}, status: 'pending_approval',
         trace_id: trace_id || undefined,
         conversation_id, duration_ms: Date.now() - startTime,
@@ -993,6 +999,7 @@ serve(async (req) => {
         // A refused redemption leaves a trail: the operator sees WHY nothing ran.
         await logActivity(supabase, {
           agent: agent_type, skill_id: skill.id, skill_name: skill.name,
+        api_key_id: caller_api_key_id || null,
           input: args, output: { refused: verdict.reason, approval_request_id: verdict.requestId ?? null, claim: claimResult },
           trace_id: trace_id || undefined,
           status: 'failed', conversation_id, duration_ms: Date.now() - startTime,
@@ -1200,6 +1207,9 @@ serve(async (req) => {
 
       } else if (handler === 'internal:get_agent_trace') {
         result = await executeAgentTrace(supabase, args as Record<string, unknown>);
+
+      } else if (handler === 'internal:agent_day_report') {
+        result = await executeAgentDayReport(supabase, args as Record<string, unknown>);
 
       } else if (handler === 'internal:reset_sandbox') {
         result = await executeResetSandbox(supabase, args as Record<string, unknown>);
@@ -1680,6 +1690,7 @@ serve(async (req) => {
       // effectiveAgent, not agent_type: an approved staged write is credited to
       // the agent that proposed it (see where it is resolved above).
       agent: effectiveAgent, skill_id: skill.id, skill_name: skill.name,
+      api_key_id: caller_api_key_id || null,
       input: activityInput, output: result as Record<string, unknown>,
       status: handlerFailed ? 'failed' : handlerRefused ? 'refused' : 'success', conversation_id,
       duration_ms: Date.now() - startTime,
@@ -3886,10 +3897,11 @@ async function executeModuleUsageReport(supabase: SupabaseClient, args: Record<s
   const since = new Date(Date.now() - days * 86400000).toISOString();
   const only = Array.isArray(args.modules) ? new Set((args.modules as unknown[]).map(String)) : null;
 
-  const { data: rows, error: settingsErr } = await supabase.from('site_settings').select('key, value').in('key', ['modules', 'module_teardowns']);
+  const { data: rows, error: settingsErr } = await supabase.from('site_settings').select('key, value').in('key', ['modules', 'module_teardowns', 'module_keeps']);
   if (settingsErr) return { error: `Could not read site_settings: ${settingsErr.message}`, code: 'TRANSIENT', retryable: true };
   const current = settingOf<ModulesSetting>(rows as SettingRow[] | null, 'modules', {});
   const teardowns = settingOf<Record<string, { at?: string; reason?: string }>>(rows as SettingRow[] | null, 'module_teardowns', {});
+  const keeps = settingOf<Record<string, ModuleKeep>>(rows as SettingRow[] | null, 'module_keeps', {});
   if (!Object.keys(current).length) return { error: 'site_settings.modules is absent — nothing to judge.', code: 'NOT_FOUND' };
 
   const { data: autos, error: autosErr } = await supabase.from('agent_automations').select('skill_name, enabled').eq('enabled', true);
@@ -3919,9 +3931,14 @@ async function executeModuleUsageReport(supabase: SupabaseClient, args: Record<s
     }
     const skills = moduleSkillNames(ARTIFACT_MODULES, c.moduleId);
     let calls = 0, automationRuns = 0;
+    // How long the module has been on this instance: its oldest skill row
+    // (skills are disabled, never deleted, so the row dates the arrival).
+    let ageDays: number | null = null;
     if (skills.length) {
       calls = (await count('agent_activity', (q) => q.in('skill_name', skills).gte('created_at', since).not('agent', 'in', '(cron,automation)'))) ?? 0;
       automationRuns = (await count('agent_activity', (q) => q.in('skill_name', skills).gte('created_at', since).in('agent', ['cron', 'automation']))) ?? 0;
+      const { data: oldest } = await supabase.from('agent_skills').select('created_at').in('name', skills).order('created_at', { ascending: true }).limit(1).maybeSingle();
+      if (oldest?.created_at) ageDays = Math.floor((Date.now() - new Date(oldest.created_at).getTime()) / 86400000);
     }
     const evidence: ModuleEvidence = {
       module: c.moduleId,
@@ -3933,14 +3950,17 @@ async function executeModuleUsageReport(supabase: SupabaseClient, args: Record<s
       automations_enabled: skills.reduce((n, s) => n + (enabledAutos.get(s) ?? 0), 0),
       required_by: MODULE_CATALOG.filter((o) => o.requires.includes(c.moduleId) && on(o.moduleId)).map((o) => o.moduleId),
     };
-    const verdict = suggestOff(evidence);
+    const kept = keeps[c.moduleId] ?? null;
+    const verdict = suggestOff(evidence, { age_days: ageDays, kept });
     return {
       ...evidence,
       name: c.name,
       requires: c.requires,
       tables_with_rows: tableCounts,
       skills: skills.length,
+      age_days: ageDays,
       switched_off: teardowns[c.moduleId] ? { at: teardowns[c.moduleId].at ?? null, reason: teardowns[c.moduleId].reason ?? null } : null,
+      kept,
       suggest_off: verdict.candidate,
       why: verdict.why,
     };
@@ -3954,8 +3974,13 @@ async function executeModuleUsageReport(supabase: SupabaseClient, args: Record<s
     modules_total: report.length,
     suggest_off: candidates,
     automation_runs_on_candidates: report.filter((r) => r.suggest_off).reduce((n, r) => n + r.automation_runs, 0),
+    // Kept modules whose automations still run on nothing: the module stays,
+    // the runs are a separate question (manage_automations disable).
+    kept_with_idle_automations: report
+      .filter((r) => r.enabled && r.kept && r.rows === 0 && r.calls === 0 && r.automation_runs > 0 && r.automations_enabled > 0)
+      .map((r) => ({ module: r.module, automation_runs: r.automation_runs, automations_enabled: r.automations_enabled })),
     modules: report.sort((a, b) => Number(b.enabled) - Number(a.enabled) || Number(b.suggest_off) - Number(a.suggest_off) || a.module.localeCompare(b.module)),
-    note: 'rows counts the module\'s declared tables — configuration counts too (a payroll country profile, a seeded tax table), so read tables_with_rows before calling a module used. A module with rows: null declares no tables; judge it by calls and by what the business does. suggest_off is a proposal for the owner, never a decision: ask, then manage_modules.',
+    note: 'rows counts the module\'s declared tables — configuration counts too (a payroll country profile, a seeded tax table), so read tables_with_rows before calling a module used. A module with rows: null declares no tables; judge it by calls and by what the business does. suggest_off is a proposal for the owner, never a decision: ask, then manage_modules (disable, or keep — a kept module is not proposed again). A module younger than 30 days on the instance (age_days) is not judged yet.',
   };
 }
 
@@ -3965,19 +3990,48 @@ async function executeManageModules(
   ctx: { caller_user_id?: string | null; caller_agent_name?: string | null; agent_type?: string; attended?: boolean },
 ): Promise<unknown> {
   const action = String(args.action ?? '').trim();
-  if (action !== 'enable' && action !== 'disable') {
-    return { error: 'action is required: enable | disable (module_usage_report is the read).', code: 'MISSING_REQUIRED_PARAMETER', retryable: true };
+  if (action !== 'enable' && action !== 'disable' && action !== 'keep' && action !== 'unkeep') {
+    return { error: 'action is required: enable | disable | keep | unkeep (module_usage_report is the read).', code: 'MISSING_REQUIRED_PARAMETER', retryable: true };
   }
   const requested = Array.isArray(args.modules) ? (args.modules as unknown[]).map(String) : typeof args.modules === 'string' ? [String(args.modules)] : [];
   if (!requested.length) return { error: 'modules is required: the module ids (module_usage_report lists them).', code: 'MISSING_REQUIRED_PARAMETER', retryable: true };
   const reason = String(args.reason ?? '').trim().slice(0, 500) || null;
 
-  const { data: rows, error: readErr } = await supabase.from('site_settings').select('key, value').in('key', ['modules', 'module_teardowns']);
+  const { data: rows, error: readErr } = await supabase.from('site_settings').select('key, value').in('key', ['modules', 'module_teardowns', 'module_keeps']);
   if (readErr) return { error: `Could not read site_settings: ${readErr.message}`, code: 'TRANSIENT', retryable: true };
   const current = { ...settingOf<ModulesSetting>(rows as SettingRow[] | null, 'modules', {}) };
   type Teardown = { at: string; by: string; reason: string | null; skills: string[]; automation_ids: string[] };
   const teardowns = { ...settingOf<Record<string, Teardown>>(rows as SettingRow[] | null, 'module_teardowns', {}) };
+  const keeps = { ...settingOf<Record<string, ModuleKeep>>(rows as SettingRow[] | null, 'module_keeps', {}) };
   if (!Object.keys(current).length) return { error: 'site_settings.modules is absent.', code: 'NOT_FOUND' };
+  const by = ctx.caller_agent_name ?? (ctx.caller_user_id ? `user:${ctx.caller_user_id}` : (ctx.agent_type ?? 'agent'));
+
+  // keep / unkeep: the owner's answer to a suggest_off — recorded, nothing
+  // else changes. module_usage_report stops proposing a kept module.
+  if (action === 'keep' || action === 'unkeep') {
+    const plan = action === 'keep' ? planModuleKeep(current, requested) : { modules: [...new Set(requested.map((m) => m.trim()).filter(Boolean))], refusals: [] };
+    if (plan.refusals.length) return { error: describeRefusals(plan.refusals), code: 'INVALID_INPUT', retryable: true, refusals: plan.refusals };
+    const at = new Date().toISOString();
+    for (const id of plan.modules) {
+      if (action === 'keep') keeps[id] = { at, by, reason };
+      else delete keeps[id];
+    }
+    const { error: keepErr } = await supabase.from('site_settings').upsert({ key: 'module_keeps', value: keeps }, { onConflict: 'key' });
+    if (keepErr) return { error: `Could not write module_keeps: ${keepErr.message}`, code: 'TRANSIENT', retryable: true };
+    await supabase.from('audit_logs').insert(plan.modules.map((id) => ({
+      entity_type: 'module',
+      entity_id: id,
+      action: action === 'keep' ? 'module.kept' : 'module.unkept',
+      metadata: { by, reason, via: 'manage_modules' },
+    })));
+    return {
+      success: true,
+      changed: plan.modules.map((id) => ({ module: id, kept: action === 'keep' })),
+      note: action === 'keep'
+        ? 'Recorded: module_usage_report no longer proposes these modules (it names the decision in why). Their automations keep running — if they run on nothing, pausing them is manage_automations disable.'
+        : 'The keep is withdrawn: module_usage_report judges these modules on the evidence again.',
+    };
+  }
 
   const plan = planModuleChange(MODULE_CATALOG, current, action, requested, { attended: ctx.attended === true });
   if (plan.refusals.length) {
@@ -3996,7 +4050,6 @@ async function executeManageModules(
   const { error: writeErr } = await supabase.from('site_settings').upsert({ key: 'modules', value: current }, { onConflict: 'key' });
   if (writeErr) return { error: `Could not write the module row: ${writeErr.message}`, code: 'TRANSIENT', retryable: true };
 
-  const by = ctx.caller_agent_name ?? (ctx.caller_user_id ? `user:${ctx.caller_user_id}` : (ctx.agent_type ?? 'agent'));
   const changed: Array<Record<string, unknown>> = [];
 
   if (action === 'disable') {
@@ -4032,6 +4085,11 @@ async function executeManageModules(
     }
   }
   await supabase.from('site_settings').upsert({ key: 'module_teardowns', value: teardowns }, { onConflict: 'key' });
+  // A switch-off supersedes an earlier keep.
+  if (action === 'disable' && plan.modules.some((id) => keeps[id])) {
+    for (const id of plan.modules) delete keeps[id];
+    await supabase.from('site_settings').upsert({ key: 'module_keeps', value: keeps }, { onConflict: 'key' });
+  }
 
   // An enabled module's skills come back through the same reconciliation
   // every admin page load runs (inserts the missing, re-enables the hidden).
@@ -4079,6 +4137,63 @@ async function readAllSkills(supabase: SupabaseClient, columns: string): Promise
     if (page.length < PAGE) break;
   }
   return { rows: out };
+}
+
+/**
+ * Automations follow the edge deploy too (2026-11-04). A module's schedule
+ * used to be seeded only by a browser bootstrap (switching the module on, a
+ * template install) or by sync-skills.ts with DATABASE_URL — so a module that
+ * arrived on a live instance with the deploy never got it: "Feedback ping"
+ * reached no instance of the fleet, nor would "Overview dashboard".
+ *
+ * Same rules as bootstrapModule and sync-skills.ts: insert by NAME only, never
+ * update (an operator's retuned cron survives), only for enabled modules, and
+ * executor='flowpilot' only while FlowPilot is on. One more, because this runs
+ * on every admin page load: each name is seeded ONCE. The ledger
+ * (site_settings.seeded_automations) remembers what was seeded or found, so an
+ * automation a person deleted stays deleted.
+ */
+async function reconcileModuleAutomations(
+  supabase: SupabaseClient,
+  isEnabled: (moduleId: string) => boolean,
+  flowpilotEnabled: boolean,
+): Promise<{ inserted: string[]; already_present: number; failures: string[] } | { error: string }> {
+  type Auto = { name?: string; description?: string; trigger_type?: string; trigger_config?: unknown; skill_name?: string; skill_arguments?: unknown; executor?: string };
+  const groups = ((bundledModuleSkills as { automations?: Array<{ moduleId: string; automations: Auto[] }> }).automations) ?? [];
+  const { data: ledgerRow, error: ledgerErr } = await supabase.from('site_settings').select('value').eq('key', 'seeded_automations').maybeSingle();
+  if (ledgerErr) return { error: `Could not read the automation ledger: ${ledgerErr.message}` };
+  const { data: rows, error: readErr } = await supabase.from('agent_automations').select('name');
+  if (readErr) return { error: `Could not read agent_automations: ${readErr.message}` };
+  const present = new Set((rows ?? []).map((r: { name: string }) => r.name));
+  const ledger = new Set<string>(Array.isArray((ledgerRow?.value as { names?: unknown })?.names) ? ((ledgerRow!.value as { names: string[] }).names) : []);
+  const before = ledger.size;
+  const inserted: string[] = [];
+  const failures: string[] = [];
+  let alreadyPresent = 0;
+  for (const g of groups) {
+    if (!isEnabled(g.moduleId)) continue;
+    for (const a of g.automations ?? []) {
+      if (!a?.name || !a.skill_name) continue;
+      const executor = a.executor ?? 'platform';
+      if (executor === 'flowpilot' && !flowpilotEnabled) continue;
+      if (present.has(a.name)) { alreadyPresent++; ledger.add(a.name); continue; }
+      if (ledger.has(a.name)) continue; // seeded once and since removed by a person: stays removed
+      const { error } = await supabase.from('agent_automations').insert({
+        name: a.name, description: a.description ?? null, trigger_type: a.trigger_type ?? 'cron',
+        trigger_config: a.trigger_config ?? {}, skill_name: a.skill_name, skill_arguments: a.skill_arguments ?? {},
+        executor, enabled: true,
+      });
+      if (error) { failures.push(`${a.name}: ${error.message}`); continue; }
+      inserted.push(`${a.name} (${g.moduleId})`);
+      ledger.add(a.name);
+    }
+  }
+  if (ledger.size !== before) {
+    const { error } = await supabase.from('site_settings').upsert(
+      { key: 'seeded_automations', value: { names: [...ledger].sort() } }, { onConflict: 'key' });
+    if (error) failures.push(`ledger: ${error.message}`);
+  }
+  return { inserted, already_present: alreadyPresent, failures };
 }
 
 async function executeSyncSkillsFromCode(supabase: SupabaseClient, args: Record<string, unknown>): Promise<unknown> {
@@ -4141,6 +4256,11 @@ async function executeSyncSkillsFromCode(supabase: SupabaseClient, args: Record<
       : 'site_settings.modules is absent or empty — the server reads every module as OFF, so this coverage covers the platform layer alone. Seed the row (ensure_modules_settings) before trusting it.',
   });
 
+  // Automations reconcile on every run — cheap (two reads, writes only when
+  // something is missing) and outside the skills' fast path, so a deploy that
+  // only adds a schedule still reaches the instance.
+  const automations = await reconcileModuleAutomations(supabase, isEnabled, isEnabled('flowpilot'));
+
   // ── 3. Snabbväg — men bara när MÄTNINGEN håller med stämpeln ──────────────
   //     Hash-lika artefakt räcker inte: den säger att koden är densamma, inte
   //     att instansen bär den. Täckningen måste vara hel också.
@@ -4153,6 +4273,7 @@ async function executeSyncSkillsFromCode(supabase: SupabaseClient, args: Record<
     return {
       status: 'unchanged',
       sha,
+      automations,
       coverage: coverage(missingBefore, hiddenBefore, rowsBefore),
       note:
         `Verified, not assumed: all ${expected.size} skills the ${
@@ -4262,6 +4383,7 @@ async function executeSyncSkillsFromCode(supabase: SupabaseClient, args: Record<
     status: complete ? 'synced' : 'incomplete',
     sha,
     stamped: complete,
+    automations,
     // Bevisbärande: vad som saknades, vad som skrevs, vad som står kvar.
     before: coverage(missingBefore, hiddenBefore, rowsBefore),
     wrote: {
@@ -5383,6 +5505,102 @@ function feedbackHost(u: string | null | undefined): string {
  * whose roles narrow what list/read return (the viewer). Agents can add,
  * never take away — there is no archive, restore or rename skill.
  */
+/** Stamp the first requester (a signed-in person) on a report the platform just published; nothing when nobody is at the keyboard. */
+async function markRequester(supabase: SupabaseClient, published: unknown, viewer: string | null): Promise<void> {
+  const slug = (published as { success?: boolean; slug?: string } | null)?.slug;
+  if (!viewer || !slug || (published as { success?: boolean }).success !== true) return;
+  const { error } = await supabase.rpc('report_mark_requester', { p_slug: slug, p_user: viewer });
+  if (error) console.error('[reports] requester stamp failed:', error.message);
+}
+
+/**
+ * The scheduled reports (docs/modules/reports.md): the weekly digest and the
+ * month close, published by the platform on a clock — or on request. The
+ * figures come from the same reads a person runs (weekly_business_digest,
+ * month_close_checklist); the renderer is pure, so a run with nothing new
+ * adds no version.
+ */
+async function executeScheduledReport(
+  supabase: SupabaseClient, skillName: string, args: Record<string, unknown>,
+  ctx: { agent_type?: string; caller_agent_name?: string | null }, viewer: string | null,
+  call: (fn: string, params: Record<string, unknown>) => Promise<unknown>,
+): Promise<unknown> {
+  const kind = ctx.agent_type === 'mcp' ? 'mcp' : ctx.agent_type === 'flowwork' ? 'flowwork' : 'flowpilot';
+  const by = kind === 'mcp' ? (ctx.caller_agent_name || 'External agent') : kind === 'flowwork' ? 'Flowwork' : 'FlowPilot';
+  const home = await loadHomeCached(supabase);
+  const f = homeFormat(home, 'en', { audience: 'admin' });
+  const fmt: ScheduledFormat = {
+    money: (cents) => f.money(cents, undefined),
+    date: (d) => f.dateTime(typeof d === 'string' ? new Date(d) : d, { year: 'numeric', month: 'short', day: 'numeric' }),
+  };
+  let askedBy: string | null = null;
+  if (viewer) {
+    const { data: person, error: personErr } = await supabase.from('profiles').select('full_name, email').eq('id', viewer).maybeSingle();
+    if (personErr) console.error('[reports] requester lookup failed:', personErr.message);
+    askedBy = (person?.full_name as string | undefined)?.trim() || (person?.email as string | undefined) || null;
+  }
+  const publish = async (r: { slug: string; title: string; description: string; category: string; note: string; content: string; audience_module?: string; subject_type?: string; subject_id?: string }, tags: string[]) => {
+    const published = await call('report_publish', {
+      p_title: r.title, p_content: r.content, p_format: 'markdown', p_slug: r.slug,
+      p_description: r.description, p_category: r.category, p_tags: tags, p_note: r.note,
+      p_expected_version: null, p_requested_by: askedBy, p_audience_module: r.audience_module ?? null,
+      p_subject_type: r.subject_type ?? null, p_subject_id: r.subject_id ?? null,
+      p_published_by: by, p_published_by_kind: kind,
+    });
+    await markRequester(supabase, published, viewer);
+    return published;
+  };
+
+  if (skillName === 'publish_weekly_digest') {
+    const { data, error } = await supabase.rpc('weekly_business_digest', { p_period: 'week', p_format: 'json' });
+    if (error) return { error: `weekly_business_digest failed: ${error.message}`, status: 'failed' };
+    return await publish(weeklyDigestReport((data ?? {}) as Record<string, number>, new Date(), fmt), ['digest', 'weekly']);
+  }
+
+  // The month close: accounting must be on, and the month must lie in a
+  // fiscal year the checklist knows — a broken fiscal year keys its months by
+  // the year it ends in, so the calendar guess is tried first, the next key after.
+  const { data: modRow, error: modErr } = await supabase.from('site_settings').select('value').eq('key', 'modules').maybeSingle();
+  if (modErr) return { error: `modules read failed: ${modErr.message}`, status: 'failed' };
+  const mods = (modRow?.value ?? {}) as Record<string, { enabled?: boolean } | undefined>;
+  if (mods.accounting?.enabled !== true) return { skipped: 'The accounting module is off — there is no month to close.' };
+  const prev = previousMonth(new Date());
+  const month = Number(args.month ?? prev.month);
+  const yearArg = args.year === undefined || args.year === null ? null : Number(args.year);
+  let checklist: Record<string, unknown> | null = null;
+  let lastError = '';
+  for (const year of yearArg !== null ? [yearArg] : [prev.year, prev.year + 1]) {
+    const { data, error } = await supabase.rpc('month_close_checklist', { p_year: year, p_month: month });
+    if (!error && data) { checklist = data as Record<string, unknown>; break; }
+    lastError = error?.message ?? 'no answer';
+    if (error && !/not in fiscal year/i.test(error.message)) break;
+  }
+  if (!checklist) return { error: `month_close_checklist failed: ${lastError}`, status: 'failed', hint: 'Pass year (the fiscal year key) and month 1–12.' };
+  const r = monthCloseReport(checklist as unknown as Parameters<typeof monthCloseReport>[0], fmt);
+  return await publish(r, ['month-close', r.subject_id]);
+}
+
+/**
+ * agent_day_report — what a connected agent did since a time (agent_day()):
+ * calls, outcomes, skills, reports published, the steps. The agent is named
+ * by its id or its name as shown under Agents.
+ */
+async function executeAgentDayReport(supabase: SupabaseClient, args: Record<string, unknown>): Promise<unknown> {
+  const ref = typeof args.agent === 'string' ? args.agent.trim() : '';
+  if (!ref) return { error: 'agent is required — the connected agent\'s name (as under Agents) or id', code: 'MISSING_REQUIRED_PARAMETER', retryable: false };
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref);
+  const q = supabase.from('a2a_peers').select('id, name').limit(5);
+  const { data: peers, error: peerErr } = await (isUuid ? q.eq('id', ref) : q.ilike('name', ref));
+  if (peerErr) return { error: `agent lookup failed: ${peerErr.message}`, status: 'failed' };
+  if (!peers?.length) return { error: `No connected agent named ${ref}`, code: 'NOT_FOUND', retryable: false, hint: 'The names are under Agents — pass the name as shown there, or the id.' };
+  if (peers.length > 1) return { error: `${peers.length} agents are named ${ref}`, code: 'INVALID_INPUT', retryable: false, hint: `Pass the id: ${peers.map((p: { id: string; name: string }) => `${p.name} = ${p.id}`).join(', ')}` };
+  const hours = Math.min(Math.max(Number(args.hours ?? 24) || 24, 1), 24 * 90);
+  const since = new Date(Date.now() - hours * 3600_000).toISOString();
+  const { data, error } = await supabase.rpc('agent_day', { p_peer_id: peers[0].id, p_since: since, p_limit: Math.min(Math.max(Number(args.limit ?? 50) || 50, 1), 200) });
+  if (error) return { error: `agent_day failed: ${error.message}`, status: 'failed' };
+  return { ...(data as Record<string, unknown>), hours };
+}
+
 async function executeReportsAction(
   supabase: SupabaseClient,
   skillName: string,
@@ -5390,6 +5608,10 @@ async function executeReportsAction(
   ctx: { agent_type?: string; caller_agent_name?: string | null; attended_user_id?: string | null },
 ): Promise<unknown> {
   const s = (k: string) => (typeof args[k] === 'string' && (args[k] as string).trim() ? (args[k] as string).trim() : null);
+  // One spelling per subject kind ("Company", "fiscal year" → company, fiscal_year):
+  // the company page asks for 'company', and a report filed under 'Company' would
+  // never be shown there.
+  const subjectType = () => s('subject_type')?.toLowerCase().replace(/[\s-]+/g, '_') ?? null;
   const n = (k: string) => (args[k] === undefined || args[k] === null || args[k] === '' ? null : Number(args[k]));
   const list = (k: string) => (Array.isArray(args[k]) ? (args[k] as unknown[]).map(String) : typeof args[k] === 'string' && args[k] ? String(args[k]).split(',').map((t) => t.trim()).filter(Boolean) : null);
   const viewer = ctx.attended_user_id ?? null;
@@ -5437,19 +5659,53 @@ async function executeReportsAction(
       if (personErr) console.error('[reports] requester lookup failed:', personErr.message);
       requestedBy = (person?.full_name as string | undefined)?.trim() || (person?.email as string | undefined) || requestedBy;
     }
-    return await call('report_publish', {
+    const published = await call('report_publish', {
       p_title: s('title'), p_content: typeof args.content === 'string' ? args.content : null,
       p_format: s('format') ?? 'markdown', p_slug: s('slug'), p_description: s('description'),
       p_category: s('category'), p_tags: list('tags'), p_note: s('note'),
       p_expected_version: n('expected_version'), p_requested_by: requestedBy,
-      p_audience_module: s('audience_module'), p_subject_type: s('subject_type'), p_subject_id: s('subject_id'),
+      p_audience_module: s('audience_module'), p_subject_type: subjectType(), p_subject_id: s('subject_id'),
       p_published_by: by, p_published_by_kind: kind,
+    });
+    // "Mine" on Reports: the person who first asked for it, stamped by the
+    // platform, once. A lens, never a wall (ownership-and-coverage.md).
+    await markRequester(supabase, published, viewer);
+    return published;
+  }
+  if (skillName === 'publish_weekly_digest' || skillName === 'publish_month_close_report') {
+    return await executeScheduledReport(supabase, skillName, args, ctx, viewer, call);
+  }
+  if (skillName === 'publish_overview_dashboard') {
+    // The standard dashboard: built from the site's language and the modules
+    // that are on, published through the same rules as any report. Run again
+    // with nothing changed, it adds no version.
+    let lang = 'en';
+    try { lang = (await siteLanguages(supabase)).default; } catch (e) { console.error('[reports] site language read failed:', (e as Error).message); }
+    const { data: modRow, error: modErr } = await supabase.from('site_settings').select('value').eq('key', 'modules').maybeSingle();
+    if (modErr) console.error('[reports] modules read failed:', modErr.message);
+    const mods = (modRow?.value ?? {}) as Record<string, { enabled?: boolean } | undefined>;
+    const d = overviewDashboard(lang, { accounting: mods.accounting?.enabled === true });
+    let askedBy: string | null = null;
+    if (viewer) {
+      const { data: person, error: personErr } = await supabase.from('profiles').select('full_name, email').eq('id', viewer).maybeSingle();
+      if (personErr) console.error('[reports] requester lookup failed:', personErr.message);
+      askedBy = (person?.full_name as string | undefined)?.trim() || (person?.email as string | undefined) || null;
+    }
+    const kind = ctx.agent_type === 'mcp' ? 'mcp' : ctx.agent_type === 'flowwork' ? 'flowwork' : ctx.agent_type === 'flowpilot' ? 'flowpilot' : 'agent';
+    const by = kind === 'mcp' ? (ctx.caller_agent_name || 'External agent') : kind === 'flowwork' ? 'Flowwork' : kind === 'flowpilot' ? 'FlowPilot' : 'FlowPilot';
+    return await call('report_publish', {
+      p_title: d.title, p_content: d.content, p_format: 'markdown', p_slug: d.slug,
+      p_description: d.description, p_category: d.category, p_tags: ['dashboard'],
+      p_note: 'The overview dashboard, rebuilt from the modules that are on',
+      p_expected_version: null, p_requested_by: askedBy, p_audience_module: null,
+      p_subject_type: null, p_subject_id: null, p_published_by: by, p_published_by_kind: kind === 'agent' ? 'flowpilot' : kind,
     });
   }
   if (skillName === 'list_reports') {
     return await call('report_list', {
       p_category: s('category'), p_search: s('search'), p_include_archived: args.include_archived === true,
-      p_subject_type: s('subject_type'), p_subject_id: s('subject_id'), p_limit: n('limit') ?? 50, p_viewer: viewer,
+      p_subject_type: subjectType(), p_subject_id: s('subject_id'), p_limit: n('limit') ?? 50, p_viewer: viewer,
+      p_mine: args.mine === true,
     });
   }
   if (skillName === 'get_report') {
@@ -5539,10 +5795,14 @@ async function executeFeedbackAction(
       if (String(Deno.env.get('FEEDBACK_SHARE_USAGE') ?? '').trim().toLowerCase() === 'false') return { skipped: 'FEEDBACK_SHARE_USAGE=false in the environment — nothing was sent.' };
       const version = await feedbackVersion(supabase);
       const instance_id = await feedbackInstanceId(supabase);
-      const payload = { instance_id, site_url: siteUrl || null, ...version };
+      // The site's name travels too — the one Branding (organisation name) or
+      // Business Identity (company name) already holds, so the fleet view reads
+      // "Nordbrygg", not a host, and three localhost rows tell apart. No setting.
+      const site_name = (await loadOrgName(supabase, '')) || null;
+      const payload = { instance_id, site_url: siteUrl || null, site_name, ...version };
       if (receiveHere) {
         const { error } = await supabase.from('feedback_instances').upsert({
-          instance_id, site_url: payload.site_url, app: version.app, skills_sha: version.skills_sha, migration_head: version.migration_head,
+          instance_id, site_url: payload.site_url, site_name, app: version.app, skills_sha: version.skills_sha, migration_head: version.migration_head,
           modules_enabled: version.modules_enabled, module_count: version.module_count, last_seen_at: new Date().toISOString(),
         }, { onConflict: 'instance_id' });
         if (error) throw new Error(`Ping record failed: ${error.message}`);
@@ -5557,7 +5817,7 @@ async function executeFeedbackAction(
       const action = String(a.action ?? 'list');
       if (action === 'instances') {
         const { data, error } = await supabase.from('feedback_instances')
-          .select('instance_id, site_url, app, skills_sha, migration_head, modules_enabled, module_count, first_seen_at, last_seen_at, ping_count')
+          .select('instance_id, site_url, site_name, app, skills_sha, migration_head, modules_enabled, module_count, first_seen_at, last_seen_at, ping_count')
           .order('last_seen_at', { ascending: false }).limit(500);
         if (error) throw new Error(`Instances read failed: ${error.message}`);
         const rows = (data ?? []) as Array<{ last_seen_at: string; skills_sha: string | null }>;
@@ -12177,12 +12437,18 @@ async function executeDbAction(
     }
 
     case 'profiles': {
-      const { action = 'list', limit = 50 } = args as any;
+      const { action = 'list', limit = 50, role: roleFilter } = args as any;
       if (action === 'list') {
-        const { data, error } = await supabase.from('profiles')
+        // A role filter narrows first, so the limit counts matching people.
+        let query = supabase.from('profiles')
           .select('id, email, full_name, created_at')
           .order('created_at', { ascending: false })
           .limit(limit);
+        if (roleFilter) {
+          const { data: holders } = await supabase.from('user_roles').select('user_id').eq('role', roleFilter);
+          query = query.in('id', ((holders ?? []) as Array<{ user_id: string }>).map((h) => h.user_id));
+        }
+        const { data, error } = await query;
         if (error) throw new Error(`List users failed: ${error.message}`);
         const users = data || [];
         // Roles live in user_roles (multi-role). Join in a second query.
@@ -12197,14 +12463,22 @@ async function executeDbAction(
             (rolesByUser[r.user_id] ||= []).push(r.role);
           }
         }
-        return {
-          users: users.map((u: any) => ({
-            ...u,
-            roles: rolesByUser[u.id] ?? [],
-            role: (rolesByUser[u.id] ?? [])[0] ?? null,
-          })),
-          count: users.length,
-        };
+        // When each person last signed in / was last active — auth.users is
+        // not public, so through the admin definer function the Users table
+        // reads too (admin_user_sign_ins).
+        const signIns: Record<string, { last_sign_in_at: string | null; last_active_at: string | null }> = {};
+        const { data: signInRows } = await supabase.rpc('admin_user_sign_ins');
+        for (const r of (signInRows ?? []) as Array<{ user_id: string; last_sign_in_at: string | null; last_active_at: string | null }>) {
+          signIns[r.user_id] = { last_sign_in_at: r.last_sign_in_at, last_active_at: r.last_active_at };
+        }
+        const listed = users.map((u: any) => ({
+          ...u,
+          roles: rolesByUser[u.id] ?? [],
+          role: (rolesByUser[u.id] ?? [])[0] ?? null,
+          last_sign_in_at: signIns[u.id]?.last_sign_in_at ?? null,
+          last_active_at: signIns[u.id]?.last_active_at ?? null,
+        }));
+        return { users: listed, count: listed.length };
       }
       return { error: `Unknown profiles action: ${action}` };
     }
@@ -17796,6 +18070,8 @@ async function logActivity(
     trace_id?: string;
     /** 'notify' marks a run on trust level notify: it stays in "acted on its own" until acknowledged. */
     log_type?: string;
+    /** The connected agent's key, when the call came over MCP — what agent_day() reads. */
+    api_key_id?: string | null;
   },
 ): Promise<string | null> {
   const { data, error } = await supabase.from('agent_activity').insert({
@@ -17816,6 +18092,7 @@ async function logActivity(
     // as 2.6 hours because someone opened its trace (2026-10-08).
     trace_id: activity.trace_id || null,
     ...(activity.log_type ? { log_type: activity.log_type } : {}),
+    ...(activity.api_key_id ? { api_key_id: activity.api_key_id } : {}),
   }).select('id').single();
 
   // 'refused' joined the enum in 20261028090037; on an instance whose

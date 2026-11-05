@@ -1,6 +1,6 @@
 import { defineModule } from '@/lib/module-def';
 import { z } from 'zod';
-import type { SkillSeed } from '@/lib/module-bootstrap';
+import type { AutomationSeed, SkillSeed } from '@/lib/module-bootstrap';
 
 /**
  * Reports — what an agent worked out, as a page a person opens (2026-11-03).
@@ -52,7 +52,14 @@ Month, Transport, Storage
 2026-07, 298000, 84000
 2026-08, 312000, 86000
 \`\`\`
-(chart kinds: bar, stacked, line; first column is the axis, the rest are series, numbers without spaces)
+(chart kinds: bar, stacked, line, pie; first column is the axis, the rest are series, numbers without spaces)
+
+\`\`\`chart pie title="Cost by kind"
+Kind, Share
+Transport, 610000
+Storage, 170000
+\`\`\`
+(a pie: one slice per row, the first series its size — one measure, no time axis)
 
 ::details Method
 How the numbers were found, which sources, what was left out.
@@ -65,7 +72,7 @@ Live figures — fetched when the report is opened, so a report of live blocks i
  "kpis": [{"path": "summary.total", "label": "Need attention"}, {"path": "summary.high", "label": "High"}],
  "table": {"rows": "findings", "columns": [{"path": "label", "label": "Finding"}, {"path": "count", "label": "Count"}], "limit": 10}}
 \`\`\`
-One JSON object: skill (a READ skill — list_/get_/check_/…, or manage_* with a read action in args) and args, then what to draw from its answer: kpis [{path, label, unit?, divide?}], chart {type bar|stacked|line, rows (path to a list), axis, series [..], unit?, divide?}, table {rows, columns [{path, label}], limit?}. Paths are dot paths into the skill's answer ("summary.total", "rows.0.amount") — run the skill once first and read its answer. divide: 100 turns cents into kronor. It runs as the person who opens the report, so they see what their roles allow; a block whose skill is not a read, does not exist or is malformed refuses the publish (LIVE_BLOCK_INVALID) with the reason. Use live blocks for figures that change (status, open items, this month); written figures for what a report concluded at a date.
+One JSON object: skill (a READ skill — list_/get_/check_/…, or manage_* with a read action in args) and args, then what to draw from its answer: kpis [{path, label, unit?, divide?}], chart {type bar|stacked|line|pie, rows (path to a list), axis, series [..], unit?, divide?}, table {rows, columns [{path, label}], limit?}. Paths are dot paths into the skill's answer ("summary.total", "rows.0.amount") — run the skill once first and read its answer. divide: 100 turns cents into kronor. It runs as the person who opens the report, so they see what their roles allow; a block whose skill is not a read, does not exist or is malformed refuses the publish (LIVE_BLOCK_INVALID) with the reason. Use live blocks for figures that change (status, open items, this month); written figures for what a report concluded at a date.
 
 Rules: figures come from a skill you ran, never from memory — say which. Write in the site's language. A report answers one question; link related reports with [title](/admin/reports/<slug>). A full HTML page (format: html) is shown sandboxed: its scripts run but cannot reach the reader's session.`;
 
@@ -80,8 +87,8 @@ const PUBLISH_PARAMS = {
   note: { type: 'string', description: 'What changed in this version, for the version list.' },
   expected_version: { type: 'number', description: 'The version you built on (from get_report). A newer one refuses with STALE_VERSION instead of undoing someone else\'s work.' },
   requested_by: { type: 'string', description: 'Who asked, when you are an agent several people talk to. Shown next to your name, never instead of it. A signed-in person is filled in by the platform.' },
-  audience_module: { type: 'string', description: 'Narrow who may read it to the roles that module is granted to: accounting for the books, hr for people, deals for the pipeline. Leave out for everyone with Reports.' },
-  subject_type: { type: 'string', description: 'What the report belongs to: company, deal, project, contact, fiscal_year, period.' },
+  audience_module: { type: 'string', description: 'Narrow who may read it to the roles that module is granted to: accounting for the books, hr for people, deals for the pipeline. Set it to the module your WRITTEN figures came from (payroll, ledger, salaries) — a live block protects itself, a written figure does not. Leave out for everyone with Reports.' },
+  subject_type: { type: 'string', description: 'What the report belongs to: company, deal, project, contact, fiscal_year, period. A company, deal, project or contact report is also shown on that page.' },
   subject_id: { type: 'string', description: 'The id (or the year/period) of that subject.' },
 } as const;
 
@@ -89,7 +96,7 @@ const REPORT_SKILLS: SkillSeed[] = [
   {
     name: 'publish_report',
     description:
-      'Publish a report — what you worked out (a quarter\'s costs, a reconciliation, a pipeline review, an incident write-up) as a page staff open under Reports, or a new version of one. Every publish is a version; nothing is overwritten. Use when: an answer is worth keeping and reading as a page rather than a chat message; the owner asks for a report, a summary to share or a write-up; you finish recurring analysis (month close, weekly review). NOT for: knowledge about how things are done (the wiki: manage_wiki_page); a customer-facing page (pages); a blog post.',
+      'Publish a report — what you worked out (a quarter\'s costs, a reconciliation, a pipeline review, an incident write-up) as a page staff open under Reports, or a new version of one. Markdown with report blocks: KPI tiles (::kpis), bar / stacked / line / pie charts (```chart), notes, collapsible details and live figures (```live) — read the instructions before writing one, a report is rarely only prose. Every publish is a version; nothing is overwritten. Use when: an answer is worth keeping and reading as a page rather than a chat message; the owner asks for a report, a summary to share or a write-up; you finish recurring analysis (month close, weekly review). NOT for: knowledge about how things are done (the wiki: manage_wiki_page); a customer-facing page (pages); a blog post.',
     category: 'content',
     handler: 'internal:reports',
     scope: 'internal',
@@ -103,7 +110,7 @@ const REPORT_SKILLS: SkillSeed[] = [
       reversal: 'A person archives the report under Reports, or restores an earlier version; every version is kept.',
       function: {
         name: 'publish_report',
-        description: 'Publish a report (markdown with report blocks, or HTML), or a new version of one.',
+        description: 'Publish a report (markdown with report blocks — kpis, bar/stacked/line/pie charts, notes, details, live figures — or HTML), or a new version of one.',
         parameters: { type: 'object', properties: PUBLISH_PARAMS, required: ['title', 'content'] },
       },
     },
@@ -129,6 +136,7 @@ const REPORT_SKILLS: SkillSeed[] = [
             include_archived: { type: 'boolean' },
             subject_type: { type: 'string' },
             subject_id: { type: 'string' },
+            mine: { type: 'boolean', description: 'Only the reports the person at the keyboard asked for (a lens, like Mine on projects). Nothing when no person is at the keyboard.' },
             limit: { type: 'number', description: 'Default 50, max 200.' },
           },
         },
@@ -206,6 +214,103 @@ const REPORT_SKILLS: SkillSeed[] = [
       },
     },
   },
+  {
+    name: 'publish_overview_dashboard',
+    description:
+      'Publish (or keep current) the overview dashboard "The state of things" / "Läget just nu" — one report of live blocks: what needs attention in the books (check_books, when accounting is on) and in operations (check_operations), fetched as the reader when it is opened. Built from the site\'s language and the modules that are on; run again with nothing changed it adds no version. Use when: the owner asks for a dashboard, an overview or "the state of things"; after modules were switched on or off. NOT for: a report you wrote yourself (publish_report); reading the figures now (check_books, check_operations).',
+    category: 'content',
+    handler: 'internal:reports',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      risk: 'low',
+      reversible: true,
+      reversal: 'A person archives the report under Reports; every version is kept.',
+      function: {
+        name: 'publish_overview_dashboard',
+        description: 'Publish or refresh the standard overview dashboard (live blocks for the books and operations).',
+        parameters: { type: 'object', properties: {} },
+      },
+    },
+  },
+  {
+    name: 'publish_weekly_digest',
+    description:
+      'Publish this week\'s digest as a report — page views, leads, bookings, orders, invoices and deals of the last seven days (weekly_business_digest), one report "Weekly digest" with a version a week, under Reports. Runs by the "Weekly digest report" automation on Fridays. Use when: the owner asks for the week in a page; a week ended and nothing was published. NOT for: the figures in chat (weekly_business_digest); a report you wrote yourself (publish_report).',
+    category: 'content',
+    handler: 'internal:reports',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      risk: 'low',
+      reversible: true,
+      reversal: 'A person archives the report under Reports; every version is kept.',
+      function: {
+        name: 'publish_weekly_digest',
+        description: 'Publish the weekly digest as a report version (a version a week).',
+        parameters: { type: 'object', properties: {} },
+      },
+    },
+  },
+  {
+    name: 'publish_month_close_report',
+    description:
+      'Publish the month close as a report — the close checklist for one month (month_close_checklist: what passed, what blocks, the exact next call) as a page "Month close — <month>" for accounting staff, with a live block that shows the checklist as it stands when opened. Default: the previous month. Runs by the "Month close report" automation on the 3rd. Use when: a month ended; the owner asks how the close stands as a page; after close_accounting_period, to record it. NOT for: closing the month (close_accounting_period); the checklist in chat (month_close_checklist).',
+    category: 'content',
+    handler: 'internal:reports',
+    scope: 'internal',
+    trust_level: 'auto',
+    tool_definition: {
+      type: 'function',
+      risk: 'low',
+      reversible: true,
+      reversal: 'A person archives the report under Reports; every version is kept.',
+      function: {
+        name: 'publish_month_close_report',
+        description: 'Publish (or refresh) the month-close report for one month; default the previous month.',
+        parameters: {
+          type: 'object',
+          properties: {
+            year: { type: 'integer', description: 'Fiscal year key (the calendar year the fiscal year ends in). Default: the previous month\'s.' },
+            month: { type: 'integer', description: 'Calendar month 1–12. Default: the previous month.' },
+          },
+        },
+      },
+    },
+  },
+];
+
+/** The dashboard is there from day one and follows the modules: once a day, a no-op when nothing changed. */
+const REPORT_AUTOMATIONS: AutomationSeed[] = [
+  {
+    name: 'Weekly digest report',
+    description: 'Every Friday afternoon, publish the week\'s digest as a version of the "Weekly digest" report.',
+    trigger_type: 'cron',
+    trigger_config: { cron: '5 16 * * 5', expression: '5 16 * * 5' },
+    skill_name: 'publish_weekly_digest',
+    skill_arguments: {},
+    executor: 'platform',
+  },
+  {
+    name: 'Month close report',
+    description: 'On the 3rd, publish the previous month\'s close checklist as a report for accounting staff (skipped when accounting is off).',
+    trigger_type: 'cron',
+    trigger_config: { cron: '17 6 3 * *', expression: '17 6 3 * *' },
+    skill_name: 'publish_month_close_report',
+    skill_arguments: {},
+    executor: 'platform',
+  },
+  {
+    name: 'Overview dashboard',
+    description: 'Once a day, publish the overview dashboard (Reports → "The state of things") if it is missing or the enabled modules changed. Its figures are live, so nothing else needs to run.',
+    trigger_type: 'cron',
+    trigger_config: { cron: '41 4 * * *', expression: '41 4 * * *' },
+    skill_name: 'publish_overview_dashboard',
+    skill_arguments: {},
+    executor: 'platform',
+  },
 ];
 
 export const reportsModule = defineModule<Input, Output>({
@@ -223,6 +328,7 @@ export const reportsModule = defineModule<Input, Output>({
   skills: REPORT_SKILLS.map((s) => s.name),
   data: { tables: ['reports', 'report_versions'] },
   skillSeeds: REPORT_SKILLS,
+  automations: REPORT_AUTOMATIONS,
   async publish(_input: Input): Promise<Output> {
     return { success: true };
   },

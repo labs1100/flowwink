@@ -71,6 +71,20 @@ A report can belong to something in the business (`subject_type` +
 `subject_id`: a company, a deal, a project, a fiscal year), and `list_reports`
 filters on it.
 
+## Where reports show up
+
+- **On their subject's page.** A report with `subject_type` `company`, `deal`,
+  `project` or `contact` is listed on that company, deal or project page (a
+  *Reports* card, `SubjectReports`), and the report links back to it
+  (`src/lib/report-subjects.ts`). The card is absent when there is none, or
+  when the reader's role may read none. The type is stored lower-case with
+  underscores (`Company`, `fiscal year` → `company`, `fiscal_year`), so a page
+  always finds its reports.
+- **In the accounting workspace.** *Reports → Written reports* opens
+  `/admin/reports?for=accounting`: the reports published with
+  `audience_module: accounting`, inside the workspace. `?for=<module>` works
+  for any module.
+
 ## The report format
 
 `format: markdown` (default): plain markdown (headings, lists, tables, links)
@@ -102,7 +116,8 @@ From accounting_reports and check_books.
 ````
 
 Note kinds: `info`, `ok`, `warn`, `bad`. Chart kinds: `bar`, `stacked`,
-`line`. In a chart, the first column is the axis and the rest are series.
+`line`, `pie`. In a chart, the first column is the axis and the rest are
+series; a pie has one slice per row and its first series is the size.
 
 ### Live figures — a report as a dashboard
 
@@ -120,7 +135,7 @@ shows the block as code.
 
 - **One JSON object:** `skill` and `args`, then what to draw from the answer:
   - `kpis`: `[{path, label, unit?, divide?}]`
-  - `chart`: `{type bar|stacked|line, rows, axis, series, unit?, divide?}`
+  - `chart`: `{type bar|stacked|line|pie, rows, axis, series, unit?, divide?}`
   - `table`: `{rows, columns [{path, label}], limit?}`
 - **Paths** are dot paths into the skill's answer (`summary.total`,
   `rows.0.amount`). `divide: 100` turns cents into currency units.
@@ -137,6 +152,24 @@ shows the block as code.
   `LIVE_BLOCK_INVALID` and the reason, and nothing is published.
 - Each block shows when it was fetched and has a refresh button.
 
+### The overview dashboard
+
+**Reports → "Läget just nu" / "The state of things"** (`/admin/reports/overview`)
+is a standard dashboard made only of live blocks. It shows what needs attention
+in the books (`check_books`, when accounting is on: findings and upcoming
+filings) and in operations (`check_operations`: sales, receivables, contracts,
+support, field service, automations).
+
+- FlowPilot publishes it with `publish_overview_dashboard`, in the site's
+  language, built from the modules that are on.
+- A daily automation ("Overview dashboard", 04:41) keeps it present. Running it
+  again with nothing changed adds no version.
+- The automation reaches an existing instance with the edge deploy: the admin
+  shell's skill sync inserts missing automations for enabled modules (see
+  CLAUDE.md, Deployment). Until it has run, an admin creates the dashboard with
+  **Create the overview dashboard** under Reports, or asks FlowPilot.
+- Each block shows only what the reader's role allows.
+
 Use live blocks for figures that change, such as status, open items or this
 month. Use written figures for what a report concluded at a date.
 
@@ -152,6 +185,7 @@ run, but it cannot reach the reader's session or the admin API. Max 2 MB.
 | `list_reports` | Reports with their details and links, and the categories in use (reuse them). Filters: `category`, `search`, `include_archived`, `subject_type`, `subject_id`. |
 | `get_report` | A report's content, current or an older `version`, to build on. |
 | `list_report_versions` | Every version: when, by whom, who asked, the note. |
+| `publish_overview_dashboard` | Publish or refresh the overview dashboard (live blocks for the books and operations) in the site's language. |
 | `update_report_details` | Title, description, category, tags without new content (`not_changed` names what a person set). |
 
 Handler: `internal:reports` in agent-execute, which stamps the publisher and
@@ -166,14 +200,45 @@ the viewer and calls the `report_*` functions.
 | Handler | `supabase/functions/agent-execute/index.ts` (`executeReportsAction`) |
 | The dialect and live blocks (pure, shared with the edge) | `supabase/functions/_shared/reports/blocks.ts` (re-exported by `src/lib/report-blocks.ts`) |
 | Reader | `src/pages/admin/ReportsPage.tsx`, `src/components/admin/reports/ReportBody.tsx`, `src/hooks/useReports.ts` |
+| On the subject's page | `src/components/admin/reports/SubjectReports.tsx`, `src/lib/report-subjects.ts` |
 | Guardrail | `src/lib/__tests__/reports-module.guardrails.test.ts` |
+
+## Scheduled reports
+
+What the platform writes on a clock lands here too, as pages with a version
+per run — identical content adds none (`_shared/reports/scheduled.ts`, pure):
+
+| Report | Slug | When | Audience |
+|---|---|---|---|
+| **Daily briefing** | `daily-briefing` | every morning, by the briefing itself (`run_daily_briefing`) | `flowpilot` — the people who run the operator |
+| **Weekly digest** | `weekly-digest` | Fridays 16:05, automation *Weekly digest report* (`publish_weekly_digest`) | everyone with Reports |
+| **Month close — \<month\>** | `month-close-<year>-<mm>` | the 3rd at 06:17, automation *Month close report* (`publish_month_close_report`, previous month; skipped when accounting is off) | `accounting`; subject `period` / `2026-10` |
+
+The briefing's chat message and mail link to its page, and to the latest
+weekly digest and month close. The month-close report carries the checklist
+as it stood and a live block with the checklist as it stands when opened.
+
+## Shared, with a lens
+
+Reports are **shared within the role matrix**, like projects and every other
+list: ownership is a lens and a label, never a security boundary
+(`docs/architecture/ownership-and-coverage.md`). What narrows reading is the
+module (`audience_module`); what a person asked for is a filter:
+
+- **"Mine"** on Reports is the same chip as on projects and contacts: the
+  reports whose first requester is me (`reports.requested_by_user_id`, stamped
+  once by the platform when a signed-in person asked). `list_reports mine: true`
+  is the same filter over MCP; without a person at the keyboard it lists nothing.
+- **Written figures carry the module they came from.** A live block runs as
+  the reader, so it protects itself; a figure written into the text does not.
+  An agent that writes payroll or ledger figures sets `audience_module` to
+  that module — the guide says so, and a person can narrow the audience
+  afterwards (a person's choice, which the agent's next version keeps).
 
 ## Next
 
-- **Reports where they belong:** a report's subject shown on that company, deal
-  or project, and under *Reports* in the accounting workspace.
-- **Scheduled reports:** FlowPilot's weekly digest and the month close
-  published as reports, with the briefing linking to them.
+- **Reports in the briefing's inbox:** a person's own reports surfaced where
+  they work (My account), not only under Reports.
 
 <!-- generated:skills:start — written by scripts/generate-module-docs.ts, edits here are overwritten -->
 ## Skills
@@ -188,5 +253,8 @@ External operators (FlowPilot, OpenClaw, Claude Desktop, custom MCP clients) can
 | `get_report` | internal | Read a report — its content and details, the current or an older version. Use when: building a new version on it; someone asks what a report says; comparing with an earlier version. NOT for: listin… |
 | `list_report_versions` | internal | Every version of a report: when, by whom (and who asked), the note. Use when: someone asks what changed or who published a report; before restoring is suggested to a person. NOT for: the content it… |
 | `update_report_details` | internal | Change a report\ |
+| `publish_overview_dashboard` | internal | Publish (or keep current) the overview dashboard "The state of things" / "Läget just nu" — one report of live blocks: what needs attention in the books (check_books, when accounting is on) and in o… |
+| `publish_weekly_digest` | internal | Publish this week\ |
+| `publish_month_close_report` | internal | Publish the month close as a report — the close checklist for one month (month_close_checklist: what passed, what blocks, the exact next call) as a page "Month close — <month>" for accounting staff… |
 
 <!-- generated:skills:end -->
