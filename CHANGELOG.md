@@ -8,6 +8,17 @@ Release process: [docs/operators/release-process.md](docs/operators/release-proc
 
 ## [Unreleased]
 
+### Changed
+
+- **Developer has three doors, Skills one page.** `/admin/developer` is
+  MCP Keys · Content API · Webhooks, each introduced by who it is for; the
+  Content API explorer runs as the signed-in person (so "requires auth"
+  endpoints answer) and its docs link exists. Skill control (enable, MCP
+  exposure, definition) moved from Developer to `/admin/skills` → **Manage**
+  beside **Browse**, with a sidebar entry under System beside Modules; `?tab=mcp-skills`
+  redirects. Removed: the mock "Dev Tools" tab, the n8n template brochure,
+  the explorer's third copy of the MCP client config (the wizard has it).
+
 ### Added
 
 **Reports — what an agent worked out, as a page**
@@ -52,6 +63,15 @@ Release process: [docs/operators/release-process.md](docs/operators/release-proc
   automation is left alone.
 
 ### Fixed
+- The nightly view sweep no longer goes red on a role refusal whose body the
+  browser could not read: a refusal by the role matrix is a warning by its
+  shape, an unreadable body is retried and named.
+- Reports published before #891 with a capitalised subject ("Company") are
+  normalised, so they show on their company, deal or project page.
+- The scheduled reports and the overview dashboard are stamped "FlowWink",
+  not "FlowPilot", when the platform's automation publishes them; the
+  agent-day lookup escapes % and _ in an agent's name; users_list's role
+  filter is capped.
 - Three pages that failed for the role they are for (newsletter and docs
   RPC grants, the web layer's state, `propose_bookkeeping` gating); HR can use
   Shifts, Compensation, Training and Disciplinary.
