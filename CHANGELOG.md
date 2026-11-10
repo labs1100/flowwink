@@ -57,6 +57,17 @@ Release process: [docs/operators/release-process.md](docs/operators/release-proc
 
 ### Added
 
+- **Agent work on the dashboard.** A panel for an owner, not a developer: how
+  much the agents did today and which ones, what is waiting for a person
+  (operations an agent staged, questions an agent asked on a task that nobody
+  has answered), and the calls that were refused or failed in the last seven
+  days with the reason in words. Scheduled jobs and a person's own clicks are
+  not counted, and a module that is off stays out of it.
+- **The books can be kept somewhere else.** Accounting → Settings → Ledger:
+  with "Kept in another system" (Fortnox, Visma …) FlowWink no longer books
+  invoices, paid orders or vendor invoices by itself, and the books check stays
+  quiet instead of listing every invoice as unbooked. Vouchers already booked
+  are left alone; switching back lets the catch-up book what was skipped.
 - **A paid order gets its receipt by itself.** The receipt is the order's paid
   invoice, sent by the new automation `Receipt on paid order` in the language the
   customer ordered in (`order_receipt` template, en + sv). It can be switched off
@@ -65,6 +76,25 @@ Release process: [docs/operators/release-process.md](docs/operators/release-proc
 
 ### Fixed
 
+- **Sending an invoice no longer needs the accounting grant.** A salesperson
+  without it was refused ("Requires the accounting module") because the booking
+  behind the send could not run. The invoice is sent, the booking is caught up.
+- **An order is revenue when it is paid.** Marking an order delivered wrote
+  `completed` over its payment status — losing `paid`, and turning an unpaid
+  delivered order into revenue — and the weekly briefing counted revenue on
+  `completed` alone, so a paid order not yet delivered was missing. Delivery no
+  longer touches the payment status, and the briefing counts what the Orders
+  page counts.
+- **The daily briefing's schedule is the platform's, not FlowPilot's.** The cron
+  health filed the briefing job under FlowPilot, so with FlowPilot off a stopped
+  briefing was never flagged and never required — while the briefing itself runs
+  without FlowPilot. It is judged on every instance now.
+- **A receipt is not unbooked work.** A paid order is booked when it is paid,
+  and its receipt is an invoice born paid. The booking functions already skipped
+  it, but `check_books` reported it as "a customer invoice without a voucher"
+  (high), `month_close_checklist` would have failed the month on it and
+  `book_unbooked_invoices` listed it every run, booking nothing. One rule,
+  `invoice_booked_with_its_order`, now answers for all three.
 - **Consultant profiles are re-embedded every hour again.** The consultants
   module schedules its reindex at `7 * * * *` (minute 7 of every hour), a shape
   the dispatcher's cron parser had no branch for, so it switched the automation
@@ -264,6 +294,9 @@ Release process: [docs/operators/release-process.md](docs/operators/release-proc
   nor the skill is woken, and the automation still reads as alive. The moment a
   lead, a scheduled post or a registration appears, the next minute's pulse runs
   it. An automation whose module is off is skipped by the dispatcher too.
+- **Two more sweeps ask first.** The SLA sweep (every 15 minutes) runs only when
+  an SLA policy is enabled, and the hourly consultant reindex only when a
+  profile is waiting to be embedded.
 - **agent-execute's pipeline is importable.** The 20 500-line executor moved
   from `agent-execute/index.ts` to `_shared/execute/core.ts` as
   `handleAgentExecute(req)`, byte-identical but for the import prefixes and the

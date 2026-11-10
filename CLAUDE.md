@@ -114,12 +114,12 @@ Block layout in `BlockRenderer`: full-bleed blocks (hero, parallax-section, marq
 
 ### Module System
 
-FlowWink has 69 modules in `src/lib/modules/`. Each module is a TypeScript file defining:
+FlowWink has 68 modules in `src/lib/modules/`. Each module is a TypeScript file defining:
 - Module metadata (id, name, category, dependencies)
 - Feature set and capabilities
 - Skill registrations pointing to `agent_skills` rows
 
-**Module categories include:** accounting, analytics, approvals, blog, booking, calendar, chat, companies, contracts, crm, customer360, deals, docs, documents, email, expenses, federation, feedback, field-service, fixed-assets, flowpilot, forms, global-blocks, growth, handbook, hr, inventory, invoicing, kb, live-support, manufacturing, media, multi-currency, newsletter, pages, payroll, pos, pricelists, products, projects, purchasing, quotes, reconciliation, recruitment, consultants, returns, river, sales-intelligence, shipping, site-migration, sla, subscriptions, surveys, templates, tickets, timesheets, webinars, wiki, workspace-chat.
+**Modules (one file each, `<name>-module.ts`):** accounting, analytics, approvals, blog, booking, calendar, chat, companies, company-insights, composio, consultants, contracts, crm, customer360, deals, developer, docs, documents, email, expenses, federation, feedback, field-service, fixed-assets, flowpilot, flowtable, forms, growth, handbook, hr, inventory, invoicing, kb, live-support, maintenance, manufacturing, media, meeting-polls, multi-currency, newsletter, pages, payroll, pos, pricelists, products, projects, purchasing, quotes, reconciliation, recruitment, reports, returns, river, sales-intelligence, shipping, site-migration, sla, subscriptions, surveys, templates, tickets, timesheets, visitor-intelligence, voice, webinars, webmeet, wiki, workspace-chat.
 
 To scaffold a new module: `bun run scripts/new-module.ts`
 
@@ -594,6 +594,14 @@ beside its payload, so an operator branches instead of guessing:
   functional role is granted on first sign-in. The edge function admits the
   platform's own call (service key + `_skill`) beside an admin session.
   `check_operations` points at it when `assignable` is empty.
+- **The books may be kept somewhere else (2026-11-10, #862).**
+  `accounting_preferences.ledger = 'external'` (Accounting → Settings) is a
+  declared fact with one reader, `books_kept_here()`. Every trigger that books
+  by itself asks it first (`on_invoice_status_book`, `on_order_paid_book`,
+  `book_vendor_invoice_on_register`; a guard discovers any new one), and
+  `check_books` / `book_unbooked_invoices` answer `external_ledger: true`
+  instead of listing unbooked work. An explicit booking skill still books — the
+  dial stops what happens by itself, not what a person asks for.
 - **Born right (2026-10-27).** `manage_invoice create` without `due_date`
   gets one from the payment terms (`net30` → 30 days after the issue date,
   30 when the terms say nothing). Every commercial `currency` column is
@@ -707,7 +715,7 @@ src/
     account/          # ~15 customer portal pages
   hooks/              # 151 custom React hooks (TanStack Query)
   lib/
-    modules/          # 69 module definitions
+    modules/          # 68 module definitions
     module-def.ts     # Module definition type system
     module-bootstrap.ts
     module-registry.ts
