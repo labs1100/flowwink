@@ -233,3 +233,185 @@ export function summarizeAgentWork(input: {
     areas: workByArea(rows, input.readers),
   };
 }
+
+/** One thing a check flags: check_operations / check_books' finding, as both return it. */
+export interface CheckFinding {
+  id: string;
+  area?: string | null;
+  severity: 'high' | 'medium' | 'low';
+  count: number;
+  label: string;
+  detail?: string | null;
+  fix?: { skill: string; args?: Record<string, unknown> } | null;
+}
+
+export interface Flag {
+  /** Unique across the checks: `<source>:<id>`. */
+  key: string;
+  source: 'operations' | 'books';
+  area: string;
+  severity: 'high' | 'medium' | 'low';
+  label: string;
+  /** The skill that fixes it, when the check names one; null means it is the owner's to decide. */
+  fixSkill: string | null;
+  /** How many findings of the same kind this row stands for (1 = just this one). */
+  same: number;
+}
+
+export interface FlagSummary {
+  high: number;
+  medium: number;
+  low: number;
+  total: number;
+  /** Rows after findings of the same kind are folded into one. */
+  rows: number;
+  /** Highest severity first, the checks' own order within a severity. */
+  top: Flag[];
+}
+
+const SEVERITY_ORDER = { high: 0, medium: 1, low: 2 } as const;
+
+/**
+ * What the checks flag, as one list (#869 point 3). The same findings an agent
+ * reads from check_operations and check_books — a person sees what the agent
+ * was told, with the skill that would fix it. A check that was not run (its
+ * module is off, or the reader's role may not ask it) is passed as null and
+ * contributes nothing.
+ */
+export function mergeFlags(
+  checks: { operations?: CheckFinding[] | null; books?: CheckFinding[] | null },
+  limit = 5,
+  /** May the reader see this area? (the role matrix) Omitted: everything the checks answered. */
+  mayRead?: (area: string) => boolean,
+): FlagSummary {
+  const all: Flag[] = [];
+  // Findings of the same kind fold into one row: a check that reports one
+  // finding per period (`deadline_overdue:agi-2025-09`, …-10, …-11) would
+  // otherwise fill the list and push everything else out of sight. The kind is
+  // the id up to its colon; severity and fix must agree too.
+  const rows = new Map<string, Flag>();
+  for (const source of ['operations', 'books'] as const) {
+    for (const f of checks[source] ?? []) {
+      if (!f || !f.id || !f.label) continue;
+      const severity = f.severity in SEVERITY_ORDER ? f.severity : 'low';
+      const area = f.area || (source === 'books' ? 'books' : 'operations');
+      // A check answers for the whole business; a reader sees their own areas.
+      if (mayRead && !mayRead(area)) continue;
+      const flag: Flag = {
+        key: `${source}:${f.id}`,
+        source,
+        area,
+        severity,
+        label: f.label,
+        fixSkill: f.fix?.skill ?? null,
+        same: 1,
+      };
+      all.push(flag);
+      const kind = f.id.includes(':') ? f.id.slice(0, f.id.indexOf(':')) : f.id;
+      const rowKey = `${source}:${kind}:${severity}:${flag.fixSkill ?? ''}`;
+      const row = rows.get(rowKey);
+      if (row) row.same += 1;
+      else rows.set(rowKey, { ...flag });
+    }
+  }
+  // Stable: Array.prototype.sort keeps the checks' own order within a severity.
+  const sorted = [...rows.values()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
+  const count = (s: Flag['severity']) => all.filter((f) => f.severity === s).length;
+  return { high: count('high'), medium: count('medium'), low: count('low'), total: all.length, rows: sorted.length, top: sorted.slice(0, limit) };
+}
+
+/**
+ * The record a call touched, and the page that opens it (#869: "with a link
+ * to the object"). `param` is the argument that names the record; a create
+ * has no id to send, so the answer's id is read too (see objectOf). Only pages that open ONE record
+ * are listed — a guard checks every address against the router.
+ */
+export interface ObjectRoute {
+  param: string;
+  entity: string;
+  label: string;
+  href: (id: string) => string;
+  /** The record is named by a slug, not a uuid. */
+  slug?: boolean;
+}
+
+export const OBJECT_ROUTES: ObjectRoute[] = [
+  { param: 'lead_id', entity: 'lead', label: 'lead', href: (id) => `/admin/leads/${id}` },
+  { param: 'deal_id', entity: 'deal', label: 'deal', href: (id) => `/admin/deals/${id}` },
+  { param: 'contract_id', entity: 'contract', label: 'contract', href: (id) => `/admin/contracts/${id}` },
+  { param: 'company_id', entity: 'company', label: 'company', href: (id) => `/admin/companies/${id}` },
+  { param: 'ticket_id', entity: 'ticket', label: 'ticket', href: (id) => `/admin/tickets?ticket=${id}` },
+  { param: 'quote_id', entity: 'quote', label: 'quote', href: (id) => `/admin/quotes?id=${id}` },
+  { param: 'invoice_id', entity: 'invoice', label: 'invoice', href: (id) => `/admin/invoices?invoice=${id}` },
+  { param: 'order_id', entity: 'order', label: 'order', href: (id) => `/admin/orders?order=${id}` },
+  { param: 'project_id', entity: 'project', label: 'project', href: (id) => `/admin/projects?project=${id}` },
+  { param: 'page_id', entity: 'page', label: 'page', href: (id) => `/admin/pages/${id}` },
+  { param: 'article_id', entity: 'article', label: 'article', href: (id) => `/admin/knowledge-base/${id}` },
+  { param: 'candidate_id', entity: 'candidate', label: 'candidate', href: (id) => `/admin/recruitment/candidates/${id}` },
+];
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SLUG = /^[a-z0-9][a-z0-9-]{0,120}$/;
+
+export interface ObjectLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * The record a call was about. When a call names several (a deal created for
+ * a company), the one the SKILL is about wins — manage_deal opens the deal.
+ * An id that is not a uuid (a placeholder, a name) links nowhere.
+ */
+export function objectOf(
+  skillName: string | null,
+  input: Record<string, unknown> | null | undefined,
+  /** Ids read from the answer the journal stored: `<param>` (lead_id), `<entity>` (lead.id), `id` and `item` (id, item.id). */
+  answered: Record<string, unknown> | null | undefined = null,
+): ObjectLink | null {
+  const skill = (skillName ?? '').toLowerCase();
+  const valid = (r: ObjectRoute, v: unknown): v is string => typeof v === 'string' && (r.slug ? SLUG : UUID).test(v);
+  const found: Array<{ route: ObjectRoute; id: string; own: boolean }> = [];
+  for (const route of OBJECT_ROUTES) {
+    const own = skill.includes(route.entity);
+    // What the call was sent; then what it answered: `lead_id`, `lead.id`, and — for the
+    // skill's own record only — `id` / `item.id` (shapes seen from add_lead, manage_ticket …).
+    const id = [input?.[route.param], answered?.[route.param], answered?.[route.entity], ...(own ? [answered?.id, answered?.item] : [])]
+      .find((v) => valid(route, v));
+    if (id) found.push({ route, id: id as string, own });
+  }
+  const pick = found.find((f) => f.own) ?? found[0];
+  return pick ? { label: pick.route.label, href: pick.route.href(pick.id) } : null;
+}
+
+export interface ChangeRow extends AgentActivityRow {
+  input?: Record<string, unknown> | null;
+  /** Ids read out of the answer (see objectOf). */
+  answered?: Record<string, unknown> | null;
+}
+
+export interface Change {
+  id: string;
+  agent: string;
+  skill: string;
+  action: string | null;
+  at: string;
+  object: ObjectLink | null;
+}
+
+/** The latest calls that changed something, newest first, each with the record it touched when one is known. */
+export function latestChanges(rows: ChangeRow[], readers: AgentWorkReaders = {}, shown: (skill: string | null) => boolean = () => true, limit = 5): Change[] {
+  return rows
+    .filter((r) => r.status === 'success' && !!r.skill_name && isAgentCall(r) && shown(r.skill_name))
+    .filter((r) => !(readers.isRead?.(r.skill_name as string, { ...(r.input ?? {}) }) ?? false))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .slice(0, limit)
+    .map((r) => ({
+      id: r.id,
+      agent: agentNameOf(r, readers.agentNames),
+      skill: r.skill_name as string,
+      action: typeof r.input?.action === 'string' ? (r.input.action as string) : null,
+      at: r.created_at,
+      object: objectOf(r.skill_name, r.input, r.answered),
+    }));
+}
