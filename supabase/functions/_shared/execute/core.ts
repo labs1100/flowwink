@@ -28,7 +28,8 @@ import { titleSimilarity } from '../domains/content-memory.ts';
 import { retiredSkillResult } from '../skills/retired-skills.ts';
 import { hideSkills, isMissingQuarantineColumn, isQuarantined } from '../skills/skill-visibility.ts';
 import { isIdleScheduledRun, declaredWorkDone } from '../activity/work-done.ts';
-import { stampAgentError } from '../agent-errors.ts';
+import { stampAgentError, classifyRuleRefusal, RAISE_EXCEPTION_SQLSTATE } from '../agent-errors.ts';
+import { scheduleState, SCHEDULE_STATE_LEGEND, type ScheduledAutomation } from '../automations/schedule-state.ts';
 import { fetchPublic } from '../net/outbound-url.ts';
 import { classifySkillModule } from '../mcp/groups.ts';
 import { readAllRows } from '../read-all-rows.ts';
@@ -1545,9 +1546,18 @@ export async function executeSkillRequest(input: ExecuteRequest, auth: ExecuteAu
                     : ` Pass the exact p_-prefixed parameter names from this skill's input schema.`);
             }
           }
-          result = { error: rpcMsg, status: 'failed' };
+          // A RAISE EXCEPTION is the function keeping a rule, not breaking:
+          // classified by its SQLSTATE, not by guessing at its wording.
+          result = (rpcErr as { code?: string }).code === RAISE_EXCEPTION_SQLSTATE
+            ? { error: rpcMsg, status: 'failed', ...classifyRuleRefusal(rpcErr.message) }
+            : { error: rpcMsg, status: 'failed' };
         } else {
-          result = (rpcData as Record<string, unknown>) ?? { success: true };
+          const answered = (rpcData as Record<string, unknown>) ?? { success: true };
+          // The function's own "no" ({ success: false, error }) is the same
+          // kind of answer; a code the function set itself wins.
+          result = answered.success === false && typeof answered.error === 'string' && answered.error && typeof answered.code !== 'string'
+            ? { ...answered, ...classifyRuleRefusal(answered.error) }
+            : answered;
         }
 
       } else {
@@ -1982,24 +1992,14 @@ async function executeModuleAction(
           .order('created_at', { ascending: false }).limit(lim);
         if (error) throw new Error(`List automations failed: ${error.message}`);
         // The verdict on a job is read against ITS schedule, never against the
-        // calendar: a weekday sweep looked at on a Sunday last ran Friday and is
-        // on_schedule, not stalled (Hermes on Nordbrygg, 2026-10-25, reported
-        // three "stalled sweeps" that were exactly that). overdue = the next
-        // run the dispatcher promised is more than 15 minutes in the past.
+        // calendar, and an idle sweep is not late — one rule with the admin's
+        // health view and check_operations (_shared/automations/schedule-state.ts).
         const now = Date.now();
-        type AutomationRow = { enabled: boolean; trigger_type: string; last_triggered_at: string | null; next_run_at: string | null } & Record<string, unknown>;
-        const automations = ((data || []) as AutomationRow[]).map((r) => {
-          const next = r.next_run_at ? new Date(r.next_run_at).getTime() : null;
-          const state = !r.enabled ? 'disabled'
-            : r.trigger_type !== 'cron' ? 'waiting'
-            : !r.last_triggered_at && !next ? 'never_ran'
-            : next !== null && next < now - 15 * 60 * 1000 ? 'overdue'
-            : 'on_schedule';
-          return { ...r, state };
-        });
+        type AutomationRow = ScheduledAutomation & Record<string, unknown>;
+        const automations = ((data || []) as AutomationRow[]).map((r) => ({ ...r, state: scheduleState(r, now) }));
         return {
           automations, count: automations.length,
-          state_legend: 'on_schedule = last run matches the schedule and the next run is ahead; overdue = the promised next_run_at is more than 15 min in the past (the dispatcher is not firing it); never_ran; waiting = event/signal/manual trigger; disabled. Judge by state, not by how old last_triggered_at looks.',
+          state_legend: SCHEDULE_STATE_LEGEND,
         };
       }
 
@@ -5706,6 +5706,16 @@ async function executeFeedbackAction(
         instance_id,
       };
       if (receiveHere) {
+        // The same report is one post, here as on the wire (content-api).
+        const { data: joined, error: joinErr } = await supabase.rpc('feedback_join_report', {
+          p_board: board, p_title: title, p_instance_id: instance_id, p_site_url: siteUrl || null,
+        });
+        if (joinErr) console.warn('[feedback] join skipped:', joinErr.message);
+        const hit = joined as { id?: string; status?: string; reports_count?: number } | null;
+        if (hit?.id) {
+          await remember(hit.id);
+          return { sent_to: 'this instance', post_id: hit.id, board, status: hit.status, merged: true, reports_count: hit.reports_count ?? null, url: siteUrl ? `${siteUrl}/feedback/${hit.id}` : null };
+        }
         const { data, error } = await supabase.from('feedback_posts')
           .insert({ board, title, body, author_name: payload.author_name, author_email: payload.author_email, origin_site_url: payload.origin_site_url, origin: payload.origin, source: 'agent' })
           .select('id, board, title, status, created_at').single();
@@ -5770,7 +5780,7 @@ async function executeFeedbackAction(
       if (action === 'list') {
         const lim = Math.min(Math.max(Number(a.limit) || 50, 1), 200);
         let q = supabase.from('feedback_posts')
-          .select('id, board, title, status, author_name, author_email, origin_site_url, origin, source, votes_count, comments_count, created_at, updated_at')
+          .select('*')
           .order('created_at', { ascending: false }).limit(lim);
         if (a.board && FEEDBACK_BOARDS.has(a.board)) q = q.eq('board', a.board);
         if (a.status && FEEDBACK_STATUSES.has(a.status)) q = q.eq('status', a.status);
@@ -18241,6 +18251,8 @@ async function logActivity(
     api_key_id?: string | null;
     /** Set on the retry for an instance whose migration lags the edge deploy (no `module` column yet). */
     _withoutModule?: boolean;
+    /** Set on the retry for an instance without the `kind` column yet (20261115090000). */
+    _withoutKind?: boolean;
   },
 ): Promise<string | null> {
   // The module that owns the skill: staff read agent work per module (the RLS
@@ -18266,7 +18278,16 @@ async function logActivity(
     ...(activity.log_type ? { log_type: activity.log_type } : {}),
     ...(activity.api_key_id ? { api_key_id: activity.api_key_id } : {}),
     ...(owner && owner !== 'platform' ? { module: owner } : {}),
+    // Lookup or change, by the platform's one read rule — what the nightly
+    // thinning (prune_logs) reads: a lookup's row is thinned, a change is kept.
+    ...(activity._withoutKind ? {} : { kind: classifyCall(activity.skill_name, activity.input) === 'read' ? 'read' : 'write' }),
   }).select('id').single();
+
+  // The `kind` column arrives with 20261115090000; where the edge deploy got
+  // there first, keep the row without it rather than lose the journal.
+  if (error && !activity._withoutKind && /\bkind\b/i.test(String(error.message)) && /PGRST204|42703|column/i.test(`${error.code} ${error.message}`)) {
+    return logActivity(supabase, { ...activity, _withoutKind: true });
+  }
 
   // The `module` column arrives with 20261111090000; where the edge deploy got
   // there first, keep the row without it rather than lose the journal.

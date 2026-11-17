@@ -17,13 +17,27 @@ import { loadEnabledModules } from '../modules.ts';
 import { classifyAgentError } from '../agent-errors.ts';
 import { enrichCronHealth, loadInstanceBornAt, type CronHealthReport } from '../cron/health.ts';
 
+/**
+ * A newborn instance files no defect. "Failed in the last 24 hours" needs a
+ * day of evidence, and an instance minutes old is being set up or tested: every
+ * CI stack is a new instance, runs the battery's deliberate failures, and for
+ * four days in 2026-11 filed them on the fleet's board as bugs (60 posts,
+ * three titles, twenty instance ids). The ping itself still goes.
+ */
+export const NEWBORN_HOURS = 24;
+
+export function instanceIsNewborn(bornAt: string | null | undefined, now: Date = new Date()): boolean {
+  const born = bornAt ? Date.parse(bornAt) : NaN;
+  return Number.isFinite(born) && now.getTime() - born < NEWBORN_HOURS * 3600_000;
+}
+
 /** One failure is an agent's bad day; this many in 24 hours is a defect. */
 export const SKILL_FAILURES_TO_REPORT = 3;
 
 export interface MachineRoomInput {
   jobs: Array<{ jobname: string; reasons: string[]; last_status: string | null; last_run: string | null }>;
   pulse: { starving: boolean; starved_hours_24h?: number };
-  failures: Array<{ skill_name: string | null; error_message: string | null }>;
+  failures: Array<{ skill_name: string | null; error_message: string | null; code?: string | null }>;
 }
 
 export interface MachineRoomReport { title: string; body: string }
@@ -46,10 +60,12 @@ export function machineRoomReports(input: MachineRoomInput): MachineRoomReport[]
   }));
 
   // Only what the classifier cannot lay on the caller: a bad argument, a
-  // closed period or a refused permission is not the platform's defect.
+  // closed period, a refused permission or a rule the database kept (the
+  // envelope's stored code, RULE_REFUSED) is not the platform's defect. The
+  // stored code wins over re-reading the message: it knew the SQLSTATE.
   const counts = new Map<string, number>();
   for (const f of input.failures) {
-    if (!f.skill_name || classifyAgentError(f.error_message).code !== 'HANDLER_ERROR') continue;
+    if (!f.skill_name || (f.code || classifyAgentError(f.error_message).code) !== 'HANDLER_ERROR') continue;
     counts.set(f.skill_name, (counts.get(f.skill_name) ?? 0) + 1);
   }
   const skills = [...counts]
@@ -68,16 +84,18 @@ export async function fileMachineRoomReports(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   submit: (args: { board: 'bug'; title: string; body: string }) => Promise<unknown>,
-): Promise<{ filed: number; already_reported: number }> {
-  const out = { filed: 0, already_reported: 0 };
+): Promise<{ filed: number; already_reported: number; newborn?: boolean }> {
+  const out: { filed: number; already_reported: number; newborn?: boolean } = { filed: 0, already_reported: 0 };
   // The ping is the point of the call: nothing here may cost it.
   try {
+    const bornAt = await loadInstanceBornAt(supabase);
+    if (instanceIsNewborn(bornAt)) return { ...out, newborn: true };
     const { data: cron, error: cronErr } = await supabase.rpc('cron_health_report');
     const enriched = !cronErr && cron?.cron_available
-      ? enrichCronHealth(cron as CronHealthReport, new Date(), { bornAt: await loadInstanceBornAt(supabase), moduleOn: await loadEnabledModules(supabase) })
+      ? enrichCronHealth(cron as CronHealthReport, new Date(), { bornAt, moduleOn: await loadEnabledModules(supabase) })
       : null;
     const { data: failures, error: failuresErr } = await supabase.from('agent_activity')
-      .select('skill_name, error_message')
+      .select('skill_name, error_message, code:output->>code')
       .eq('status', 'failed')
       .gte('created_at', new Date(Date.now() - 86400000).toISOString())
       .limit(500);
