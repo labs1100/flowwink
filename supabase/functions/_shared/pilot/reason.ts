@@ -68,6 +68,7 @@ import { getBuiltInTools, getDispatchTools } from './built-in-tools.ts';
 import { createTraceRecorder } from '../trace/events.ts';
 import { lessonText } from './lesson-text.ts';
 import { foldReadToolResults, type LoopMessage } from './fold-tool-results.ts';
+import { measurePrompt, type StepSize } from './prompt-sizes.ts';
 import { SERVICE_CALLER, type ExecuteRequest, type SkillRunner } from '../execute/types.ts';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -172,15 +173,40 @@ export async function loadMemories(supabase: any): Promise<string> {
     .select('key, value, category')
     .not('key', 'in', '("soul","identity","agents","heartbeat_state","heartbeat_protocol","tool_policy","expected_skill_hash")')
     .order('updated_at', { ascending: false })
-    .limit(20);
+    .limit(MEMORY_FETCH);
 
-  if (!data || data.length === 0) return '';
-  const lines = data.map((m: any) => {
+  const picked = pickMemoriesForPrompt((data || []) as MemoryRow[]);
+  if (!picked.length) return '';
+  const lines = picked.map((m) => {
     const val = typeof m.value === 'string' ? m.value : JSON.stringify(m.value);
     const truncated = val.length > 150 ? val.slice(0, 150) + '…' : val;
     return `- [${m.category}] ${m.key}: ${truncated}`;
   });
   return `\n\nMemory (use memory_read for full values):\n${lines.join('\n')}`;
+}
+
+// What a heartbeat is shown of its memory (2026-11-25). The list was the 20
+// rows touched last, and most rows are written by the platform each run — an
+// outcome per scored action, the run's flush, the daily reflection. On liteit
+// the notes the agent wrote itself ("staged_blog_…_READY",
+// "cadence_window_is_not_monday") fell off the list within two days; on
+// nordbrygg 17 of the 20 were the journal. The agent's own notes come first
+// now, and the journal keeps a few places for the latest runs.
+export type MemoryRow = { key: string; value: unknown; category?: string | null };
+export const MEMORY_FETCH = 80;
+export const MEMORY_NOTES_SHOWN = 14;
+export const MEMORY_JOURNAL_SHOWN = 4;
+const JOURNAL_KEY = /^(outcome_(success|learning):|heartbeat_flush_|heartbeat_\d{4}-|lesson:reflect_)/;
+
+export function isJournalMemory(key: string): boolean {
+  return JOURNAL_KEY.test(key);
+}
+
+/** Rows newest first in; the agent's own notes first out, then the newest journal rows. */
+export function pickMemoriesForPrompt(rows: readonly MemoryRow[]): MemoryRow[] {
+  const notes = rows.filter((r) => !isJournalMemory(r.key)).slice(0, MEMORY_NOTES_SHOWN);
+  const journal = rows.filter((r) => isJournalMemory(r.key)).slice(0, MEMORY_JOURNAL_SHOWN);
+  return [...notes, ...journal];
 }
 
 // The cadence quota lives in ./cadence.ts so the plan, workflow, automation
@@ -1067,6 +1093,9 @@ export async function reason(
   const skillOpts = { callerUserId: config.callerUserId ?? null, enforceCadence: config.enforceCadence === true, runSkill: config.runSkill };
   // The run's decisions, kept with its steps (agent_trace_events). Flushed once in finally.
   const why = createTraceRecorder(supabase, traceId);
+  // What each step sent, by part — written as one trace event at the end
+  // (prompt-sizes.ts): the token count alone never said what made a step grow.
+  const stepSizes: Array<StepSize & { iteration: number; prompt_tokens?: number }> = [];
   console.log(`[reason] Starting run trace=${traceId} lane=${config.lockLane || 'none'} tier=${config.tier || 'fast'}`);
 
   const lane = config.lockLane;
@@ -1247,6 +1276,7 @@ export async function reason(
           console.log(`[reason] trace=${traceId} folded ${fold.folded} read tool answer(s), ~${Math.round(fold.savedChars / 4)} tokens`);
         }
       }
+      stepSizes.push({ iteration: i, ...measurePrompt(conversationMessages as LoopMessage[], allTools) });
       const aiResponse = await callAiWithRetry({
         apiKey, apiUrl, model,
         messages: conversationMessages,
@@ -1280,6 +1310,7 @@ export async function reason(
         completion_tokens: usage.completion_tokens || 0,
         total_tokens: (usage.prompt_tokens || 0) + (usage.completion_tokens || 0),
       };
+      if (stepSizes.length) stepSizes[stepSizes.length - 1].prompt_tokens = iterTokens.prompt_tokens;
       void logAiUsage({
         supabase, source: usageSource, provider, model,
         promptTokens: iterTokens.prompt_tokens,
@@ -1651,6 +1682,14 @@ export async function reason(
     }
     // Terminal checkpoint on every exit path (including a thrown error).
     await checkpointRun(supabase, { traceId, status: runOutcome }).catch(() => {});
+    if (stepSizes.length) {
+      const last = stepSizes[stepSizes.length - 1];
+      const top = last.largest_answers[0];
+      why.add('prompt_sizes',
+        `${stepSizes.length} steps; the last sent ${Math.round((last.system + last.user + last.assistant + last.tool_answers + last.tool_schemas) / 1000)}k characters` +
+        ` (system ${Math.round(last.system / 1000)}k, tool schemas ${Math.round(last.tool_schemas / 1000)}k, tool answers ${Math.round(last.tool_answers / 1000)}k${top ? `, most from ${top.tool}` : ''}).`,
+        { steps: stepSizes });
+    }
     // The run's decisions, in one write. Never throws.
     await why.flush();
   }
